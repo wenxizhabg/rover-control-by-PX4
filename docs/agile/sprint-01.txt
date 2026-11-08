@@ -9,11 +9,11 @@ SPRINT BACKLOG (cập nhật trạng thái mỗi khi task đổi trạng thái)
 ---------------------------------------------------------------
 Task | Mô tả ngắn                       | Test tự động | Trạng thái | Commit
 -----+----------------------------------+--------------+------------+-------
-T1   | Khởi tạo repo                    | có (2 test)  | DOING      |
-T3   | VehicleInfo từ HEARTBEAT         | có           | TODO       |
+T1   | Khởi tạo repo                    | có (2 test)  | DONE       |
+T2   | Hướng dẫn bật/tắt mô phỏng       | không        | DONE       |
+T3   | VehicleInfo từ HEARTBEAT         | có           | DOING      |
 T4   | connect(url, timeout)            | có           | TODO       |
 T5   | Lệnh CLI connect                 | có           | TODO       |
-T2   | scripts/start_sim.sh             | không        | TODO       |
 T6   | Hướng dẫn kiểm thử chấp nhận     | không        | TODO       |
 
 Quy ước commit: "US-01/Tx: <nội dung>"
@@ -21,7 +21,7 @@ Quy ước commit: "US-01/Tx: <nội dung>"
 SPRINT REVIEW (điền khi kết thúc sprint)
 ----------------------------------------
 Kết quả kiểm thử chấp nhận:
-  AC1: 
+  AC1: đạt
   AC2: 
   AC3: 
   AC4: 

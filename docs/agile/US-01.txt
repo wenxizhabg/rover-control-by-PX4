@@ -14,7 +14,9 @@ Ngoài phạm vi story này: phát hiện mất kết nối khi đang chạy, đ
 AC1  Bật mô phỏng theo README
      Cách kiểm : làm theo mục "Bật và tắt mô phỏng" trong README
      Đạt khi   : cửa sổ Gazebo hiện xe r1_rover; terminal hiện dấu nhắc "pxh>";
-                 "mavlink status" có instance gửi tới 127.0.0.1 cổng 14540
+                 "mavlink status" có instance mode Onboard với dòng
+                 "transport protocol: UDP (14580, remote port: 14540)"
+     
 
 AC2  Kết nối khi mô phỏng đang chạy
      Cách kiểm : terminal khác, chạy: python -m rover connect
@@ -34,7 +36,7 @@ AC4  Đổi thời gian chờ
 3. TASK – YÊU CẦU TEST
 ----------------------
 Trạng thái task: TODO | DOING | DONE
-Thứ tự thực hiện: T2 -> T1 -> T3 -> T4 -> T5 -> T6
+Thứ tự thực hiện: T1 -> T2 -> T3 -> T4 -> T5 -> T6
 
 T1  Khởi tạo repo
     Làm gì      : .gitignore, requirements.txt (pymavlink, pytest), pytest.ini,
@@ -48,7 +50,7 @@ T2  Hướng dẫn bật/tắt mô phỏng trong README
                   cách kiểm tra cổng 14540 bằng "mavlink status", cách tắt
     Test tự động: không (phụ thuộc Gazebo)
     Kiểm tay    : AC1
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T3  Đọc thông tin xe từ HEARTBEAT (rover/vehicle_info.py)
     Làm gì      : hàm nhận message HEARTBEAT, trả VehicleInfo
@@ -58,7 +60,7 @@ T3  Đọc thông tin xe từ HEARTBEAT (rover/vehicle_info.py)
                   - heartbeat có autopilot INVALID (như QGC) -> bị đánh dấu không phải xe
                   - type lạ -> trả tên thô, không lỗi
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T4  Kết nối (rover/connection.py)
     Làm gì      : connect(url, timeout): mở cổng UDP, chờ heartbeat của autopilot,
@@ -88,6 +90,8 @@ T6  Hướng dẫn kiểm thử chấp nhận (docs/acceptance/US-01.txt)
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------
+- 2026-11-08: Sửa AC1 theo output thực tế của PX4 trên máy (không có dòng partner IP).
+  PX4 gửi MAVLink 2 tới localhost:14540, không broadcast.
 - 2026-11-08: Mô phỏng do nhóm tự bật bằng lệnh hướng dẫn trong README, không dùng script,
   app không tự bật mô phỏng.
 - Cổng MAVLink app dùng: 14540 (QGC dùng 14550, không tranh cổng).

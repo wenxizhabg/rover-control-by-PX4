@@ -127,12 +127,16 @@ Mở một terminal riêng cho mô phỏng (giữ nguyên terminal này trong su
 - Bật xong khi: cửa sổ Gazebo hiện xe `r1_rover` và terminal hiện dấu nhắc `pxh>`.
 
 ### Kiểm tra PX4 đang gửi MAVLink cho ứng dụng
-Tại dấu nhắc `pxh>`, gõ:
+ại dấu nhắc `pxh>`, gõ:
 
     mavlink status
 
-Trong danh sách instance phải có một dòng `partner IP: 127.0.0.1` với `remote port: 14540`.
-Đây là cổng mà ứng dụng của nhóm sẽ nghe. Cổng 14550 dành cho QGroundControl.
+Tìm instance có `mode: Onboard` và dòng:
+
+    transport protocol: UDP (14580, remote port: 14540)
+
+Nghĩa là PX4 gửi MAVLink  tới cổng 14540 trên localhost. Đây là cổng ứng dụng của nhóm nghe.
+Instance mà có `remote port: 14550` dành cho QGroundControl.
 
 ### Tắt
 Tại dấu nhắc `pxh>`, gõ `shutdown`, hoặc nhấn `Ctrl+C` trong terminal mô phỏng.
