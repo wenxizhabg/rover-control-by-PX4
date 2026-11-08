@@ -1,0 +1,36 @@
+SPRINT 01
+=========
+Mục tiêu     : Nhóm bật được mô phỏng bằng một lệnh và ứng dụng xác nhận được nó đang
+               nói chuyện với đúng xe PX4, hoặc báo lỗi rõ ràng nếu không có xe.
+Story chọn   : US-01 (chi tiết: US-01.txt)
+
+SPRINT BACKLOG (cập nhật trạng thái mỗi khi task đổi trạng thái)
+---------------------------------------------------------------
+Task | Mô tả ngắn                       | Test tự động | Trạng thái | Commit
+-----+----------------------------------+--------------+------------+-------
+T1   | Khởi tạo repo                    | có (1 test)  | TODO       |
+T3   | VehicleInfo từ HEARTBEAT         | có           | TODO       |
+T4   | connect(url, timeout)            | có           | TODO       |
+T5   | Lệnh CLI connect                 | có           | TODO       |
+T2   | scripts/start_sim.sh             | không        | TODO       |
+T6   | Hướng dẫn kiểm thử chấp nhận     | không        | TODO       |
+
+Quy ước commit: "US-01/Tx: <nội dung>"
+
+SPRINT REVIEW (điền khi kết thúc sprint)
+----------------------------------------
+Kết quả kiểm thử chấp nhận:
+  AC1: 
+  AC2: 
+  AC3: 
+  AC4: 
+Story US-01 đạt?:
+Phản hồi của khách hàng:
+
+SPRINT RETROSPECTIVE (điền khi kết thúc sprint)
+-----------------------------------------------
+Điều làm tốt:
+Điều cần cải thiện:
+Hành động cho sprint sau:
+
+Định hướng story tiếp theo ():

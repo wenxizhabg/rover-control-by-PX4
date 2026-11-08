@@ -1,0 +1,91 @@
+USER STORY US-01 – Bật mô phỏng Gazebo và kết nối đến xe
+=========================================================
+Yêu cầu gốc của khách hàng: "Bật phần mềm mô phỏng Gazebo và kết nối đến xe."
+
+1. STORY
+--------
+Là người vận hành xe, tôi có thể bật mô phỏng Gazebo có xe rover và cho ứng dụng kết nối
+đến xe, để biết xe đã sẵn sàng trước khi giám sát hoặc gửi lệnh.
+
+Ngoài phạm vi story này: phát hiện mất kết nối khi đang chạy, đọc trạng thái xe, gửi lệnh.
+
+2. TIÊU CHÍ CHẤP NHẬN (khách hàng tự kiểm với xe mô phỏng)
+---------------------------------------------------------
+AC1  Bật mô phỏng
+     Cách kiểm : chạy ./scripts/start_sim.sh
+     Đạt khi   : cửa sổ Gazebo hiện xe r1_rover; terminal PX4 hiện dấu nhắc "pxh>"
+
+AC2  Kết nối khi mô phỏng đang chạy
+     Cách kiểm : terminal khác, chạy: python -m rover connect
+     Đạt khi   : trong <= 10 s in
+                 "Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER"
+                 và thoát với mã 0 (echo $? in 0)
+
+AC3  Kết nối khi mô phỏng chưa chạy
+     Cách kiểm : tắt mô phỏng, chạy: python -m rover connect
+     Đạt khi   : sau khoảng 10 s in "Không nhận được heartbeat từ xe sau 10 s",
+                 thoát với mã khác 0, không treo
+
+AC4  Đổi thời gian chờ
+     Cách kiểm : mô phỏng tắt, chạy: python -m rover connect --timeout 3
+     Đạt khi   : báo lỗi sau khoảng 3 s
+
+3. TASK – YÊU CẦU TEST
+----------------------
+Trạng thái task: TODO | DOING | DONE
+Thứ tự thực hiện: T1 -> T3 -> T4 -> T5 -> T2 -> T6
+
+T1  Khởi tạo repo
+    Làm gì      : cấu trúc thư mục, .gitignore, requirements.txt (pymavlink, pytest),
+                  pytest.ini, venv, README phần cài đặt
+    Test tự động: 1 test kiểm tra pytest chạy được
+    Kiểm tay    : "pytest" báo 1 passed
+    Trạng thái  : TODO
+
+T2  Script bật mô phỏng (scripts/start_sim.sh)
+    Làm gì      : đọc biến PX4_DIR (mặc định ~/PX4-Autopilot), chạy
+                  "make px4_sitl gz_r1_rover"; báo lỗi nếu thư mục không tồn tại
+    Test tự động: không (phụ thuộc Gazebo)
+    Kiểm tay    : AC1; chạy với PX4_DIR sai -> in lỗi, thoát mã khác 0
+    Trạng thái  : TODO
+
+T3  Đọc thông tin xe từ HEARTBEAT (rover/vehicle_info.py)
+    Làm gì      : hàm nhận message HEARTBEAT, trả VehicleInfo
+                  (system, component, autopilot, type dạng tên);
+                  nhận biết heartbeat không phải của autopilot (autopilot = INVALID)
+    Test tự động: - heartbeat PX4 rover -> autopilot="PX4", type="GROUND_ROVER"
+                  - heartbeat có autopilot INVALID (như QGC) -> bị đánh dấu không phải xe
+                  - type lạ -> trả tên thô, không lỗi
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T4  Kết nối (rover/connection.py)
+    Làm gì      : connect(url, timeout): mở cổng UDP, chờ heartbeat của autopilot,
+                  trả VehicleInfo hoặc ném ConnectionTimeout
+    Test tự động: dùng kết nối pymavlink thứ hai trên localhost đóng vai xe:
+                  - xe gửi heartbeat -> trả VehicleInfo đúng
+                  - không ai gửi -> ConnectionTimeout sau khoảng timeout
+                  - chỉ có heartbeat của GCS -> vẫn timeout
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T5  Lệnh CLI (rover/cli.py, rover/__main__.py)
+    Làm gì      : lệnh "connect" với --url (mặc định udpin:0.0.0.0:14540) và --timeout
+                  (mặc định 10); in kết quả; trả mã thoát
+    Test tự động: thay connect bằng hàm giả:
+                  - thành công -> in dòng "Đã kết nối: ...", mã 0
+                  - timeout -> in thông báo lỗi, mã khác 0
+                  - --timeout 3 được truyền đúng xuống connect
+    Kiểm tay    : AC2, AC3, AC4
+    Trạng thái  : TODO
+
+T6  Hướng dẫn kiểm thử chấp nhận (docs/acceptance/US-01.txt)
+    Làm gì      : các bước chạy AC1-AC4, dòng cần quan sát, bảng ghi Đạt/Không đạt
+    Test tự động: không
+    Kiểm tay    : nhóm chạy đủ AC1-AC4 theo hướng dẫn
+    Trạng thái  : TODO
+
+4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
+------------------------------
+- Mô phỏng bật bằng script riêng hay do app tự bật: CHỜ QUYẾT ĐỊNH (đề xuất: script riêng)
+- Cổng MAVLink app dùng: 14540 (QGC dùng 14550, không tranh cổng)

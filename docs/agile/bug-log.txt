@@ -1,0 +1,7 @@
+NHẬT KÝ LỖI
+===========
+Mã    | Ngày | Story/Task | Mô tả lỗi (lệnh chạy, kết quả thấy, kết quả mong đợi) | Trạng thái | Commit sửa
+------+------+------------+---------------------------------------------------------+------------+-----------
+(chưa có)
+
+Trạng thái: MO (mở) | DANG_SUA | DA_SUA
