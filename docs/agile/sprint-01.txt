@@ -1,4 +1,5 @@
-SPRINT 01
+SPRINT 01 
+Thời gian    : 2026-11-08 – 2026-11-09 23:59
 =========
 Mục tiêu     : Nhóm bật được mô phỏng bằng một lệnh và ứng dụng xác nhận được nó đang
                nói chuyện với đúng xe PX4, hoặc báo lỗi rõ ràng nếu không có xe.

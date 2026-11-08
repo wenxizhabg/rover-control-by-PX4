@@ -11,9 +11,10 @@ Ngoài phạm vi story này: phát hiện mất kết nối khi đang chạy, đ
 
 2. TIÊU CHÍ CHẤP NHẬN (khách hàng tự kiểm với xe mô phỏng)
 ---------------------------------------------------------
-AC1  Bật mô phỏng
-     Cách kiểm : chạy ./scripts/start_sim.sh
-     Đạt khi   : cửa sổ Gazebo hiện xe r1_rover; terminal PX4 hiện dấu nhắc "pxh>"
+AC1  Bật mô phỏng theo README
+     Cách kiểm : làm theo mục "Bật và tắt mô phỏng" trong README
+     Đạt khi   : cửa sổ Gazebo hiện xe r1_rover; terminal hiện dấu nhắc "pxh>";
+                 "mavlink status" có instance gửi tới 127.0.0.1 cổng 14540
 
 AC2  Kết nối khi mô phỏng đang chạy
      Cách kiểm : terminal khác, chạy: python -m rover connect
@@ -33,21 +34,21 @@ AC4  Đổi thời gian chờ
 3. TASK – YÊU CẦU TEST
 ----------------------
 Trạng thái task: TODO | DOING | DONE
-Thứ tự thực hiện: T1 -> T3 -> T4 -> T5 -> T2 -> T6
+Thứ tự thực hiện: T2 -> T1 -> T3 -> T4 -> T5 -> T6
 
 T1  Khởi tạo repo
-    Làm gì      : cấu trúc thư mục, .gitignore, requirements.txt (pymavlink, pytest),
-                  pytest.ini, venv, README phần cài đặt
-    Test tự động: 1 test kiểm tra pytest chạy được
+    Làm gì      : .gitignore, requirements.txt (pymavlink, pytest), pytest.ini,
+                  package rover, venv, README phần cài đặt
+    Test tự động: 1 test kiểm tra import được rover và pymavlink
     Kiểm tay    : "pytest" báo 1 passed
     Trạng thái  : TODO
 
-T2  Script bật mô phỏng (scripts/start_sim.sh)
-    Làm gì      : đọc biến PX4_DIR (mặc định ~/PX4-Autopilot), chạy
-                  "make px4_sitl gz_r1_rover"; báo lỗi nếu thư mục không tồn tại
+T2  Hướng dẫn bật/tắt mô phỏng trong README
+    Làm gì      : mục "Bật và tắt mô phỏng": lệnh make px4_sitl gz_r1_rover,
+                  cách kiểm tra cổng 14540 bằng "mavlink status", cách tắt
     Test tự động: không (phụ thuộc Gazebo)
-    Kiểm tay    : AC1; chạy với PX4_DIR sai -> in lỗi, thoát mã khác 0
-    Trạng thái  : TODO
+    Kiểm tay    : AC1
+    Trạng thái  : DOING
 
 T3  Đọc thông tin xe từ HEARTBEAT (rover/vehicle_info.py)
     Làm gì      : hàm nhận message HEARTBEAT, trả VehicleInfo
@@ -87,5 +88,6 @@ T6  Hướng dẫn kiểm thử chấp nhận (docs/acceptance/US-01.txt)
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------
-- Mô phỏng bật bằng script riêng hay do app tự bật: CHỜ QUYẾT ĐỊNH (đề xuất: script riêng)
-- Cổng MAVLink app dùng: 14540 (QGC dùng 14550, không tranh cổng)
+- 2026-11-08: Mô phỏng do nhóm tự bật bằng lệnh hướng dẫn trong README, không dùng script,
+  app không tự bật mô phỏng.
+- Cổng MAVLink app dùng: 14540 (QGC dùng 14550, không tranh cổng).

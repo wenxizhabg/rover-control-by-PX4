@@ -98,7 +98,31 @@ Trong suốt sprint, nhóm họp ngắn hằng ngày (daily stand-up). Mỗi ng�
 - PX4-Autopilot (PX4 SITL + Gazebo)
 - Python 3
 
-Hướng dẫn cài đặt và chạy sẽ được bổ sung khi hoàn thành task US-01/T1.
+## Bật và tắt mô phỏng
 
+### Bật
+Mở một terminal riêng cho mô phỏng (giữ nguyên terminal này trong suốt quá trình làm việc):
+
+    cd ~/PX4-Autopilot
+    make px4_sitl gz_r1_rover
+
+- Lần đầu chạy sẽ biên dịch PX4, mất vài phút. Những lần sau chạy nhanh hơn.
+- Bật xong khi: cửa sổ Gazebo hiện xe `r1_rover` và terminal hiện dấu nhắc `pxh>`.
+
+### Kiểm tra PX4 đang gửi MAVLink cho ứng dụng
+Tại dấu nhắc `pxh>`, gõ:
+
+    mavlink status
+
+Trong danh sách instance phải có một dòng `partner IP: 127.0.0.1` với `remote port: 14540`.
+Đây là cổng mà ứng dụng của nhóm sẽ nghe. Cổng 14550 dành cho QGroundControl.
+
+### Tắt
+Tại dấu nhắc `pxh>`, gõ `shutdown`, hoặc nhấn `Ctrl+C` trong terminal mô phỏng.
+
+Nếu lần bật sau báo lỗi do Gazebo cũ vẫn còn chạy:
+
+    pkill -9 -f "gz sim"
+    
 ## Trạng thái hiện tại
 Sprint 1 – US-01: Bật mô phỏng Gazebo và kết nối đến xe.
