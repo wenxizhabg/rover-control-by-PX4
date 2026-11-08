@@ -52,25 +52,55 @@ T2  Hướng dẫn bật/tắt mô phỏng trong README
     Kiểm tay    : AC1
     Trạng thái  : DONE
 
-T3  Đọc thông tin xe từ HEARTBEAT (rover/vehicle_info.py)
-    Làm gì      : hàm nhận message HEARTBEAT, trả VehicleInfo
-                  (system, component, autopilot, type dạng tên);
-                  nhận biết heartbeat không phải của autopilot (autopilot = INVALID)
-    Test tự động: - heartbeat PX4 rover -> autopilot="PX4", type="GROUND_ROVER"
-                  - heartbeat có autopilot INVALID (như QGC) -> bị đánh dấu không phải xe
-                  - type lạ -> trả tên thô, không lỗi
-    Kiểm tay    : không
-    Trạng thái  : DOING
+T3  Đọc thông tin xe từ HEARTBEAT
+    File code   : rover/vehicle_info.py
+    File test   : tests/test_vehicle_info.py
+
+    Kiến thức:
+      - HEARTBEAT là message mà xe PX4 tự gửi khoảng 1 lần/giây để báo "tôi đang hoạt động".
+        QGroundControl và các app khác cũng gửi HEARTBEAT.
+      - Mỗi HEARTBEAT cho biết: ai gửi (system_id, component_id), loại firmware (autopilot), loại thiết bị (type). Hai trường autopilot và type là con số; mỗi số ứng với một tên trong bảng tra của MAVLink, ví dụ autopilot 12 = PX4, type 10 = GROUND_ROVER (xe mặt đất).
+      - Phần mềm không phải autopilot (như QGroundControl) gửi autopilot = 8 (INVALID), nghĩa là "tôi không phải xe".
+
+    Công việc:
+      Viết hàm parse_heartbeat: nhận một HEARTBEAT, trả về thông tin xe ở dạng dễ đọc (VehicleInfo gồm: system_id, component_id, tên autopilot, tên loại xe).
+      Nếu HEARTBEAT không phải của xe (autopilot = INVALID) thì trả None (không có xe).
+
+    Mục đích:
+      Task T4 nhận HEARTBEAT từ mạng; dùng hàm này để biết gói nào là của xe, gói nào của phần mềm khác để bỏ qua.
+
+    Test tự động (4 test):
+      1. Xe PX4 bình thường
+         Đầu vào : HEARTBEAT từ system 1, component 1, autopilot PX4, type GROUND_ROVER
+         Mong đợi: VehicleInfo(1, 1, "PX4", "GROUND_ROVER")
+         Ý nghĩa : đọc đúng thông tin của xe mô phỏng.
+
+      2. HEARTBEAT của trạm mặt đất (như QGroundControl)
+         Đầu vào : autopilot INVALID, type GCS
+         Mong đợi: None
+         Ý nghĩa : không nhận nhầm phần mềm khác là xe.
+
+      3. Loại xe lạ
+         Đầu vào : HEARTBEAT PX4 với type = 250 (số không có trong bảng tra)
+         Mong đợi: tên loại xe là "UNKNOWN(250)", chương trình không bị lỗi
+         Ý nghĩa : gặp thiết bị lạ thì vẫn báo được, không làm app dừng.
+
+      4. Xe có system_id khác
+         Đầu vào : HEARTBEAT từ system 2
+         Mong đợi: system_id = 2
+         Ý nghĩa : hàm đọc số thật trong gói, không gán cứng là 1 (cần khi sau này có nhiều xe).
+
+    Kiểm tay    : không (chỉ là xử lý dữ liệu, không cần mô phỏng)
+    Trạng thái  : DONE
 
 T4  Kết nối (rover/connection.py)
-    Làm gì      : connect(url, timeout): mở cổng UDP, chờ heartbeat của autopilot,
-                  trả VehicleInfo hoặc ném ConnectionTimeout
+    Làm gì      : connect(url, timeout): mở cổng UDP, chờ heartbeat của autopilot, trả VehicleInfo hoặc ném ConnectionTimeout
     Test tự động: dùng kết nối pymavlink thứ hai trên localhost đóng vai xe:
                   - xe gửi heartbeat -> trả VehicleInfo đúng
                   - không ai gửi -> ConnectionTimeout sau khoảng timeout
                   - chỉ có heartbeat của GCS -> vẫn timeout
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T5  Lệnh CLI (rover/cli.py, rover/__main__.py)
     Làm gì      : lệnh "connect" với --url (mặc định udpin:0.0.0.0:14540) và --timeout
