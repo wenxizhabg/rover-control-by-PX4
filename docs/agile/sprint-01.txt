@@ -11,9 +11,9 @@ Task | Mô tả ngắn                       | Test tự động | Trạng thái
 -----+----------------------------------+--------------+------------+-------
 T1   | Khởi tạo repo                    | có (2 test)  | DONE       |
 T2   | Hướng dẫn bật/tắt mô phỏng       | không        | DONE       |
-T3   | VehicleInfo từ HEARTBEAT         | có           | DOING      |
-T4   | connect(url, timeout)            | có           | TODO       |
-T5   | Lệnh CLI connect                 | có           | TODO       |
+T3   | VehicleInfo từ HEARTBEAT         | có (4 test)  | DONE       |
+T4   | connect(url, timeout)            | có (4 test)  | DONE       |
+T5   | Lệnh CLI connect                 | có           | DOING      |
 T6   | Hướng dẫn kiểm thử chấp nhận     | không        | TODO       |
 
 Quy ước commit: "US-01/Tx: <nội dung>"

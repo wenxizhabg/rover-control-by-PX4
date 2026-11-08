@@ -93,14 +93,52 @@ T3  Đọc thông tin xe từ HEARTBEAT
     Kiểm tay    : không (chỉ là xử lý dữ liệu, không cần mô phỏng)
     Trạng thái  : DONE
 
-T4  Kết nối (rover/connection.py)
-    Làm gì      : connect(url, timeout): mở cổng UDP, chờ heartbeat của autopilot, trả VehicleInfo hoặc ném ConnectionTimeout
-    Test tự động: dùng kết nối pymavlink thứ hai trên localhost đóng vai xe:
-                  - xe gửi heartbeat -> trả VehicleInfo đúng
-                  - không ai gửi -> ConnectionTimeout sau khoảng timeout
-                  - chỉ có heartbeat của GCS -> vẫn timeout
-    Kiểm tay    : không
-    Trạng thái  : DOING
+T4  Kết nối tới xe và chờ HEARTBEAT
+    File code   : rover/connection.py
+    File test   : tests/test_connection.py
+
+    Kiến thức:
+      - PX4 SITL tự gửi gói MAVLink qua UDP tới cổng 14540 trên máy (instance mode Onboard trong "mavlink status"). App chỉ cần mở cổng đó và chờ, không cần gửi gì trước.
+      - Địa chỉ viết theo kiểu pymavlink: "udpin:0.0.0.0:14540" nghĩa là app mở cổng 14540 và chờ nhận; "udpout:127.0.0.1:14540" nghĩa là chủ động gửi tới cổng đó (vai của PX4).
+      - UDP không có bước bắt tay, nên "đã kết nối" được hiểu là: nhận được HEARTBEAT của xe.
+      - PX4 gửi MAVLink 2; app bật sẵn chế độ MAVLink 2 để giải mã đúng.
+      - Trên cổng có thể có HEARTBEAT của phần mềm khác (như QGroundControl); app dùng parse_heartbeat của T3 để bỏ qua các gói đó.
+
+    Công việc:
+      Viết hàm connect(url, timeout): mở cổng theo url, chờ HEARTBEAT của xe trong tối đa timeout giây.
+      Gặp HEARTBEAT của xe -> trả VehicleInfo. Hết giờ mà không gặp -> ném lỗi ConnectionTimeout.
+      Dù kết quả nào cũng đóng cổng trước khi kết thúc. Mặc định: url = "udpin:0.0.0.0:14540", timeout = 10 giây.
+
+    Mục đích:
+      Đây là phần lõi của việc "kết nối đến xe" (AC2, AC3). Task T5 (lệnh CLI) gọi hàm này rồi in kết quả cho người dùng.
+
+    Test tự động (4 test, không cần mô phỏng):
+      Mỗi test chạy một giả lập trên localhost: luồng phụ gửi HEARTBEAT tới một cổng trống ngẫu nhiên, giống PX4 gửi tới cổng 14540.
+
+      1. Giả lập xe PX4 gửi HEARTBEAT
+         Đầu vào : giả lập xe PX4 rover gửi HEARTBEAT MAVLink 2 liên tục; timeout 3 giây
+         Mong đợi: VehicleInfo(1, 1, "PX4", "GROUND_ROVER")
+         Ý nghĩa : kết nối được với xe và giải mã đúng gói MAVLink 2.
+
+      2. Không có ai gửi
+         Đầu vào : không có giả lập nào; timeout 0,5 giây
+         Mong đợi: ném ConnectionTimeout sau khoảng 0,5 giây (không sớm hơn, không treo)
+         Ý nghĩa : đúng AC3, hết giờ thì báo lỗi chứ không chờ mãi.
+
+      3. Chỉ có trạm mặt đất gửi
+         Đầu vào : chỉ có giả lập QGroundControl gửi HEARTBEAT; timeout 0,5 giây
+         Mong đợi: vẫn ném ConnectionTimeout
+         Ý nghĩa : không nhận nhầm QGroundControl là xe.
+
+      4. Trạm mặt đất gửi trước, xe gửi sau
+         Đầu vào : giả lập QGroundControl gửi 0,5 giây đầu, sau đó giả lập xe mới gửi; timeout 3 giây
+         Mong đợi: trả VehicleInfo của xe
+         Ý nghĩa : gặp gói không phải của xe thì bỏ qua và chờ tiếp, không dừng sớm.
+
+    Kiểm tay    : không bắt buộc (kết nối với mô phỏng thật được kiểm ở AC2, AC3 sau khi có T5).
+                  Thử nhanh nếu muốn: bật mô phỏng, chạy
+                  python -c "from rover .connection import connect; print (connect ())"
+    Trạng thái  : DONE
 
 T5  Lệnh CLI (rover/cli.py, rover/__main__.py)
     Làm gì      : lệnh "connect" với --url (mặc định udpin:0.0.0.0:14540) và --timeout
@@ -110,7 +148,7 @@ T5  Lệnh CLI (rover/cli.py, rover/__main__.py)
                   - timeout -> in thông báo lỗi, mã khác 0
                   - --timeout 3 được truyền đúng xuống connect
     Kiểm tay    : AC2, AC3, AC4
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T6  Hướng dẫn kiểm thử chấp nhận (docs/acceptance/US-01.txt)
     Làm gì      : các bước chạy AC1-AC4, dòng cần quan sát, bảng ghi Đạt/Không đạt
