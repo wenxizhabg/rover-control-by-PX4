@@ -98,6 +98,23 @@ Trong suốt sprint, nhóm họp ngắn hằng ngày (daily stand-up). Mỗi ng�
 - PX4-Autopilot (PX4 SITL + Gazebo)
 - Python 3
 
+## Cài đặt (lần đầu sau khi clone)
+
+    git clone https://github.com/wenxizhabg/rover-control-by-PX4
+    cd rover-control-by-PX4
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+
+
+## Chạy test
+
+    pytest          # tóm tắt: mỗi dấu . là một test pass, F là fail
+    pytest -v       # hiện tên từng test và PASSED/FAILED
+
+Kết quả đạt: dòng cuối báo toàn bộ `passed`, không có `failed`.
+
+
 ## Bật và tắt mô phỏng
 
 ### Bật

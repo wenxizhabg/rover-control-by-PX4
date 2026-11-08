@@ -2,10 +2,10 @@ DEFINITION OF DONE
 ==================
 Một TASK được tính là xong khi:
 1. Phần test tự động được: test viết trước code; "pytest" báo toàn bộ passed.
-2. Code đã commit với message "US-xx/Tx: <nội dung>".
-3. README / hướng dẫn chạy đã cập nhật nếu cách chạy thay đổi.
-4. Lỗi phát hiện mà chưa sửa đã ghi vào bug-log.txt.
-5. Trạng thái task đã cập nhật trong US-xx.txt và sprint-xx.txt.
+2. README / hướng dẫn chạy đã cập nhật nếu cách chạy thay đổi.
+3. Lỗi phát hiện mà chưa sửa đã ghi vào bug-log.txt.
+4. Trạng thái task đã cập nhật trong US-xx.txt và sprint-xx.txt.
+5. Code đã commit với message "US-xx/Tx: <nội dung>".
 
 Một STORY được tính là xong khi:
 1. Tất cả task của story đã xong theo các điều trên.

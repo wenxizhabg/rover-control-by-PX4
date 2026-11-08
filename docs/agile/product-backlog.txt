@@ -9,8 +9,9 @@ Quy tắc:
 
 Ưu tiên | Mã    | Story (tóm tắt)                                   | Sprint | Trạng thái | File chi tiết
 --------+-------+---------------------------------------------------+--------+------------+--------------
-1       | US-01 | Bật mô phỏng Gazebo và kết nối đến xe              | S1     | SAN_SANG   | US-01.txt
+1       | US-01 | Bật mô phỏng Gazebo và kết nối đến xe              | S1     | DANG_LAM  | US-01.txt
 
 Lịch sử thay đổi backlog
 ------------------------
 2026-11-08  Thêm US-01 (yêu cầu đầu tiên của khách hàng).
+2026-11-08  US-01: SAN_SANG -> DANG_LAM (bắt đầu Sprint 01, hạn 2026-11-09 23:59).

@@ -39,9 +39,9 @@ Thứ tự thực hiện: T2 -> T1 -> T3 -> T4 -> T5 -> T6
 T1  Khởi tạo repo
     Làm gì      : .gitignore, requirements.txt (pymavlink, pytest), pytest.ini,
                   package rover, venv, README phần cài đặt
-    Test tự động: 1 test kiểm tra import được rover và pymavlink
-    Kiểm tay    : "pytest" báo 1 passed
-    Trạng thái  : TODO
+    Test tự động: 1 test kiểm tra import được rover và 1 test kiểm tra import được pymavlink
+    Kiểm tay    : "pytest" báo 2 passed
+    Trạng thái  : DONE
 
 T2  Hướng dẫn bật/tắt mô phỏng trong README
     Làm gì      : mục "Bật và tắt mô phỏng": lệnh make px4_sitl gz_r1_rover,

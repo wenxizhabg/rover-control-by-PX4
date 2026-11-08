@@ -9,7 +9,7 @@ SPRINT BACKLOG (cập nhật trạng thái mỗi khi task đổi trạng thái)
 ---------------------------------------------------------------
 Task | Mô tả ngắn                       | Test tự động | Trạng thái | Commit
 -----+----------------------------------+--------------+------------+-------
-T1   | Khởi tạo repo                    | có (1 test)  | TODO       |
+T1   | Khởi tạo repo                    | có (2 test)  | DOING      |
 T3   | VehicleInfo từ HEARTBEAT         | có           | TODO       |
 T4   | connect(url, timeout)            | có           | TODO       |
 T5   | Lệnh CLI connect                 | có           | TODO       |
