@@ -20,6 +20,9 @@ Agile (Scrum kết hợp các thực hành XP):
 - Nhóm tự chạy kiểm thử chấp nhận với xe mô phỏng.
 - Story mới chỉ được thêm vào product backlog sau sprint review và retrospective.
 
+## Trạng thái hiện tại
+Sprint 1 – US-01: Bật mô phỏng Gazebo và kết nối đến xe.
+
 ## Quy trình làm việc theo Agile
 
 Một vòng lặp gồm các bước sau. Hết một vòng thì quay lại bước 1 cho sprint tiếp theo.
@@ -144,6 +147,27 @@ Tại dấu nhắc `pxh>`, gõ `shutdown`, hoặc nhấn `Ctrl+C` trong terminal
 Nếu lần bật sau báo lỗi do Gazebo cũ vẫn còn chạy:
 
     pkill -9 -f "gz sim"
-    
-## Trạng thái hiện tại
-Sprint 1 – US-01: Bật mô phỏng Gazebo và kết nối đến xe.
+
+## Quy ước đặt tên (theo PEP 8)
+
+| Loại tên | Kiểu | Ví dụ |
+|---|---|---|
+| Class | PascalCase (viết hoa chữ đầu mỗi từ) | `VehicleInfo` |
+| Hàm, biến, tham số | snake_case (viết thường, nối bằng `_`) | `parse_heartbeat`, `system_id` |
+| Module, tên file | snake_case | `vehicle_info.py` |
+| Hằng số | CHỮ_HOA, nối bằng `_` | `DEFAULT_TIMEOUT` |
+| File test, hàm test | bắt đầu bằng `test_` | `test_vehicle_info.py`, `test_1_xe_px4_binh_thuong` |
+
+- Mỗi file, class, hàm có docstring `"""..."""` ở dòng đầu: nói nó dùng để làm gì (file test ghi thêm thuộc story/task nào, ví dụ `"""US-01/T3: ..."""`).
+- Hàm, biến của thư viện ngoài (ví dụ `get_srcSystem()` của pymavlink) giữ nguyên tên gốc.
+- Comment `#` dùng để giải thích các dòng code bên trong: dòng này làm gì, vì sao.
+- Docstring và comment: mỗi đoạn viết trên một dòng, không tự xuống hàng (bật `Alt+Z` trong VS Code để tự xuống dòng khi đọc).
+
+
+## Sử dụng công cụ AI
+
+Dự án có sự hỗ trợ của Claude  (Mô hình AI của Anthropic) dưới sự giám sát và kiểm duyệt của các thành viên, theo hướng vừa học vừa làm nhằm  tiết kiệm thời gian thực hiện, vừa giúp nhóm tiếp thu kiến thức mới (quy trình Agile, viết test trước, giao thức MAVLink, PX4) ngay trong quá trình làm dự án.
+
+- AI đề xuất cách làm, viết code, viết test và hướng dẫn chạy theo từng task, kèm giải thích ý nghĩa để thành viên hiểu trước khi dùng.
+- Các thành viên đặt yêu cầu (user story), duyệt từng đề xuất trước khi thực hiện, tự chạy test, tự chạy kiểm thử chấp nhận và quyết định việc tiếp theo.
+- Mọi file đưa vào repo đều do thành viên đọc, chạy kiểm tra và tự commit.

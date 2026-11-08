@@ -9,7 +9,7 @@ Quy tắc:
 
 Ưu tiên | Mã    | Story (tóm tắt)                                   | Sprint | Trạng thái | File chi tiết
 --------+-------+---------------------------------------------------+--------+------------+--------------
-1       | US-01 | Bật mô phỏng Gazebo và kết nối đến xe              | S1     | DANG_LAM  | US-01.txt
+1       | US-01 | Bật mô phỏng Gazebo và kết nối đến xe             |  S1     | DANG_LAM  | US-01.txt
 
 Lịch sử thay đổi backlog
 ------------------------
