@@ -1,2 +1,2 @@
 pymavlink>=2.4.41
-pytest>=8.0s
+pytest>=8.0
