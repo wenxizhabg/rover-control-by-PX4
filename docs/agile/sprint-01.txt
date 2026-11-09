@@ -14,7 +14,7 @@ T2   | Hướng dẫn bật/tắt mô phỏng       | không        | DONE      
 T3   | VehicleInfo từ HEARTBEAT         | có (4 test)  | DONE       |
 T4   | connect(url, timeout)            | có (4 test)  | DONE       |
 T5   | Lệnh CLI connect                 | có           | DONE       |
-T6   | Hướng dẫn kiểm thử chấp nhận     | không        | DONE      |
+T6   | Hướng dẫn kiểm thử chấp nhận     | không        | DONE       |
 
 Quy ước commit: "US-01/Tx: <nội dung>"
 
@@ -22,11 +22,14 @@ SPRINT REVIEW (điền khi kết thúc sprint)
 ----------------------------------------
 Kết quả kiểm thử chấp nhận:
   AC1: đạt
-  AC2: 
-  AC3: 
-  AC4: 
-Story US-01 đạt?:
-Phản hồi của khách hàng:
+  AC2: đạt
+  AC3: đạt
+  AC4: đạt
+Story US-01 đạt:  đạt
+Phản hồi của khách hàng: 
+  Cần cập nhật phần kết nối sao cho thấy được có đang kết nối theo thời gian thực hay không chứ này chỉ mới nhận gói tin heartbeat đầu tiên thfi chưa chắc lắm.
+  Giờ thêm các lệnh cơ bản của PX4 (nếu PX4 có một số lệnh có sẵn thì ưu tiên dùng lệnh đó để đơn giản) để điều khiển xe di chuyển.
+  Làm app CLI đơn giản để người dùng dễ thao tác ra lệnh.
 
 SPRINT RETROSPECTIVE (điền khi kết thúc sprint)
 -----------------------------------------------

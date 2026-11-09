@@ -1,6 +1,6 @@
 PRODUCT BACKLOG – Hệ thống điều khiển xe rover qua Wi-Fi dùng PX4
 ==================================================================
-Product Owner:  Dương Hoàng Phương
+Product Owner:  Vũ Duy Dương, Trương Nhật Hoàng, Đinh Trần Thảo Phương 
 Quy tắc:
 - Mỗi dòng là một user story; thứ tự từ trên xuống = độ ưu tiên.
 - Chỉ thêm story mới sau khi kết thúc sprint (review + retrospective).
@@ -9,9 +9,14 @@ Quy tắc:
 
 Ưu tiên | Mã    | Story (tóm tắt)                                   | Sprint | Trạng thái | File chi tiết
 --------+-------+---------------------------------------------------+--------+------------+--------------
-1       | US-01 | Bật mô phỏng Gazebo và kết nối đến xe             |  S1     | DANG_LAM  | US-01.txt
+1       | US-01 | Bật mô phỏng Gazebo và kết nối đến xe             |  S1    | XONG       | US-01.txt
+2       | US-02 | Theo dõi realtime trạng thái kết nối với xe       |        | MOI        |
+3       | US-03 | Ra lệnh cơ bản cho xe di chuyển                   |        | MOI        |
+4       | US-04 | App CLI đơn giản để người dùng dễ thao tác ra lệnh|        | MOI        |
 
 Lịch sử thay đổi backlog
 ------------------------
+2026-11-09  Thêm US-02, US-03, US-04 từ phản hồi của khách hàng ở sprint review Sprint 01.
+2026-11-09  US-01: DANG_LAM -> XONG (sprint review Sprint 01, AC1-AC4 đều Đạt)
 2026-11-08  Thêm US-01 (yêu cầu đầu tiên của khách hàng).
 2026-11-08  US-01: SAN_SANG -> DANG_LAM (bắt đầu Sprint 01, hạn 2026-11-09 23:59).
