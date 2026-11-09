@@ -187,11 +187,22 @@ T5  Lệnh CLI "connect"
     Kiểm tay    : AC2, AC3, AC4 với mô phỏng thật (hướng dẫn chi tiết viết ở T6)
     Trạng thái  : DONE
 
-T6  Hướng dẫn kiểm thử chấp nhận (docs/acceptance/US-01.txt)
-    Làm gì      : các bước chạy AC1-AC4, dòng cần quan sát, bảng ghi Đạt/Không đạt
+T6  Hướng dẫn kiểm thử chấp nhận
+    File        : docs/acceptance/US-01.txt
+
+    Kiến thức:
+      - Kiểm thử chấp nhận (acceptance test): khách hàng tự chạy phần mềm với xe mô phỏng thật, làm đúng các bước trong tiêu chí chấp nhận (AC), và đánh giá Đạt / Không đạt.
+      - Khác với test tự động (pytest) chỉ kiểm từng phần riêng lẻ bằng giả lập, kiểm thử chấp nhận kiểm toàn bộ hệ thống: PX4 SITL + Gazebo + app.
+
+    Công việc:
+      Viết file hướng dẫn: chuẩn bị, các bước chạy AC1-AC4 (lệnh gõ, kết quả cần thấy), bảng ghi kết quả Đạt / Không đạt.
+
+    Mục đích:
+      Ai trong nhóm cũng làm lại được đúng các bước kiểm, kết quả ghi lại làm bằng chứng cho sprint review.
+
     Test tự động: không
-    Kiểm tay    : nhóm chạy đủ AC1-AC4 theo hướng dẫn
-    Trạng thái  : DOING
+    Kiểm tay    : nhóm chạy đủ AC1-AC4 theo hướng dẫn và điền bảng kết quả
+    Trạng thái  : DONE
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------

@@ -1,0 +1,106 @@
+KIỂM THỬ CHẤP NHẬN – US-01: Bật mô phỏng Gazebo và kết nối đến xe
+==================================================================
+
+THÔNG TIN LẦN KIỂM
+------------------
+Ngày giờ kiểm   :   Nov9 10:42 
+Người kiểm      :   Trương Nhật Hoàng
+Máy / hệ điều hành :Ubuntu 24.04 LTS
+Phiên bản code  :   9b02c85
+
+CHUẨN BỊ
+--------
+1. Mở 2 terminal:
+   - Terminal A: dùng cho mô phỏng.
+   - Terminal B: dùng cho app. Chạy ở thư mục gốc repo:
+       source venv/bin/activate
+2. Kiểm tra test tự động đều pass (Terminal B):
+       pytest
+   Kết quả cần thấy: dòng cuối báo toàn bộ "passed".
+3. Đảm bảo không còn mô phỏng cũ đang chạy:
+       pkill -9 -f "gz sim"
+
+AC1 – Bật mô phỏng theo README
+------------------------------
+Bước (Terminal A):
+    cd ~/PX4-Autopilot
+    make px4_sitl gz_r1_rover
+Chờ đến khi xuất hiện dấu nhắc "pxh>", rồi gõ:
+    mavlink status
+Đạt khi:
+    [v] Cửa sổ Gazebo hiện xe r1_rover
+    [v] Terminal A hiện dấu nhắc "pxh>"
+    [v] "mavlink status" có instance "mode: Onboard" với dòng
+        "transport protocol: UDP (14580, remote port: 14540)"
+Giữ nguyên mô phỏng đang chạy để kiểm AC2.
+
+AC2 – Kết nối khi mô phỏng đang chạy
+------------------------------------
+Bước (Terminal B):
+    time python3 -m rover connect; echo "exit=$?"
+Đạt khi:
+    [v] In ra dòng: Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER
+    [v] In ra "exit=0"
+    [v] Dòng "real" của lệnh time nhỏ hơn 10 giây (thường chỉ khoảng 1 giây)
+Ghi lại dòng in ra thực tế:
+    hoang@UbuntuMSI:/media/hoang/DATA/BachKhoa/HK7/CNPM/rover-control-by-PX4$ time python3 -m rover connect; echo "exit=$?"
+    Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER
+
+    real	0m1.000s
+    user	0m2.042s
+    sys	0m0.051s
+    exit=0
+
+AC3 – Kết nối khi mô phỏng chưa chạy
+------------------------------------
+Bước:
+    Terminal A: nhấn Ctrl+C (1–2 lần) để tắt mô phỏng, rồi chạy:
+        pkill -9 -f "gz sim"; pkill -9 -f px4
+        pgrep -af "gz sim"; pgrep -af px4      (không in ra gì = đã tắt hẳn)
+    Terminal B:
+        time python3 -m rover connect; echo "exit=$?"
+Đạt khi:
+    [v] In ra: Không nhận được heartbeat từ xe sau 10 s
+    [v] In ra "exit=1" (khác 0)
+    [v] Dòng "real" khoảng 10 giây (không treo, không báo sớm)
+Ghi lại thời gian "real" thực tế:
+    hoang@UbuntuMSI:/media/hoang/DATA/BachKhoa/HK7/CNPM/rover-control-by-PX4$ time python3 -m rover connect; echo "exit=$?"
+    Không nhận được heartbeat từ xe sau 10 s
+
+    real	0m10.291s
+    user	0m1.991s
+    sys	0m0.039s
+    exit=1
+
+AC4 – Đổi thời gian chờ
+-----------------------
+Bước (Terminal B, mô phỏng vẫn tắt):
+    time python3 -m rover connect --timeout 3; echo "exit=$?"
+Đạt khi:
+    [v] In ra: Không nhận được heartbeat từ xe sau 3 s
+    [v] In ra "exit=1"
+    [v] Dòng "real" khoảng 3 giây
+Ghi lại thời gian "real" thực tế:
+    hoang@UbuntuMSI:/media/hoang/DATA/BachKhoa/HK7/CNPM/rover-control-by-PX4$ time python3 -m rover connect --timeout 3; echo "exit=$?"
+    Không nhận được heartbeat từ xe sau 3 s
+
+    real	0m3.256s
+    user	0m2.043s
+    sys	0m0.043s
+    exit=1
+    
+BẢNG KẾT QUẢ
+------------
+AC  | Kết quả (Đạt / Không đạt) | Ghi chú
+----+---------------------------+--------
+AC1 | Đạt                       |
+AC2 | Đạt                       |
+AC3 | Đạt                       |
+AC4 | Đạt                       |
+
+Kết luận US-01: Đạt
+
+NẾU CÓ AC KHÔNG ĐẠT
+-------------------
+1. Ghi lỗi vào docs/agile/bug-log.txt (trạng thái MO): lệnh đã chạy, kết quả thấy, kết quả mong đợi.
+2. Không chuyển US-01 sang XONG; báo lại để sửa rồi kiểm lại AC đó.
