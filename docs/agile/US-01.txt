@@ -140,21 +140,58 @@ T4  Kết nối tới xe và chờ HEARTBEAT
                   python -c "from rover .connection import connect; print (connect ())"
     Trạng thái  : DONE
 
-T5  Lệnh CLI (rover/cli.py, rover/__main__.py)
-    Làm gì      : lệnh "connect" với --url (mặc định udpin:0.0.0.0:14540) và --timeout
-                  (mặc định 10); in kết quả; trả mã thoát
-    Test tự động: thay connect bằng hàm giả:
-                  - thành công -> in dòng "Đã kết nối: ...", mã 0
-                  - timeout -> in thông báo lỗi, mã khác 0
-                  - --timeout 3 được truyền đúng xuống connect
-    Kiểm tay    : AC2, AC3, AC4
-    Trạng thái  : DOING
+T5  Lệnh CLI "connect"
+    File code   : rover/cli.py, rover/__main__.py
+    File test   : tests/test_cli.py
+
+    Kiến thức:
+      - CLI (command-line interface): chương trình chạy bằng lệnh trong terminal. Người dùng gõ: python -m rover connect --timeout 3
+      - "python -m rover": Python chạy file rover/__main__.py của package rover. File này chỉ gọi hàm main trong cli.py.
+      - argparse: thư viện có sẵn của Python, đọc các phần người dùng gõ sau tên chương trình (lệnh "connect", tùy chọn --url, --timeout), tự kiểm tra kiểu dữ liệu và tự sinh trang trợ giúp (--help).
+      - Mã thoát (exit code): số chương trình trả cho hệ điều hành khi kết thúc; 0 = thành công, khác 0 = lỗi. Xem bằng "echo $?" ngay sau khi chạy lệnh.
+      - stdout / stderr: hai luồng in ra màn hình; kết quả bình thường in ra stdout, thông báo lỗi in ra stderr.
+
+    Công việc:
+      Viết hàm main(argv, connect_fn): đọc lệnh người dùng, gọi connect (của T4) với url và timeout, in kết quả, trả mã thoát.
+      Kết nối được -> in ra stdout: "Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER", trả 0.
+      Hết giờ -> in ra stderr: "Không nhận được heartbeat từ xe sau 10 s", trả 1.
+      Mặc định: --url udpin:0.0.0.0:14540, --timeout 10 (lấy từ connection.py, không viết lại số).
+      Tham số connect_fn: mặc định là hàm connect thật; test truyền vào một hàm giả lập để không cần mạng.
+
+    Mục đích:
+      Đây là phần người dùng nhìn thấy và dùng để kiểm thử chấp nhận AC2, AC3, AC4.
+
+    Test tự động (4 test, không cần mô phỏng, không cần mạng):
+      Mỗi test truyền vào main một hàm giả lập thay cho connect: hàm này ghi lại url, timeout nó nhận được, rồi trả VehicleInfo hoặc ném ConnectionTimeout theo kịch bản của test.
+
+      1. Kết nối thành công
+         Đầu vào : "connect"; hàm giả lập trả VehicleInfo(1, 1, "PX4", "GROUND_ROVER")
+         Mong đợi: stdout có dòng "Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER"; mã thoát 0
+         Ý nghĩa : đúng nội dung AC2.
+
+      2. Hết giờ
+         Đầu vào : "connect"; hàm giả lập ném ConnectionTimeout("Không nhận được heartbeat từ xe sau 10 s")
+         Mong đợi: stderr có dòng thông báo đó; stdout trống; mã thoát khác 0
+         Ý nghĩa : đúng nội dung AC3, lỗi in ra stderr và báo bằng mã thoát.
+
+      3. Không gõ tùy chọn thì dùng mặc định
+         Đầu vào : "connect"
+         Mong đợi: hàm giả lập nhận url = "udpin:0.0.0.0:14540", timeout = 10
+         Ý nghĩa : người dùng chỉ cần gõ "python -m rover connect" là kết nối đúng cổng của PX4 SITL.
+
+      4. Tùy chọn được truyền đúng xuống connect
+         Đầu vào : "connect --timeout 3 --url udpin:127.0.0.1:15000"
+         Mong đợi: hàm giả lập nhận timeout = 3, url = "udpin:127.0.0.1:15000"
+         Ý nghĩa : đúng AC4 (đổi thời gian chờ), và đổi được cổng khi cần.
+
+    Kiểm tay    : AC2, AC3, AC4 với mô phỏng thật (hướng dẫn chi tiết viết ở T6)
+    Trạng thái  : DONE
 
 T6  Hướng dẫn kiểm thử chấp nhận (docs/acceptance/US-01.txt)
     Làm gì      : các bước chạy AC1-AC4, dòng cần quan sát, bảng ghi Đạt/Không đạt
     Test tự động: không
     Kiểm tay    : nhóm chạy đủ AC1-AC4 theo hướng dẫn
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------
