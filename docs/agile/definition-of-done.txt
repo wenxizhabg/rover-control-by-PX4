@@ -6,8 +6,11 @@ Một TASK được tính là xong khi:
 3. Lỗi phát hiện mà chưa sửa đã ghi vào bug-log.txt.
 4. Trạng thái task đã cập nhật trong US-xx.txt và sprint-xx.txt.
 5. Code đã commit với message "US-xx/Tx: <nội dung>".
+6. Code chỉ phục vụ AC của story; mỗi test ghi rõ nó kiểm AC hoặc yêu cầu nào.
+7. Làm trên nhánh riêng của task; merge vào main khi pytest toàn bộ passed.
 
 Một STORY được tính là xong khi:
 1. Tất cả task của story đã xong theo các điều trên.
 2. Nhóm đã chạy toàn bộ tiêu chí chấp nhận với xe mô phỏng và đánh dấu Đạt.
 3. Trạng thái story trong product-backlog.txt chuyển sang XONG.
+4. Sơ đồ tổng quan hệ thống (docs/diagrams/system-overview.mmd) và các sơ đồ liên quan đã cập nhật nếu story thay đổi cấu trúc hoặc luồng.

@@ -35,6 +35,23 @@ SPRINT RETROSPECTIVE (điền khi kết thúc sprint)
 -----------------------------------------------
 Điều làm tốt:
 Điều cần cải thiện:
+1. Task chia theo chuỗi phụ thuộc (T3 -> T4 -> T5), chỉ một người làm được tại một thời điểm.
+2. Có phần code/test vượt yêu cầu khách hàng (tùy chọn --url, xử lý UNKNOWN type, test system_id = 2 cho "nhiều xe sau này").
+3. Tiêu chí chấp nhận lẫn chi tiết kỹ thuật (cổng 14540, mã thoát) thay vì hành vi khách hàng nhìn thấy.
+4. Chưa có diagram giúp khách hàng, owner, dev hình dung hệ thống.
+5. Lỗi B-01 (shutdown không tắt Gazebo) sửa trực tiếp, chưa ghi bug-log.
+6. Tài liệu kiểm thử chấp nhận trùng tên US-01.txt ở 2 thư mục, AC ghi ở 2 nơi.
+
 Hành động cho sprint sau:
+1. Sprint planning chốt trước giao diện giữa các task (tên hàm, tham số, kết quả) để làm song song; mỗi task một nhánh, chỉ merge vào main khi pytest pass.
+2. Mỗi phần code / test phải chỉ ra được nó phục vụ AC nào; không có AC thì không làm.
+3. AC viết theo hành vi người dùng nhìn thấy; chi tiết kỹ thuật đưa xuống phần kiểm tay của task.
+4. Thêm docs/diagrams/: system-overview.mmd (luôn cập nhật) + sơ đồ theo story khi story có luồng/trạng thái đáng vẽ; thêm vào DoD.
+5. Mỗi người chỉ 1 task DOING tại một thời điểm.
+6. Lỗi phát hiện trong lúc kiểm vẫn ghi bug-log (1 dòng) trước khi sửa.
+7. Gom thủ tục kiểm thử vào docs/agile/US-xx-acceptance.txt; AC chỉ ghi gốc ở US-xx.txt.
 
 Định hướng story tiếp theo ():
+1. Refinement US-02, US-03, US-04 (viết story đầy đủ, tách US-03, 
+2. Làm rõ US-04 khác gì CLI hiện có, viết AC, ước lượng story point)
+3. Sprint planning cho Sprint 02.
