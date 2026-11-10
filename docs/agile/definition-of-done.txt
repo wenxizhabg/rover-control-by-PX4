@@ -13,4 +13,4 @@ Một STORY được tính là xong khi:
 1. Tất cả task của story đã xong theo các điều trên.
 2. Nhóm đã chạy toàn bộ tiêu chí chấp nhận với xe mô phỏng và đánh dấu Đạt.
 3. Trạng thái story trong product-backlog.txt chuyển sang XONG.
-4. Sơ đồ tổng quan hệ thống (docs/diagrams/system-overview/: .mmd, .svg, .txt.) và các sơ đồ liên quan đã cập nhật nếu story thay đổi cấu trúc hoặc luồng.
+4. Sơ đồ tổng quan hệ thống (docs/diagrams/system-overview/: .mmd, .svg, .txt) và các sơ đồ liên quan đã cập nhật nếu story thay đổi cấu trúc hoặc luồng.

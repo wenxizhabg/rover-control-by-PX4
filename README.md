@@ -57,7 +57,7 @@ Một vòng lặp gồm các bước sau. Hết một vòng thì quay lại bư�
 - Viết tiêu chí chấp nhận: khách hàng kiểm tra bằng cách nào, kết quả thế nào thì đạt.
 - Chia story thành các task nhỏ. Với mỗi task, ghi rõ phần nào test tự động, phần nào kiểm bằng tay.
 - Đặt mục tiêu sprint, gói trong một câu.
-- File: `docs/agile/stories/US-xx.txt`, `docs/agile/sprints/sprint-xx.txt`
+- File: `docs/agile/user-stories/US-xx.txt`, `docs/agile/sprints/sprint-xx.txt`
 
 ### 3. Thực hiện sprint – làm từng task
 Với mỗi task, làm theo thứ tự:
@@ -103,7 +103,7 @@ Thư mục `docs/` chia theo người đọc:
 | `docs/agile/product-backlog.txt` | Danh sách user story theo thứ tự ưu tiên và trạng thái |
 | `docs/agile/definition-of-done.txt` | Điều kiện để task và story được tính là xong |
 | `docs/agile/bug-log.txt` | Nhật ký lỗi |
-| `docs/agile/stories/US-xx.txt` | Chi tiết từng story: tiêu chí chấp nhận, task, yêu cầu test |
+| `docs/agile/user-stories/US-xx.txt` | Chi tiết từng story: tiêu chí chấp nhận, task, yêu cầu test |
 | `docs/agile/sprints/sprint-xx.txt` | Mục tiêu sprint, sprint backlog, kết quả review và retrospective |
 | `docs/acceptance/US-xx-acceptance.txt` | Thủ tục kiểm thử chấp nhận từng story: lệnh chạy, kết quả mong đợi cho từng AC |
 | `docs/diagrams/system-overview/` | Sơ đồ tổng quan hệ thống và chú thích |

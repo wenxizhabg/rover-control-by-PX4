@@ -188,7 +188,7 @@ T5  Lệnh CLI "connect"
     Trạng thái  : DONE
 
 T6  Hướng dẫn kiểm thử chấp nhận
-    File        : docs/acceptance/US-01.txt
+    File        : docs/acceptance/US-01-acceptance.txt
 
     Kiến thức:
       - Kiểm thử chấp nhận (acceptance test): khách hàng tự chạy phần mềm với xe mô phỏng thật, làm đúng các bước trong tiêu chí chấp nhận (AC), và đánh giá Đạt / Không đạt.
