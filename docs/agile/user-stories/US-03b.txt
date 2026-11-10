@@ -1,0 +1,42 @@
+USER STORY US-03b – Lái xe tiến, lùi, quay bằng phím
+===================================================
+Yêu cầu gốc của khách hàng (sprint review Sprint 01): "Giờ thêm các lệnh cơ bản của PX4 (nếu PX4 có một số lệnh có sẵn thì ưu tiên dùng lệnh đó để đơn giản) để điều khiển xe di chuyển."
+Tách ở refinement 2026-11-10: US-03 -> US-03a (mở / khóa xe) và US-03b (lái xe, story này).
+Người làm  : (chọn ở Sprint Planning của sprint đưa story này vào)
+Điểm       : 8 (chưa chắc; ước lượng lại sau spike)
+Sprint     : chưa chọn
+Trạng thái : MOI – chờ spike
+
+1. STORY
+--------
+Là người vận hành, tôi có thể cho xe tiến, lùi, quay trái, quay phải bằng phím, mỗi lần bấm xe chạy khoảng 1 s rồi tự dừng, và dừng xe ngay khi cần, để điều khiển xe trong Gazebo.
+
+Ngoài phạm vi story này: chỉnh tốc độ, giữ phím để chạy liên tục, chạy theo lộ trình / tọa độ.
+
+2. TIÊU CHÍ CHẤP NHẬN (bản nháp, chốt khi đưa vào sprint)
+---------------------------------------------------------
+AC1  Tiến
+     Cách kiểm : xe đã mở khóa (US-03a), bấm W một lần
+     Đạt khi   : xe trong Gazebo chạy tới khoảng 1 s rồi tự dừng; màn hình hiện lệnh đang chạy, hết 1 s hiện đã dừng
+
+AC2  Lùi, quay trái, quay phải
+     Cách kiểm : bấm lần lượt S, A, D
+     Đạt khi   : xe đi đúng hướng tương ứng, mỗi lần khoảng 1 s rồi tự dừng
+
+AC3  Dừng ngay
+     Cách kiểm : bấm W liên tiếp vài lần để xe đang chạy, rồi bấm Space
+     Đạt khi   : xe đứng yên trong vòng 1 s
+
+AC4  Xe chưa mở khóa
+     Cách kiểm : xe đang "ĐÃ KHÓA", bấm W
+     Đạt khi   : vùng thông báo hiện "Xe chưa mở khóa"; xe không chạy
+
+3. VIỆC CẦN LÀM TRƯỚC KHI ĐƯA VÀO SPRINT
+----------------------------------------
+Spike (XP, giới hạn nửa ngày): chạy thử với mô phỏng để chọn cách đơn giản nhất mà PX4 rover có sẵn để nhận lệnh di chuyển từ app qua MAVLink (ví dụ điều khiển tay MANUAL_CONTROL ở chế độ Manual, hoặc chế độ Offboard), ghi kết quả: cách chọn, chế độ cần chuyển, tần số phải gửi, PX4 làm gì khi app ngừng gửi. Sau spike: ước lượng lại điểm, chia task theo docs/diagrams/class/class.txt mục 7.
+
+4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
+------------------------------
+- 2026-11-10: Mỗi lần bấm phím lái, xe chạy khoảng 1 s rồi tự dừng (không dùng kiểu giữ phím: terminal không báo lúc thả phím).
+- 2026-11-10: Phím W / S / A / D: tiến / lùi / quay trái / quay phải; Space: dừng ngay.
+- 2026-11-10: Ưu tiên lệnh có sẵn của PX4.

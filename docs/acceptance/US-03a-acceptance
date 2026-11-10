@@ -1,0 +1,96 @@
+KIỂM THỬ CHẤP NHẬN – US-03a: Mở khóa / khóa xe bằng phím
+========================================================
+AC gốc: docs/agile/user-stories/US-03a.txt (mục 2). File này chỉ ghi cách kiểm và kết quả.
+
+THÔNG TIN LẦN KIỂM
+------------------
+Ngày giờ kiểm      :
+Người kiểm         :
+Máy / hệ điều hành :
+Phiên bản code     :   (git log --oneline -1)
+
+CHUẨN BỊ
+--------
+1. Mở 2 terminal:
+   - Terminal A: dùng cho mô phỏng.
+   - Terminal B: dùng cho app. Chạy ở thư mục gốc repo:
+       source venv/bin/activate
+2. Kiểm tra test tự động đều pass (Terminal B):
+       pytest
+   Kết quả cần thấy: dòng cuối báo toàn bộ "passed".
+3. Đảm bảo không còn mô phỏng cũ đang chạy (Terminal A):
+       pkill -9 -f "gz sim"; pkill -9 -f px4
+4. Tắt QGroundControl nếu đang mở.
+
+AC4 – Chưa kết nối xe (kiểm trước vì mô phỏng đang tắt)
+-------------------------------------------------------
+Bước (Terminal B):
+    python3 -m rover
+App hiện "ĐANG CHỜ XE". Bấm r.
+Đạt khi:
+    [ ] Vùng thông báo hiện "Chưa kết nối xe"
+    [ ] Dòng "Khóa xe" vẫn là "chưa rõ"
+Giữ app đang chạy.
+
+AC1 – Mở khóa xe
+----------------
+Bước:
+    Terminal A:
+        cd ~/PX4-Autopilot
+        make px4_sitl gz_r1_rover
+    Chờ dấu nhắc "pxh>"; Terminal B hiện "ĐÃ KẾT NỐI" và "Khóa xe  : ĐÃ KHÓA".
+    Terminal B: bấm r.
+Đạt khi:
+    [ ] Vùng thông báo hiện "Đã gửi lệnh mở khóa" (sau đó có thể đổi thành "Xe chấp nhận lệnh mở khóa")
+    [ ] Trong vòng 2 s, dòng "Khóa xe" chuyển sang "ĐÃ MỞ KHÓA"
+    [ ] Đối chiếu: Terminal A (console PX4) có dòng báo đã arm (ví dụ "Armed by external command")
+Làm ngay AC2 sau khi AC1 đạt (xem lưu ý cuối file về tự khóa).
+
+AC2 – Khóa xe
+-------------
+Bước (Terminal B): bấm f.
+Đạt khi:
+    [ ] Vùng thông báo hiện "Đã gửi lệnh khóa"
+    [ ] Trong vòng 2 s, dòng "Khóa xe" chuyển sang "ĐÃ KHÓA"
+    [ ] Đối chiếu: console PX4 có dòng báo đã disarm
+
+AC3 – Xe từ chối lệnh
+---------------------
+Cách làm PX4 từ chối mở khóa: yêu cầu PX4 chỉ nhận tay điều khiển RC thật; mô phỏng không có RC nên PX4 sẽ từ chối arm.
+Bước:
+    Terminal A (pxh>), ghi lại giá trị cũ trước khi đổi:
+        param show COM_RC_IN_MODE
+        param set COM_RC_IN_MODE 0
+    Chờ khoảng 5 s. Terminal B: bấm r.
+Đạt khi:
+    [ ] Vùng thông báo hiện "Xe từ chối lệnh mở khóa"
+    [ ] Dòng "Khóa xe" vẫn là "ĐÃ KHÓA"
+    [ ] App không treo (bấm h vẫn hiện / ẩn bảng phím)
+    [ ] Đối chiếu: console PX4 có dòng "Arming denied" kèm lý do
+Trả lại như cũ sau khi kiểm (Terminal A):
+        param set COM_RC_IN_MODE <giá trị cũ đã ghi>
+Giá trị cũ của COM_RC_IN_MODE:
+Nếu sau khi đổi tham số mà PX4 vẫn cho mở khóa (dòng "Khóa xe" thành "ĐÃ MỞ KHÓA"): ghi AC3 là "Chưa kiểm được", ghi lại dòng console PX4, báo PO chọn cách khác để làm xe từ chối; khóa xe lại bằng f rồi trả tham số về như cũ.
+
+Kết thúc: bấm q để thoát app.
+
+BẢNG KẾT QUẢ
+------------
+AC  | Kết quả (Đạt / Không đạt) | Ghi chú
+----+---------------------------+--------
+AC1 |                           |
+AC2 |                           |
+AC3 |                           |
+AC4 |                           |
+
+Kết luận US-03a:
+
+LƯU Ý
+-----
+- PX4 có thể tự khóa lại xe sau khoảng 10 s đã mở khóa mà xe không chạy (tham số COM_DISARM_PRFLT). Khi đó dòng "Khóa xe" tự chuyển về "ĐÃ KHÓA" mà không bấm f: đây là hành vi đúng của app (trạng thái luôn lấy từ xe), không phải lỗi. Vì vậy kiểm AC2 ngay sau AC1.
+- Nếu ở AC1 PX4 từ chối mở khóa với tham số mặc định: ghi bug-log kèm dòng "Arming denied ..." trên console PX4, báo PO; không tự đổi tham số an toàn của PX4.
+
+NẾU CÓ AC KHÔNG ĐẠT
+-------------------
+1. Ghi lỗi vào docs/agile/bug-log.txt (trạng thái MO): lệnh đã chạy, kết quả thấy, kết quả mong đợi.
+2. Không chuyển US-03a sang XONG; báo lại để sửa rồi kiểm lại AC đó.

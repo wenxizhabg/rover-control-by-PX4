@@ -1,0 +1,177 @@
+---
+title: Sơ đồ lớp – kiến trúc phần mềm Sprint 2 (US-04, US-02, US-03a) – chú thích và định nghĩa API tại docs/diagrams/class/class.txt
+---
+classDiagram
+    direction TB
+
+    %% Tầng 1 – Ứng dụng: điểm vào và vòng lặp chính; chỉ gọi xuống tầng 2 và tầng 3
+    namespace Layer1_Application {
+        class cli {
+            <<module>>
+            +main(argv, connect_fn, app_fn) int
+            +run_connect(url, timeout, connect_fn) int
+        }
+        class app {
+            <<module>>
+            +run_app() int
+        }
+        class RoverApp {
+            -link: VehicleLink | None
+            -terminal: Terminal
+            -clock: Clock
+            -link_monitor: LinkMonitor
+            -arm_control: ArmControl
+            -message: str
+            -show_help: bool
+            +step() bool
+            +run() int
+        }
+    }
+
+    %% Tầng 2 – Xử lý: Python thuần, không biết MAVLink, không biết curses, nhận now từ ngoài vào
+    namespace Layer2_Logic {
+        class keymap {
+            <<module>>
+            +KEY_BINDINGS: list
+            +action_for(key) Action | None
+            +help_lines() list~str~
+        }
+        class screen {
+            <<module>>
+            +render(view) list~str~
+            +format_link_status(state, count, seconds) str
+            +format_arm_status(armed) str
+        }
+        class ViewModel {
+            <<dataclass>>
+            +status_lines: list~str~
+            +message: str
+            +show_help: bool
+            +help_lines: list~str~
+        }
+        class LinkMonitor {
+            +timeout_s: float = 3.0
+            +heartbeat_count: int
+            +on_heartbeat(now) None
+            +state(now) LinkState
+            +seconds_since_last(now) float | None
+        }
+        class ArmControl {
+            +armed: bool | None
+            +on_heartbeat(armed) None
+            +request(arm, link_state) tuple
+            +on_ack(ack) str
+        }
+    }
+
+    %% Tầng 3 – Trừu tượng (giống HAL): chỉ định nghĩa hàm, không có code xử lý
+    namespace Layer3_HAL {
+        class VehicleLink {
+            <<interface>>
+            +poll() list~VehicleEvent~
+            +send_arm(arm) None
+            +close() None
+        }
+        class Terminal {
+            <<interface>>
+            +read_key() str | None
+            +draw(lines) None
+            +close() None
+        }
+        class Clock {
+            <<interface>>
+            +now() float
+        }
+    }
+
+    %% Tầng 4 – Driver: hiện thực các interface của tầng 3; chỉ tầng này dùng pymavlink, curses, time
+    namespace Layer4_Drivers {
+        class MavlinkVehicleLink {
+            -conn
+            -target_system: int | None
+            +poll() list~VehicleEvent~
+            +send_arm(arm) None
+            +close() None
+        }
+        class CursesTerminal {
+            -stdscr
+            +read_key() str | None
+            +draw(lines) None
+            +close() None
+        }
+        class SystemClock {
+            +now() float
+        }
+        class vehicle_info {
+            <<module US-01>>
+            +parse_heartbeat(msg) VehicleInfo | None
+        }
+        class connection {
+            <<module US-01>>
+            +DEFAULT_URL: str
+            +connect(url, timeout) VehicleInfo
+        }
+    }
+
+    %% Kiểu dữ liệu dùng chung giữa các tầng (rover/types.py, rover/vehicle_info.py)
+    namespace Types {
+        class LinkState {
+            <<enumeration>>
+            WAITING
+            CONNECTED
+            LOST
+        }
+        class Action {
+            <<enumeration>>
+            TOGGLE_HELP
+            QUIT
+            ARM
+            DISARM
+        }
+        class Heartbeat {
+            <<dataclass>>
+            +info: VehicleInfo
+            +armed: bool
+        }
+        class ArmAck {
+            <<dataclass>>
+            +accepted: bool
+        }
+        class VehicleInfo {
+            <<dataclass US-01>>
+            +system_id: int
+            +component_id: int
+            +autopilot: str
+            +vehicle_type: str
+        }
+    }
+
+    %% Chiều gọi: tầng trên gọi tầng dưới (mũi tên nét đứt = dùng / gọi)
+    cli ..> app : gọi run_app
+    cli ..> connection : lệnh connect (US-01)
+    app ..> RoverApp : tạo và chạy
+    app ..> MavlinkVehicleLink : tạo
+    app ..> CursesTerminal : tạo
+    app ..> SystemClock : tạo
+    RoverApp ..> keymap : action_for
+    RoverApp ..> screen : render
+    RoverApp *-- LinkMonitor
+    RoverApp *-- ArmControl
+    RoverApp o-- VehicleLink
+    RoverApp o-- Terminal
+    RoverApp o-- Clock
+    screen ..> ViewModel
+
+    %% Hiện thực interface (tầng 4 hiện thực tầng 3)
+    MavlinkVehicleLink ..|> VehicleLink
+    CursesTerminal ..|> Terminal
+    SystemClock ..|> Clock
+    MavlinkVehicleLink ..> vehicle_info : dùng lại parse_heartbeat
+    connection ..> vehicle_info
+
+    %% Kiểu dữ liệu đi qua các tầng
+    VehicleLink ..> Heartbeat : trả về
+    VehicleLink ..> ArmAck : trả về
+    Heartbeat *-- VehicleInfo
+    LinkMonitor ..> LinkState
+    keymap ..> Action

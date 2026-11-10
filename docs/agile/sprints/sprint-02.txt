@@ -1,0 +1,97 @@
+SPRINT 02
+Thời gian    : 2026-11-10 – 2026-11-11 23:59
+=========
+Mục tiêu     : Người vận hành mở app bằng một lệnh, thấy tình trạng kết nối với xe cập nhật liên tục, và mở / khóa được xe bằng phím.
+Story chọn   : US-04 (5 điểm), US-02 (3 điểm), US-03a (3 điểm) – tổng 11 điểm. Chi tiết: docs/agile/user-stories/US-xx.txt
+Không chọn   : US-03b (8 điểm, cần spike trước) – để sprint sau.
+Kiến trúc    : docs/diagrams/class/class.mmd + class.txt (sơ đồ lớp, định nghĩa API – "hợp đồng" giữa các task)
+
+PHÂN CÔNG (mỗi thành viên một story, xếp theo độ khó giảm dần)
+-------------------------------------------------------------
+Thành viên             | Story  | Lý do độ khó
+-----------------------+--------+-------------------------------------------------------------------
+Trương Nhật Hoàng      | US-04  | Khung app: hợp đồng API (T0), curses, vòng lặp chính, sửa CLI; mọi story khác nối vào đây
+Vũ Duy Dương           | US-03a | Gửi lệnh tới xe và đọc phản hồi (COMMAND_LONG / COMMAND_ACK), giả lập PX4 hai chiều, nối sau cùng
+Đinh Trần Thảo Phương  | US-02  | Logic trạng thái thuần (thời gian giả lập) + đọc HEARTBEAT không chờ, dựa trên code US-01
+
+CẢI TIẾN TỪ RETROSPECTIVE SPRINT 01
+-----------------------------------
+1. (Hành động 1) Chốt giao diện trước: docs/diagrams/class/class.txt mục 4; task US-04/T0 đưa vào code trước khi tách nhánh. Mỗi task một nhánh, merge vào main khi pytest toàn bộ passed.
+2. (Hành động 2) Mỗi test ghi rõ phục vụ AC nào (cột "Ý nghĩa" trong US-xx.txt); class.txt mục 6 nối từng thành phần với AC.
+3. (Hành động 3) AC viết theo hành vi người dùng nhìn thấy; chi tiết kỹ thuật (cổng, message MAVLink) nằm trong phần Kiến thức của task.
+4. (Hành động 4) Đã có docs/diagrams/system-overview/ và docs/diagrams/class/. Commit 673f2b1, 802ca1a và commit Sprint Planning này.
+5. (Hành động 5) Mỗi người chỉ 1 task DOING tại một thời điểm.
+6. (Hành động 6) Lỗi phát hiện lúc kiểm: ghi bug-log 1 dòng trước khi sửa.
+7. (Hành động 7, điều chỉnh) Thủ tục kiểm thử chấp nhận đặt ở docs/acceptance/US-xx-acceptance.txt (không phải docs/agile/), để tách tài liệu cho khách hàng khỏi tài liệu nội bộ; AC chỉ ghi gốc ở US-xx.txt.
+Quy ước mới từ Sprint 2: tên trong code bằng tiếng Anh, chữ hiện cho người dùng và comment bằng tiếng Việt (class.txt mục 1).
+
+SPRINT BACKLOG (cập nhật trạng thái mỗi khi task đổi trạng thái)
+---------------------------------------------------------------
+Task       | Người   | Mô tả ngắn                                      | Test tự động | Phụ thuộc                 | Trạng thái | Commit
+-----------+---------+-------------------------------------------------+--------------+---------------------------+------------+-------
+US-04/T0   | Hoàng   | Hợp đồng: rover/types.py, rover/hal.py          | không        | –                         | TODO       |
+US-04/T1   | Hoàng   | KeyMap (H, Q)                                   | có (3 test)  | T0                        | TODO       |
+US-04/T2   | Hoàng   | Screen .render, ViewModel                       | có (3 test)  | T0                        | TODO       |
+US-04/T3   | Hoàng   | CursesTerminal, SystemClock                     | không        | T0                        | TODO       |
+US-04/T4   | Hoàng   | RoverApp, python -m rover, fakes, README        | có (5 test)  | US-04/T1, T2, T3          | TODO       |
+US-04/T5   | Hoàng   | Chạy kiểm thử chấp nhận US-04                   | không        | US-04/T4                  | TODO       |
+US-02/T1   | Phương  | LinkMonitor                                     | có (5 test)  | US-04/T0                  | TODO       |
+US-02/T2   | Phương  | MavlinkVehicleLink .poll, tests/mavlink_sim.py  | có (4 test)  | US-04/T0                  | TODO       |
+US-02/T3   | Phương  | Nối trạng thái kết nối vào app                  | có (4 test)  | US-04/T4, US-02/T1, T2    | TODO       |
+US-02/T4   | Phương  | Chạy kiểm thử chấp nhận US-02                   | không        | US-02/T3                  | TODO       |
+US-03a/T1  | Dương   | ArmControl                                      | có (6 test)  | US-04/T0                  | TODO       |
+US-03a/T2  | Dương   | send_arm, ArmAck, giả lập PX4 hai chiều         | có (3 test)  | US-02/T2                  | TODO       |
+US-03a/T3  | Dương   | Nối mở / khóa xe vào app (phím R, F)            | có (5 test)  | US-02/T3, US-03a/T1, T2   | TODO       |
+US-03a/T4  | Dương   | Chạy kiểm thử chấp nhận US-03a                  | không        | US-03a/T3                 | TODO       |
+S02/DOC    | Hoàng   | Cập nhật sơ đồ cuối sprint (overview, class)    | không        | cả 3 story XONG           | TODO       |
+
+Tổng test tự động mới: 38 (US-04: 11, US-02: 13, US-03a: 14); cộng 14 test US-01 = 52.
+
+THỨ TỰ VÀ CHỖ PHẢI CHỜ NHAU
+--------------------------
+                       US-04/T0 (hợp đồng, merge trước)
+            ┌──────────────┼──────────────────────┐
+  Hoàng: T1, T2, T3   Phương: T1, T2         Dương: T1 (+ chuẩn bị giả lập hai chiều)    <- song song
+            │              │  └──────────────▶ Dương: T2 (sửa cùng mavlink_link.py)
+  Hoàng: T4 ─────────▶ Phương: T3 ──────────▶ Dương: T3                                     <- nối theo thứ tự (cùng sửa app.py)
+            │              │                       │
+  Hoàng: T5           Phương: T4             Dương: T4                                      <- kiểm thử chấp nhận
+                                 └── Hoàng: S02/DOC
+
+Đường găng (chậm ở đây là chậm cả sprint): US-04/T0 -> US-04/T4 -> US-02/T3 -> US-03a/T3 -> kiểm thử chấp nhận. Ai xong T4 / T3 của mình thì báo ngay trong nhóm để người sau tách nhánh từ main mới.
+
+LỊCH ĐỀ XUẤT
+------------
+2026-11-10 chiều : Hoàng xong US-04/T0 và merge (sớm nhất có thể). Sau đó cả 3 làm song song: Hoàng T1–T3, Phương T1–T2, Dương T1.
+2026-11-10 tối   : Hoàng T4 merge. Phương T2 merge -> Dương bắt đầu T2.
+2026-11-11 sáng  : Phương T3 merge. Dương T2 merge.
+2026-11-11 chiều : Dương T3 merge. Mỗi người chạy kiểm thử chấp nhận story của mình (T5 / T4 / T4).
+2026-11-11 tối   : Hoàng S02/DOC. Sprint review + retrospective, điền 2 phần dưới.
+
+QUY ƯỚC
+-------
+Nhánh  : một nhánh cho một task, tên theo mã task viết thường, ví dụ us-04/t0, us-02/t1, us-03a/t2. Tách từ main mới nhất; merge vào main khi pytest toàn bộ passed.
+Commit : "US-xx/Tx: <nội dung>", ví dụ "US-03a/T1: ArmControl quyết định gửi lệnh và thông báo".
+Đổi chữ ký hàm trong class.txt mục 4: báo cả nhóm trước, sửa class.mmd + class.txt trong cùng commit.
+
+DAILY SCRUM (mỗi người 3 câu: đã làm gì, sẽ làm gì, đang vướng gì)
+-----------------------------------------------------------------
+2026-11-11 sáng:
+  Hoàng  :
+  Dương  :
+  Phương :
+
+SPRINT REVIEW (điền khi kết thúc sprint)
+----------------------------------------
+Kết quả kiểm thử chấp nhận:
+  US-04 : AC1:      AC2:      AC3:
+  US-02 : AC1:      AC2:      AC3:      AC4:
+  US-03a: AC1:      AC2:      AC3:      AC4:
+Story đạt:
+Phản hồi của khách hàng:
+
+SPRINT RETROSPECTIVE (điền khi kết thúc sprint)
+-----------------------------------------------
+Điều làm tốt:
+Điều cần cải thiện:
+Hành động cho sprint sau:

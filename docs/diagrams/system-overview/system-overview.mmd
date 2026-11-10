@@ -1,5 +1,5 @@
 ---
-title: Tổng quan hệ thống – kết quả đầu ra Sprint 1 (US-01)
+title: Tổng quan hệ thống – khối màu là kết quả đầu ra Sprint 1 (US-01), khối xám là dự kiến Sprint 2
 config:
   flowchart:
     curve: linear
@@ -15,10 +15,12 @@ flowchart LR
     conn["rover/connection.py<br/>connect"]
     vi["rover/vehicle_info.py<br/>parse_heartbeat"]
 
-    %% Khối dự kiến cho các story tiếp theo, chưa thiết kế chi tiết
-    ui2["CLI tương tác<br/>(US-04)"]
-    mon2["Theo dõi kết nối<br/>liên tục (US-02)"]
-    cmd2["Gửi lệnh di chuyển<br/>(US-03)"]
+    %% Khối dự kiến Sprint 2 (US-04, US-02, US-03a) và US-03b (chưa vào sprint), theo kiến trúc trong docs/diagrams/class/
+    app2["rover/app.py – RoverApp<br/>màn hình + phím (US-04)"]
+    lm2["rover/link_monitor.py<br/>LinkMonitor (US-02)"]
+    arm2["rover/arm.py<br/>mở / khóa xe (US-03a)"]
+    ml2["rover/mavlink_link.py<br/>MavlinkVehicleLink<br/>(US-02, US-03a)"]
+    drv2["Lái xe<br/>(US-03b, sau spike)"]
 
     %% --- ĐỊNH HÌNH BỐ CỤC CHÍNH ---
     user -->|"1"| cli
@@ -33,12 +35,15 @@ flowchart LR
 
     px4 <--> gz
 
-    %% Luồng dự kiến
-    user -.-> ui2
-    ui2 -.-> cmd2
-    cmd2 -.-> px4
-    px4 -.-> mon2
-    mon2 -.-> ui2
+    %% Luồng dự kiến, chưa đánh số (cạnh 8 trở đi)
+    user -.->|"phím"| app2
+    app2 -.-> lm2
+    app2 -.-> drv2
+    app2 -.-> ml2
+    ml2 -.-> arm2
+    ml2 -.->|"dùng lại"| vi
+    ml2 -.->|"lệnh mở / khóa"| px4
+    px4 -.->|"HEARTBEAT, ACK"| ml2
 
     classDef done fill:#cfe2ff,stroke:#000,stroke-width:2px,color:#000
     classDef ext fill:#ffe8a3,stroke:#000,stroke-width:2px,color:#000
@@ -46,8 +51,8 @@ flowchart LR
 
     class cli,conn,vi done
     class user,px4,gz ext
-    class ui2,mon2,cmd2 plan
+    class app2,lm2,arm2,ml2,drv2 plan
 
     linkStyle 0,1,2,3,4,5,6 stroke:#000,stroke-width:2px,color:#000
     linkStyle 7 stroke:#000,stroke-width:1px,color:#000
-    linkStyle 8,9,10,11,12 stroke:#aaa,stroke-width:1px,color:#aaa
+    linkStyle 8,9,10,11,12,13,14,15 stroke:#aaa,stroke-width:1px,color:#aaa

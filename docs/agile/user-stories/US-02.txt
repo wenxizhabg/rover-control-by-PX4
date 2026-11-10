@@ -1,0 +1,160 @@
+USER STORY US-02 – Thấy tình trạng kết nối với xe liên tục
+=========================================================
+Yêu cầu gốc của khách hàng (sprint review Sprint 01): "Cần cập nhật phần kết nối sao cho thấy được có đang kết nối theo thời gian thực hay không chứ này chỉ mới nhận gói tin heartbeat đầu tiên thì chưa chắc lắm."
+Người làm  : Đinh Trần Thảo Phương
+Điểm       : 3
+Sprint     : S2
+
+1. STORY
+--------
+Là người vận hành, tôi thấy liên tục trên màn hình app đang còn nhận tín hiệu từ xe hay đã mất, để biết lệnh tôi gửi có tới được xe hay không.
+
+Ngoài phạm vi story này: tỉ lệ mất gói, độ trễ, mức "kết nối yếu"; gửi lệnh tới xe.
+
+2. TIÊU CHÍ CHẤP NHẬN (khách hàng tự kiểm, thủ tục: docs/acceptance/US-02-acceptance.txt)
+---------------------------------------------------------------------------------------
+AC1  Đang kết nối
+     Cách kiểm : bật mô phỏng, rồi mở app (python -m rover), quan sát khoảng 30 s
+     Đạt khi   : vùng trạng thái hiện "ĐÃ KẾT NỐI" suốt 30 s; số HEARTBEAT đã nhận tăng dần (khoảng 1 lần mỗi giây); số giây "lần cuối ... trước" luôn nhỏ (dưới 2 s)
+
+AC2  Mất kết nối
+     Cách kiểm : app đang hiện "ĐÃ KẾT NỐI", tắt mô phỏng (Ctrl+C ở terminal mô phỏng)
+     Đạt khi   : khoảng 3 s sau khi tắt (chậm nhất 4 s) hiện "MẤT KẾT NỐI"; số giây "lần cuối ... trước" tiếp tục tăng; app không treo, vẫn bấm H, Q được
+
+AC3  Kết nối lại
+     Cách kiểm : app đang hiện "MẤT KẾT NỐI", bật lại mô phỏng, không tắt app
+     Đạt khi   : khi mô phỏng chạy lên (có dấu nhắc "pxh>"), app tự hiện lại "ĐÃ KẾT NỐI", không phải mở lại app
+
+AC4  Mở app khi chưa có xe
+     Cách kiểm : mô phỏng tắt, mở app
+     Đạt khi   : vùng trạng thái hiện "ĐANG CHỜ XE"; app không báo lỗi, không thoát; bật mô phỏng thì chuyển sang "ĐÃ KẾT NỐI"
+
+3. TASK – YÊU CẦU TEST
+----------------------
+Trạng thái task: TODO | DOING | DONE
+Thứ tự: T1, T2 song song (bắt đầu sau khi US-04/T0 merge); T3 sau US-04/T4 và T1, T2; T4 cuối.
+Hợp đồng API: docs/diagrams/class/class.txt (mục 4.1, 4.2, 4.4, 4.5, 4.9). Tên trong code bằng tiếng Anh, comment / docstring bằng tiếng Việt.
+
+T1  Logic trạng thái kết nối
+    File code   : rover/link_monitor.py
+    File test   : tests/test_link_monitor.py
+
+    Kiến thức:
+      - UDP không có trạng thái "đã kết nối". App coi là còn kết nối khi vẫn nhận HEARTBEAT của xe đều đặn (PX4 gửi khoảng 1 lần/giây).
+      - Ngưỡng 3 s (PO chốt): quá 3 s không có HEARTBEAT nào thì coi là mất, tức là bỏ lỡ khoảng 3 gói liên tiếp.
+      - Lớp này không đọc đồng hồ: thời điểm now được truyền vào mỗi lần gọi. Nhờ vậy test đặt now = 0, 1, 3.5 ... và kiểm được ngay, không phải chờ 3 s thật. Giống viết hàm xử lý máy trạng thái trên MCU nhận tick từ ngoài vào thay vì tự đọc SysTick.
+
+    Công việc:
+      LINK_TIMEOUT_S = 3.0 và LinkMonitor theo mục 4.5 class.txt: on_heartbeat (now), state (now), heartbeat_count, seconds_since_last (now). Đúng ngưỡng: lệch đúng 3.0 s vẫn CONNECTED, lớn hơn 3.0 s mới LOST.
+
+    Mục đích:
+      Phần lõi quyết định "ĐANG CHỜ XE / ĐÃ KẾT NỐI / MẤT KẾT NỐI" (AC1–AC4).
+
+    Test tự động (5 test, thời gian giả lập, không cần mạng):
+      1. Chưa có HEARTBEAT
+         Đầu vào : LinkMonitor () mới; state (10.0)
+         Mong đợi: LinkState .WAITING; heartbeat_count = 0; seconds_since_last (10.0) = None
+         Ý nghĩa : AC4.
+      2. Có HEARTBEAT
+         Đầu vào : on_heartbeat (1.0); state (1.5)
+         Mong đợi: CONNECTED; heartbeat_count = 1; seconds_since_last (1.5) = 0.5
+         Ý nghĩa : AC1.
+      3. Đúng ngưỡng và quá ngưỡng
+         Đầu vào : on_heartbeat (1.0); state (4.0) và state (4.1)
+         Mong đợi: CONNECTED rồi LOST
+         Ý nghĩa : AC2 (quá 3 s mới báo mất, không báo sớm).
+      4. Mất rồi có lại
+         Đầu vào : on_heartbeat (1.0); state (10.0); on_heartbeat (10.0); state (10.2)
+         Mong đợi: LOST rồi CONNECTED; heartbeat_count = 2
+         Ý nghĩa : AC3.
+      5. HEARTBEAT đều đặn không bị báo mất
+         Đầu vào : on_heartbeat tại 0, 1, 2, ..., 30; kiểm state tại mỗi thời điểm cộng thêm 0.9
+         Mong đợi: luôn CONNECTED; heartbeat_count = 31
+         Ý nghĩa : AC1 (giữ "ĐÃ KẾT NỐI" suốt 30 s).
+
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T2  Đọc HEARTBEAT liên tục từ xe (driver MAVLink)
+    File code   : rover/mavlink_link.py
+    File test   : tests/test_mavlink_link.py, tests/mavlink_sim.py (mới), tests/test_connection.py (sửa import)
+
+    Kiến thức:
+      - US-01 dùng recv_match (blocking = True, timeout = ...): chờ tới khi có gói. Vòng lặp của app không được đứng chờ như vậy (màn hình sẽ đơ), nên dùng recv_match (blocking = False): có gói thì trả gói, không có thì trả None ngay. poll () gọi lặp tới khi trả None để lấy hết gói đang chờ trong bộ đệm UDP.
+      - Dùng lại parse_heartbeat của US-01 để biết gói nào là của xe (bỏ gói autopilot = INVALID của QGroundControl).
+      - Cờ "đã mở khóa" nằm trong trường base_mode của HEARTBEAT: bit MAV_MODE_FLAG_SAFETY_ARMED (giá trị 128). Driver đọc luôn cờ này vào Heartbeat .armed (US-03a dùng), để tầng trên không phải biết MAVLink.
+      - "udpin": app mở cổng và chờ; mavutil .mavlink_connection không chặn khi tạo nên mở cổng ngay trong __init__ được.
+
+    Công việc:
+      1. Chuyển heartbeat_bytes, HeartbeatSimulator, find_free_port, VEHICLE_HEARTBEAT, GCS_HEARTBEAT từ tests/test_connection.py sang tests/mavlink_sim.py (thêm tham số base_mode cho heartbeat_bytes, mặc định 0); test_connection.py import lại từ đó. Không đổi nội dung 4 test của US-01.
+      2. MavlinkVehicleLink (url = DEFAULT_URL) với poll () và close () theo mục 4.9 class.txt; poll () trả list Heartbeat (info, armed). send_arm để US-03a/T2 viết.
+
+    Mục đích:
+      Nguồn dữ liệu thật cho LinkMonitor: mỗi HEARTBEAT của xe thành một sự kiện (AC1–AC4).
+
+    Test tự động (4 test, giả lập UDP như US-01, không cần mô phỏng):
+      1. Xe gửi HEARTBEAT
+         Đầu vào : giả lập xe PX4 rover gửi HEARTBEAT tới cổng trống; chờ 0,3 s; poll ()
+         Mong đợi: danh sách khác rỗng; mọi phần tử là Heartbeat với info = VehicleInfo (1, 1, "PX4", "GROUND_ROVER"), armed = False
+         Ý nghĩa : AC1.
+      2. Cờ đã mở khóa
+         Đầu vào : giả lập xe gửi HEARTBEAT có base_mode = MAV_MODE_FLAG_SAFETY_ARMED; poll ()
+         Mong đợi: Heartbeat .armed = True
+         Ý nghĩa : giải mã HEARTBEAT là việc của driver; phục vụ US-03a AC1.
+      3. Chỉ có trạm mặt đất
+         Đầu vào : chỉ giả lập QGroundControl gửi; chờ 0,3 s; poll ()
+         Mong đợi: []
+         Ý nghĩa : không nhận nhầm QGroundControl là xe (AC2: tắt mô phỏng mà còn QGC thì vẫn phải báo mất).
+      4. Không có gói thì không chờ
+         Đầu vào : không có giả lập; đo thời gian một lần poll ()
+         Mong đợi: trả [] trong dưới 0,1 s
+         Ý nghĩa : vòng lặp app không bị đơ khi mất xe (AC2: vẫn bấm H, Q được).
+
+    Kiểm tay    : không bắt buộc (kiểm cùng AC sau T3)
+    Trạng thái  : TODO
+
+T3  Nối vào app
+    File code   : rover/app.py, rover/screen.py (thêm format_link_status), tests/fakes.py (thêm FakeVehicleLink: poll, push, close)
+    File test   : tests/test_app.py (thêm), tests/test_screen.py (thêm)
+    Phụ thuộc   : US-04/T4 đã merge (có RoverApp, tests/fakes.py)
+
+    Công việc:
+      1. screen .format_link_status (state, count, seconds) theo mục 4.4 class.txt (chữ tiếng Việt, số giây 1 chữ số thập phân).
+      2. RoverApp: tạo LinkMonitor; mỗi step (): với mỗi Heartbeat từ link .poll () gọi on_heartbeat (now); thêm dòng format_link_status vào status_lines. Không có link thì không có dòng này.
+      3. run_app (): tạo MavlinkVehicleLink () và truyền vào RoverApp; run () đóng link khi thoát.
+
+    Mục đích:
+      Đưa trạng thái kết nối lên màn hình người vận hành nhìn thấy.
+
+    Test tự động (3 test trong test_app.py dùng FakeVehicleLink, FakeClock, FakeTerminal; 1 test trong test_screen.py):
+      1. Chưa có HEARTBEAT
+         Đầu vào : FakeVehicleLink không có sự kiện; step ()
+         Mong đợi: last_lines có "ĐANG CHỜ XE"
+         Ý nghĩa : AC4.
+      2. Có HEARTBEAT
+         Đầu vào : push (Heartbeat (...)); step ()
+         Mong đợi: last_lines có "ĐÃ KẾT NỐI" và "HEARTBEAT: 1"
+         Ý nghĩa : AC1.
+      3. Mất rồi có lại
+         Đầu vào : push (Heartbeat) ; step (); clock .advance (3.5); step (); push (Heartbeat); step ()
+         Mong đợi: lần 2 có "MẤT KẾT NỐI"; lần 3 có "ĐÃ KẾT NỐI" và "HEARTBEAT: 2"
+         Ý nghĩa : AC2, AC3.
+      4. Định dạng dòng trạng thái (test_screen.py)
+         Đầu vào : format_link_status (CONNECTED, 42, 0.43), format_link_status (LOST, 42, 5.21), format_link_status (WAITING, 0, None)
+         Mong đợi: đúng 3 chuỗi ở mục 4.4 class.txt
+         Ý nghĩa : AC1, AC2, AC4 (chữ người dùng thấy).
+
+    Kiểm tay    : AC1–AC4 theo docs/acceptance/US-02-acceptance.txt
+    Trạng thái  : TODO
+
+T4  Kiểm thử chấp nhận
+    File        : docs/acceptance/US-02-acceptance.txt (bản hướng dẫn đã viết ở Sprint Planning; T4 là chạy và điền kết quả)
+    Công việc   : chạy AC1–AC4, điền kết quả; AC không đạt thì ghi bug-log trước khi sửa.
+    Test tự động: không
+    Trạng thái  : TODO
+
+4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
+------------------------------
+- 2026-11-10: Ngưỡng báo mất kết nối: quá 3 s không nhận HEARTBEAT.
+- 2026-11-10: Hiện trạng thái trong khung app của US-04 (không làm lệnh chạy riêng); mỗi HEARTBEAT nhận được thì màn hình cập nhật (số HEARTBEAT, số giây kể từ lần cuối).
+- App vẫn dùng cổng 14540 (instance Onboard của PX4) như US-01.

@@ -1,0 +1,167 @@
+USER STORY US-03a – Mở khóa / khóa xe bằng phím
+===============================================
+Yêu cầu gốc của khách hàng (sprint review Sprint 01): "Giờ thêm các lệnh cơ bản của PX4 (nếu PX4 có một số lệnh có sẵn thì ưu tiên dùng lệnh đó để đơn giản) để điều khiển xe di chuyển."
+Tách ở refinement 2026-11-10: US-03 -> US-03a (mở / khóa xe, story này) và US-03b (lái xe).
+Người làm  : Vũ Duy Dương
+Điểm       : 3
+Sprint     : S2
+
+1. STORY
+--------
+Là người vận hành, tôi có thể mở khóa (arm) và khóa (disarm) xe bằng một phím, để xe chỉ chạy được khi tôi cho phép.
+
+Ngoài phạm vi story này: lái xe (US-03b); chờ phản hồi quá lâu thì gửi lại lệnh.
+
+2. TIÊU CHÍ CHẤP NHẬN (khách hàng tự kiểm, thủ tục: docs/acceptance/US-03a-acceptance.txt)
+----------------------------------------------------------------------------------------
+AC1  Mở khóa xe
+     Cách kiểm : mô phỏng đang chạy, app hiện "ĐÃ KẾT NỐI" và "ĐÃ KHÓA"; bấm R
+     Đạt khi   : vùng thông báo hiện "Đã gửi lệnh mở khóa"; trong vòng 2 s vùng trạng thái chuyển sang "ĐÃ MỞ KHÓA"
+
+AC2  Khóa xe
+     Cách kiểm : xe đang "ĐÃ MỞ KHÓA"; bấm F
+     Đạt khi   : vùng thông báo hiện "Đã gửi lệnh khóa"; trong vòng 2 s vùng trạng thái chuyển sang "ĐÃ KHÓA"
+
+AC3  Xe từ chối lệnh
+     Cách kiểm : làm xe từ chối lệnh mở khóa theo cách ghi trong file acceptance (đổi một tham số của PX4 để PX4 từ chối arm)
+     Đạt khi   : vùng thông báo hiện "Xe từ chối lệnh mở khóa"; vùng trạng thái vẫn "ĐÃ KHÓA"; app không treo
+
+AC4  Chưa kết nối xe
+     Cách kiểm : mô phỏng tắt (app hiện "ĐANG CHỜ XE" hoặc "MẤT KẾT NỐI"); bấm R
+     Đạt khi   : vùng thông báo hiện "Chưa kết nối xe"; không có lệnh nào được gửi
+
+3. TASK – YÊU CẦU TEST
+----------------------
+Trạng thái task: TODO | DOING | DONE
+Thứ tự: T1 bắt đầu sau khi US-04/T0 merge; T2 sau US-02/T2 (cùng sửa rover/mavlink_link.py); T3 sau US-02/T3; T4 cuối.
+Trong lúc chờ US-02/T2, làm T1 (phần thuần, không phụ thuộc ai) và chuẩn bị giả lập PX4 hai chiều cho T2.
+Hợp đồng API: docs/diagrams/class/class.txt (mục 4.1–4.4, 4.6, 4.9). Tên trong code bằng tiếng Anh, comment / docstring bằng tiếng Việt.
+
+T1  Logic mở / khóa xe
+    File code   : rover/arm_control.py
+    File test   : tests/test_arm_control.py
+
+    Kiến thức:
+      - Arm (mở khóa): cho phép động cơ chạy. Xe PX4 mặc định ở trạng thái khóa (disarmed), khi đó mọi lệnh lái bị bỏ qua.
+      - Trạng thái khóa thật của xe lấy từ HEARTBEAT (Heartbeat .armed), không suy ra từ việc "đã gửi lệnh": lệnh có thể bị từ chối, và PX4 có thể tự khóa lại (ví dụ sau vài giây đã mở khóa mà xe không chạy).
+      - Lớp này không biết MAVLink, không biết link: chỉ quyết định "có được gửi không" và "hiện thông báo gì"; RoverApp làm phần gửi.
+
+    Công việc:
+      ArmControl theo mục 4.6 class.txt: armed, on_heartbeat (armed), request (arm, link_state) -> (gửi?, thông báo), on_ack (ack) -> thông báo. on_ack dựa vào lệnh gửi gần nhất để chọn chữ "mở khóa" hay "khóa".
+
+    Mục đích:
+      Toàn bộ quyết định của AC1–AC4 nằm ở đây, test được không cần mạng.
+
+    Test tự động (6 test):
+      1. Chưa có HEARTBEAT
+         Đầu vào : ArmControl () mới
+         Mong đợi: armed = None
+         Ý nghĩa : màn hình hiện "chưa rõ" trước khi thấy xe (AC4).
+      2. Trạng thái theo HEARTBEAT
+         Đầu vào : on_heartbeat (True), rồi on_heartbeat (False)
+         Mong đợi: armed = True, rồi False
+         Ý nghĩa : AC1, AC2 (trạng thái lấy từ xe).
+      3. Mở khóa khi đã kết nối
+         Đầu vào : request (True, LinkState .CONNECTED)
+         Mong đợi: (True, "Đã gửi lệnh mở khóa")
+         Ý nghĩa : AC1.
+      4. Khóa khi đã kết nối
+         Đầu vào : request (False, LinkState .CONNECTED)
+         Mong đợi: (True, "Đã gửi lệnh khóa")
+         Ý nghĩa : AC2.
+      5. Chưa kết nối
+         Đầu vào : request (True, LinkState .WAITING) và request (True, LinkState .LOST)
+         Mong đợi: cả hai (False, "Chưa kết nối xe")
+         Ý nghĩa : AC4.
+      6. Phản hồi của xe
+         Đầu vào : request (True, CONNECTED) rồi on_ack (ArmAck (False)); request (False, CONNECTED) rồi on_ack (ArmAck (False)); request (True, CONNECTED) rồi on_ack (ArmAck (True))
+         Mong đợi: "Xe từ chối lệnh mở khóa"; "Xe từ chối lệnh khóa"; "Xe chấp nhận lệnh mở khóa"
+         Ý nghĩa : AC3.
+
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T2  Gửi lệnh mở / khóa và đọc phản hồi (driver MAVLink)
+    File code   : rover/mavlink_link.py (thêm send_arm, đọc COMMAND_ACK trong poll)
+    File test   : tests/test_mavlink_link.py (thêm), tests/mavlink_sim.py (thêm giả lập PX4 hai chiều)
+    Phụ thuộc   : US-02/T2 đã merge (có MavlinkVehicleLink .poll, tests/mavlink_sim.py)
+
+    Kiến thức:
+      - Lệnh có sẵn của PX4 để mở / khóa: message COMMAND_LONG với command = MAV_CMD_COMPONENT_ARM_DISARM (số 400), param1 = 1 (mở khóa) hoặc 0 (khóa), target_system / target_component = số hiệu của xe (lấy từ HEARTBEAT gần nhất, thường là 1 / 1). pymavlink: conn .mav .command_long_send (...).
+      - Xe trả lời bằng COMMAND_ACK: trường command = 400, result = MAV_RESULT_ACCEPTED (0) nếu chấp nhận; số khác (ví dụ DENIED, TEMPORARILY_REJECTED) là từ chối.
+      - Với "udpin", pymavlink chỉ biết gửi về đâu sau khi đã nhận ít nhất một gói từ xe (lấy địa chỉ người gửi). Vì vậy send_arm chỉ dùng sau khi poll () đã thấy HEARTBEAT của xe; RoverApp bảo đảm điều này bằng ArmControl .request (chỉ gửi khi CONNECTED).
+      - Giả lập PX4 hai chiều trong test: một socket UDP vừa gửi HEARTBEAT tới cổng của app, vừa đọc gói app gửi về (giải mã bằng mavlink .MAVLink .parse_buffer), và gửi COMMAND_ACK khi cần.
+
+    Công việc:
+      1. tests/mavlink_sim.py: thêm giả lập PX4 hai chiều (gửi HEARTBEAT, nhận COMMAND_LONG, gửi COMMAND_ACK theo kịch bản).
+      2. MavlinkVehicleLink: ghi nhớ system_id, component_id của xe từ HEARTBEAT; send_arm (arm) gửi COMMAND_LONG như trên; poll () đổi COMMAND_ACK có command = 400 thành ArmAck (accepted), bỏ qua ACK của lệnh khác.
+
+    Mục đích:
+      Phần nói chuyện thật với PX4 của AC1–AC3.
+
+    Test tự động (3 test, giả lập PX4 hai chiều, không cần mô phỏng):
+      1. Gửi lệnh mở khóa
+         Đầu vào : giả lập xe gửi HEARTBEAT; app poll () thấy xe; send_arm (True)
+         Mong đợi: giả lập nhận COMMAND_LONG với command = 400, param1 = 1, target_system = 1, target_component = 1
+         Ý nghĩa : AC1 (dùng lệnh có sẵn của PX4).
+      2. Gửi lệnh khóa
+         Đầu vào : như test 1 nhưng send_arm (False)
+         Mong đợi: COMMAND_LONG command = 400, param1 = 0
+         Ý nghĩa : AC2.
+      3. Đọc phản hồi
+         Đầu vào : giả lập gửi COMMAND_ACK (400, ACCEPTED), COMMAND_ACK (400, DENIED), COMMAND_ACK (176, ACCEPTED); poll ()
+         Mong đợi: trong kết quả có đúng [ArmAck (True), ArmAck (False)] theo thứ tự (ACK lệnh 176 bị bỏ qua)
+         Ý nghĩa : AC3.
+
+    Kiểm tay    : không bắt buộc (kiểm cùng AC sau T3)
+    Trạng thái  : TODO
+
+T3  Nối vào app
+    File code   : rover/keymap.py (thêm R, F), rover/screen.py (thêm format_arm_status), rover/app.py, tests/fakes.py (thêm send_arm, sent_arm cho FakeVehicleLink)
+    File test   : tests/test_app.py (thêm), tests/test_keymap.py (thêm), tests/test_screen.py (thêm)
+    Phụ thuộc   : US-02/T3 đã merge (có LinkMonitor trong RoverApp, FakeVehicleLink)
+
+    Công việc:
+      1. KEY_BINDINGS thêm ("r", Action .ARM, "mở khóa xe"), ("f", Action .DISARM, "khóa xe").
+      2. format_arm_status (armed) theo mục 4.4 class.txt.
+      3. RoverApp: tạo ArmControl; Heartbeat -> arm_control .on_heartbeat (armed); ArmAck -> message = on_ack (...); Action ARM / DISARM -> (gửi, message) = request (arm, link_monitor .state (now)), gửi thì link .send_arm (arm); thêm dòng format_arm_status vào status_lines.
+
+    Mục đích:
+      Người vận hành bấm R / F và thấy kết quả trên màn hình.
+
+    Test tự động (5 test):
+      1. Phím R, F (test_keymap.py)
+         Đầu vào : action_for ("r"), action_for ("F"); help_lines ()
+         Mong đợi: Action .ARM, Action .DISARM; help_lines có dòng "R  mở khóa xe", "F  khóa xe"
+         Ý nghĩa : AC1, AC2; bảng phím H hiện đủ phím mới.
+      2. Định dạng dòng khóa xe (test_screen.py)
+         Đầu vào : format_arm_status (None / True / False)
+         Mong đợi: "Khóa xe  : chưa rõ", "Khóa xe  : ĐÃ MỞ KHÓA", "Khóa xe  : ĐÃ KHÓA"
+         Ý nghĩa : AC1, AC2 (chữ người dùng thấy).
+      3. Bấm R khi đã kết nối (test_app.py)
+         Đầu vào : push (Heartbeat (armed = False)); step (); bấm "r"; step (); push (Heartbeat (armed = True)); step ()
+         Mong đợi: link giả lập có sent_arm = [True]; có "Đã gửi lệnh mở khóa"; khung cuối có "ĐÃ MỞ KHÓA"
+         Ý nghĩa : AC1.
+      4. Xe từ chối (test_app.py)
+         Đầu vào : đã kết nối; bấm "r"; push (ArmAck (False)); step ()
+         Mong đợi: khung có "Xe từ chối lệnh mở khóa"
+         Ý nghĩa : AC3.
+      5. Chưa kết nối (test_app.py)
+         Đầu vào : không có Heartbeat; bấm "r"; step ()
+         Mong đợi: sent_arm = []; khung có "Chưa kết nối xe"
+         Ý nghĩa : AC4.
+
+    Kiểm tay    : AC1–AC4 theo docs/acceptance/US-03a-acceptance.txt
+    Trạng thái  : TODO
+
+T4  Kiểm thử chấp nhận
+    File        : docs/acceptance/US-03a-acceptance.txt (bản hướng dẫn đã viết ở Sprint Planning; T4 là chạy và điền kết quả)
+    Công việc   : chạy AC1–AC4, điền kết quả; AC không đạt thì ghi bug-log trước khi sửa.
+    Test tự động: không
+    Trạng thái  : TODO
+
+4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
+------------------------------
+- 2026-11-10: Tách US-03 thành US-03a (mở / khóa) và US-03b (lái); dùng lệnh có sẵn của PX4 (MAV_CMD_COMPONENT_ARM_DISARM).
+- 2026-11-10: Phím R mở khóa, F khóa.
+- Rủi ro đã biết: PX4 có thể từ chối arm hoặc tự khóa lại tùy tham số an toàn của mô phỏng. Nếu gặp khi kiểm, ghi bug-log kèm dòng thông báo trên console PX4 (pxh>) rồi báo PO quyết định; không tự đổi tham số PX4 trong code.

@@ -1,0 +1,192 @@
+USER STORY US-04 – Khung app điều khiển bằng bàn phím
+====================================================
+Yêu cầu gốc của khách hàng (sprint review Sprint 01): "Làm app CLI đơn giản để người dùng dễ thao tác ra lệnh."
+Làm rõ ở refinement 2026-11-10: app mở một lần, màn hình tự cập nhật, điều khiển bằng phím đơn (bấm là chạy, không gõ lệnh rồi Enter).
+Người làm  : Trương Nhật Hoàng
+Điểm       : 5
+Sprint     : S2
+
+1. STORY
+--------
+Là người vận hành, tôi mở app một lần, thấy một màn hình tự cập nhật và điều khiển bằng phím đơn, để thao tác nhanh mà không phải gõ lệnh dài cho mỗi việc.
+
+Ngoài phạm vi story này: nội dung trạng thái kết nối (US-02), mở / khóa xe (US-03a), lái xe (US-03b). Story này chỉ làm khung: các story kia thêm dòng trạng thái và phím của mình vào khung.
+Lệnh "python -m rover connect" của US-01 giữ nguyên.
+
+2. TIÊU CHÍ CHẤP NHẬN (khách hàng tự kiểm, thủ tục: docs/acceptance/US-04-acceptance.txt)
+---------------------------------------------------------------------------------------
+AC1  Mở app
+     Cách kiểm : chạy python -m rover
+     Đạt khi   : terminal chuyển sang màn hình của app, gồm: tiêu đề, vùng trạng thái, vùng thông báo, dòng gợi ý phím "H: hướng dẫn   Q: thoát"; không hiện con trỏ nhấp nháy, chữ bấm không bị in lên màn hình
+
+AC2  Xem hướng dẫn phím
+     Cách kiểm : bấm H, rồi bấm H lần nữa
+     Đạt khi   : lần 1 hiện bảng phím, mỗi phím kèm một dòng giải thích; lần 2 bảng phím ẩn đi; chữ hoa hay thường đều được
+
+AC3  Thoát app
+     Cách kiểm : bấm Q; mở lại app rồi bấm Ctrl+C
+     Đạt khi   : cả hai cách đều thoát ngay, không in lỗi (traceback); terminal trở lại bình thường: hiện con trỏ, gõ chữ hiện lên màn hình, xuống dòng đúng
+
+3. TASK – YÊU CẦU TEST
+----------------------
+Trạng thái task: TODO | DOING | DONE
+Thứ tự: T0 làm đầu tiên (các thành viên khác cần); T1, T2, T3 song song; T4 sau T1–T3; T5 cuối.
+Hợp đồng API: docs/diagrams/class/class.txt (mục 4). Tên trong code bằng tiếng Anh, comment / docstring bằng tiếng Việt.
+
+T0  Hợp đồng kiểu dữ liệu và interface (làm ngay sau Sprint Planning, khoảng 30 phút, merge vào main trước khi mọi người tách nhánh)
+    File code   : rover/types.py, rover/hal.py
+
+    Kiến thức:
+      - Enum: tập hằng số có tên, ví dụ LinkState .CONNECTED; giống enum trong C nhưng mỗi giá trị là một đối tượng, in ra được tên.
+      - typing.Protocol: khai báo một "interface" chỉ gồm chữ ký hàm, thân hàm là "...". Lớp nào có đủ các hàm đúng tên và tham số thì được coi là hiện thực interface đó, không cần kế thừa. Giống một struct các con trỏ hàm trong C (HAL driver struct).
+      - Kiểu "A | B" (Python 3.10+) nghĩa là A hoặc B, ví dụ str | None.
+
+    Công việc:
+      Viết đúng mục 4.1 và 4.2 của docs/diagrams/class/class.txt: LinkState, Action (TOGGLE_HELP, QUIT, ARM, DISARM), Heartbeat, ArmAck, VehicleEvent; VehicleLink, Terminal, Clock. Chỉ định nghĩa, không có logic; mỗi lớp / hàm có docstring tiếng Việt nói ý nghĩa.
+
+    Mục đích:
+      Ba thành viên code theo cùng một chữ ký nên làm song song được (hành động Retro Sprint 1 số 1).
+
+    Test tự động: không (chỉ định nghĩa). Kiểm: pytest vẫn 14 passed; python -c "import rover .types, rover .hal" không lỗi.
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T1  Bảng phím
+    File code   : rover/keymap.py
+    File test   : tests/test_keymap.py
+
+    Kiến thức:
+      - Mọi phím được định nghĩa ở một chỗ (KEY_BINDINGS): hàm đổi phím -> hành động và bảng hướng dẫn đều đọc từ đó, nên thêm phím (US-03a, US-03b) chỉ thêm một dòng.
+
+    Công việc:
+      KEY_BINDINGS với 2 phím của story này: ("h", Action .TOGGLE_HELP, "ẩn / hiện hướng dẫn"), ("q", Action .QUIT, "thoát app"). action_for (key): không phân biệt hoa thường; None hoặc phím lạ -> None. help_lines (): mỗi dòng "H  ẩn / hiện hướng dẫn".
+
+    Mục đích:
+      Đổi phím người dùng bấm thành việc cần làm (AC2, AC3).
+
+    Test tự động (3 test, không cần terminal):
+      1. Phím H
+         Đầu vào : action_for ("h") và action_for ("H")
+         Mong đợi: cả hai trả Action .TOGGLE_HELP
+         Ý nghĩa : AC2, bấm chữ hoa hay thường đều được.
+      2. Phím Q
+         Đầu vào : action_for ("q") và action_for ("Q")
+         Mong đợi: Action .QUIT
+         Ý nghĩa : AC3.
+      3. Phím lạ, không có phím, bảng hướng dẫn
+         Đầu vào : action_for ("x"), action_for (None), help_lines ()
+         Mong đợi: None, None; help_lines có 2 dòng, bắt đầu bằng "H" và "Q"
+         Ý nghĩa : AC2 (bảng phím đúng); phím không dùng thì bỏ qua, app không lỗi.
+
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T2  Dựng nội dung khung màn hình
+    File code   : rover/screen.py
+    File test   : tests/test_screen.py
+
+    Kiến thức:
+      - Tách "dựng nội dung" (danh sách dòng chữ) khỏi "vẽ lên terminal" (curses, T3): phần dựng nội dung là hàm thuần, test được bằng so sánh chuỗi, không cần màn hình thật.
+
+    Công việc:
+      ViewModel (status_lines, message, show_help, help_lines) và render (view) -> list [str] theo mục 4.4 class.txt. Thứ tự dòng: tiêu đề "ROVER – điều khiển xe PX4 qua MAVLink", dòng kẻ, các dòng status_lines (chưa có thì in "Trạng thái: (chưa có dữ liệu)"), "Thông báo: <message>", dòng kẻ, bảng phím (khi show_help), dòng gợi ý "H: hướng dẫn   Q: thoát".
+
+    Mục đích:
+      Nội dung màn hình của AC1, AC2; story sau chỉ thêm dòng vào status_lines.
+
+    Test tự động (3 test):
+      1. Khung cơ bản
+         Đầu vào : ViewModel () mặc định
+         Mong đợi: có dòng tiêu đề, dòng "Thông báo:", dòng gợi ý "H: hướng dẫn   Q: thoát"; không có bảng phím
+         Ý nghĩa : AC1.
+      2. Bật hướng dẫn
+         Đầu vào : ViewModel (show_help = True, help_lines = ["H  ẩn / hiện hướng dẫn", "Q  thoát app"])
+         Mong đợi: hai dòng đó có trong kết quả
+         Ý nghĩa : AC2.
+      3. Dòng trạng thái và thông báo
+         Đầu vào : ViewModel (status_lines = ["dòng A", "dòng B"], message = "xin chào")
+         Mong đợi: "dòng A" đứng trước "dòng B", cả hai đứng trước dòng "Thông báo: xin chào"
+         Ý nghĩa : AC1 (vùng trạng thái, vùng thông báo đúng chỗ) – chỗ để US-02, US-03a thêm dòng.
+
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T3  Driver terminal và đồng hồ
+    File code   : rover/terminal.py, rover/clock.py
+
+    Kiến thức:
+      - curses: thư viện có sẵn của Python trên Linux, điều khiển terminal theo kiểu toàn màn hình: vẽ chữ ở vị trí bất kỳ, đọc từng phím không cần Enter.
+      - Các chế độ cần bật: curses .cbreak () (đọc phím ngay, Ctrl+C vẫn ngắt được), curses .noecho () (phím bấm không in lên màn hình), curses .curs_set (0) (ẩn con trỏ), stdscr .timeout (50) (getch chờ tối đa 50 ms, không có phím trả -1). Khi thoát phải gọi ngược lại: nocbreak, echo, curs_set (1), endwin; nếu quên, terminal sau khi thoát bị "đơ" (gõ không hiện chữ).
+      - Tiếng Việt: gọi locale .setlocale (locale .LC_ALL, "") trước curses .initscr () để curses in đúng UTF-8.
+      - addstr vào ô cuối cùng của màn hình gây lỗi curses .error: cắt mỗi dòng còn tối đa (số cột - 1) ký tự, bỏ các dòng vượt số hàng.
+      - time .monotonic (): đồng hồ chỉ tăng, không bị ảnh hưởng khi đổi giờ hệ thống; dùng cho Clock.
+
+    Công việc:
+      CursesTerminal hiện thực Terminal (mục 4.9): __init__ mở curses với các chế độ trên; read_key () đổi mã phím getch sang ký tự (chỉ nhận ký tự in được, còn lại trả None); draw (lines) = erase, addstr từng dòng đã cắt, refresh; close () trả terminal về bình thường, gọi nhiều lần không lỗi. SystemClock hiện thực Clock.
+
+    Mục đích:
+      Phần chạm vào terminal thật của AC1, AC3; tách riêng để mọi phần khác test bằng giả lập.
+
+    Test tự động: không (cần terminal thật); kiểm bằng AC1, AC3 sau T4.
+    Kiểm tay    : sau T4: python -m rover hiện khung (AC1); bấm Q, Ctrl+C thoát, terminal bình thường (AC3)
+    Trạng thái  : TODO
+
+T4  RoverApp, lệnh "python -m rover", giả lập dùng chung, README
+    File code   : rover/app.py, rover/cli.py (sửa), tests/fakes.py, README.md (mục chạy app)
+    File test   : tests/test_app.py, tests/test_cli.py (thêm 1 test)
+
+    Kiến thức:
+      - Vòng lặp một luồng (super-loop): mỗi lần step () đọc phím, xử lý, vẽ lại khung; read_key chờ tối đa 50 ms nên vòng lặp chạy khoảng 20 lần/giây mà không tốn CPU.
+      - try / finally trong run (): phần finally luôn chạy, kể cả khi người dùng bấm Ctrl+C (Python ném KeyboardInterrupt); đặt terminal .close () ở đó để terminal luôn được trả về bình thường.
+      - Truyền terminal, clock từ ngoài vào RoverApp (không tự tạo bên trong) để test truyền giả lập vào.
+      - argparse: đổi lệnh con thành không bắt buộc (required = False); không có lệnh con thì chạy app.
+
+    Công việc:
+      1. tests/fakes.py: FakeClock, FakeTerminal theo mục 5 class.txt.
+      2. RoverApp (terminal, clock, link = None) với step (), run () theo mục 3, 4.7 class.txt (phần link để US-02/T3 nối). run_app () tạo CursesTerminal, SystemClock rồi chạy.
+      3. cli .main (argv = None, connect_fn = connect, app_fn = run_app): không có lệnh con -> return app_fn (); lệnh connect giữ nguyên.
+      4. README: thêm mục "Chạy app điều khiển" (lệnh python -m rover, bảng phím H, Q).
+
+    Mục đích:
+      Nối T1–T3 thành app chạy được; là khung để US-02, US-03a nối vào.
+
+    Test tự động (5 test, dùng FakeTerminal, FakeClock):
+      1. Vòng đầu vẽ khung
+         Đầu vào : FakeTerminal (keys = []); gọi step () một lần
+         Mong đợi: step trả True; last_lines có dòng gợi ý "H: hướng dẫn   Q: thoát"
+         Ý nghĩa : AC1.
+      2. Bấm H hai lần
+         Đầu vào : keys = ["h", "h"]; gọi step () hai lần, xem last_lines sau mỗi lần
+         Mong đợi: lần 1 có dòng "Q  thoát app"; lần 2 không còn
+         Ý nghĩa : AC2.
+      3. Bấm Q
+         Đầu vào : keys = ["q"]; gọi run ()
+         Mong đợi: run trả 0; terminal .closed = True
+         Ý nghĩa : AC3 (thoát, trả terminal về bình thường).
+      4. Ctrl+C giữa chừng
+         Đầu vào : FakeTerminal mà read_key ném KeyboardInterrupt; gọi run ()
+         Mong đợi: run trả 0, không ném lỗi ra ngoài; terminal .closed = True
+         Ý nghĩa : AC3 (Ctrl+C thoát gọn, không traceback).
+      5. CLI không có lệnh con (tests/test_cli.py)
+         Đầu vào : main ([], app_fn = hàm giả lập trả 0 và ghi lại là đã được gọi)
+         Mong đợi: hàm giả lập được gọi đúng 1 lần; main trả 0; 4 test cũ của US-01 vẫn pass
+         Ý nghĩa : AC1 (python -m rover mở app), lệnh connect của US-01 không bị hỏng.
+
+    Kiểm tay    : AC1, AC2, AC3 theo docs/acceptance/US-04-acceptance.txt
+    Trạng thái  : TODO
+
+T5  Kiểm thử chấp nhận
+    File        : docs/acceptance/US-04-acceptance.txt (bản hướng dẫn đã viết ở Sprint Planning; T5 là chạy và điền kết quả)
+
+    Công việc:
+      Chạy AC1–AC3 theo file, điền thông tin lần kiểm và bảng kết quả; AC nào không đạt thì ghi bug-log trước khi sửa (hành động Retro 6).
+
+    Test tự động: không
+    Kiểm tay    : AC1–AC3
+    Trạng thái  : TODO
+
+4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
+------------------------------
+- 2026-11-10: Chọn kiểu điều khiển bằng phím đơn, màn hình tự cập nhật (không gõ lệnh rồi Enter, không menu số).
+- 2026-11-10: Bỏ AC "bấm phím không dùng thì báo"; phím không dùng được bỏ qua.
+- 2026-11-10: Bảng phím toàn app: W/S/A/D lái (US-03b), Space dừng (US-03b), R mở khóa, F khóa (US-03a), H hướng dẫn, Q thoát.

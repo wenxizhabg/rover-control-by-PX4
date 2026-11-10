@@ -3,7 +3,7 @@ TỔNG QUAN HỆ THỐNG – CHÚ THÍCH SƠ ĐỒ
 File nguồn : docs/diagrams/system-overview/system-overview.mmd (Mermaid, sửa sơ đồ ở file này)
 File ảnh   : docs/diagrams/system-overview/system-overview.svg (xuất từ file nguồn, dùng để xem và nhúng README; cần đưa vào Word/slide thì xuất thêm PNG từ mermaid.live)
 Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI). Bố cục có thể khác nhau giữa các phiên bản Mermaid, nên ảnh trong repo là bản chuẩn để cả nhóm cùng xem.
-Phiên bản  : kết quả đầu ra Sprint 1 (US-01). Các khối xám là dự kiến từ Sprint 2 (US-02, US-03, US-04), chưa refinement.
+Phiên bản  : kết quả đầu ra Sprint 1 (US-01). Các khối xám là dự kiến Sprint 2 (US-04, US-02, US-03a) và US-03b (chưa vào sprint), theo kiến trúc ở docs/diagrams/class/; cập nhật sau Sprint Planning Sprint 2 (2026-11-10).
 
 1. MÔI TRƯỜNG CHẠY
 ------------------
@@ -43,7 +43,7 @@ Mũi tên xám nét đứt      : luồng dự kiến, chưa đánh số (xem m�
 
 5 rover/vehicle_info.py -> rover/connection.py
     Dữ liệu : VehicleInfo hoặc None
-    Ý nghĩa : Là xe thì trả VehicleInfo; là phần mềm khác (autopilot = INVALID) thì trả None, connection.py quay lại ③ chờ tiếp.
+    Ý nghĩa : Là xe thì trả VehicleInfo; là phần mềm khác (autopilot = INVALID) thì trả None, connection.py quay lại 3 chờ tiếp.
 
 6  rover/connection.py -> rover/cli.py
     Dữ liệu : VehicleInfo hoặc ConnectionTimeout
@@ -55,12 +55,13 @@ Mũi tên xám nét đứt      : luồng dự kiến, chưa đánh số (xem m�
 
 Đặc điểm hiện tại: dữ liệu chỉ đi một chiều từ xe tới app; app dừng ngay sau HEARTBEAT đầu tiên của xe.
 
-5. LUỒNG DỰ KIẾN (CHƯA CHÍNH XÁC)
----------------------------------
-- Người vận hành -> CLI tương tác (US-04): thao tác ra lệnh dễ hơn lệnh connect hiện có.
-- CLI tương tác -> Gửi lệnh di chuyển (US-03) -> PX4 SITL: lần đầu có chiều dữ liệu từ app tới xe.
-- PX4 SITL -> Theo dõi kết nối liên tục (US-02) -> CLI tương tác: nhận HEARTBEAT liên tục để biết kết nối còn hay mất theo thời gian thực.
-Phần này sẽ được viết lại sau khi refinement và sprint planning Sprint 2.
+5. LUỒNG DỰ KIẾN (SPRINT 2, CHƯA CHÍNH XÁC)
+-------------------------------------------
+- Người vận hành -> rover/app.py (US-04): mở app bằng "python -m rover", màn hình tự cập nhật, điều khiển bằng phím đơn; lệnh "python -m rover connect" của US-01 vẫn giữ.
+- rover/app.py -> rover/link_monitor.py (US-02): mỗi HEARTBEAT nhận được thì cập nhật trạng thái kết nối; quá 3 s không có HEARTBEAT thì báo mất kết nối.
+- rover/app.py -> rover/mavlink_link.py (US-02, US-03a): app chỉ nói chuyện với xe qua lớp này (lớp trừu tượng VehicleLink); lớp này dùng lại parse_heartbeat của rover/vehicle_info.py và các hàm của rover/arm.py.
+- rover/mavlink_link.py <-> PX4 SITL: lần đầu có chiều dữ liệu từ app tới xe (lệnh mở / khóa); chiều về gồm HEARTBEAT và phản hồi lệnh (ACK).
+- rover/app.py -> Lái xe (US-03b): chưa vào Sprint 2, chờ spike chọn cách PX4 rover nhận lệnh di chuyển.
 
 6. QUY TẮC CẬP NHẬT
 -------------------

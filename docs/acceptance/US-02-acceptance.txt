@@ -1,0 +1,78 @@
+KIỂM THỬ CHẤP NHẬN – US-04: Khung app điều khiển bằng bàn phím
+==============================================================
+AC gốc: docs/agile/user-stories/US-04.txt (mục 2). File này chỉ ghi cách kiểm và kết quả.
+
+THÔNG TIN LẦN KIỂM
+------------------
+Ngày giờ kiểm      :
+Người kiểm         :
+Máy / hệ điều hành :
+Phiên bản code     :   (git log --oneline -1)
+
+CHUẨN BỊ
+--------
+1. Mở 1 terminal ở thư mục gốc repo (story này không cần mô phỏng):
+       source venv/bin/activate
+2. Kiểm tra test tự động đều pass:
+       pytest
+   Kết quả cần thấy: dòng cuối báo toàn bộ "passed".
+3. Cửa sổ terminal nên rộng ít nhất 80 cột, cao ít nhất 20 dòng (khung bị cắt nếu nhỏ hơn).
+
+AC1 – Mở app
+------------
+Bước:
+    python3 -m rover
+Đạt khi:
+    [ ] Terminal chuyển sang màn hình của app (nội dung cũ trên terminal biến mất)
+    [ ] Có dòng tiêu đề "ROVER – điều khiển xe PX4 qua MAVLink"
+    [ ] Có vùng trạng thái (dòng "Trạng thái" hoặc các dòng trạng thái)
+    [ ] Có dòng "Thông báo:"
+    [ ] Có dòng gợi ý "H: hướng dẫn   Q: thoát"
+    [ ] Không có con trỏ nhấp nháy; bấm thử vài chữ (ví dụ x, y) thì chữ không bị in lên màn hình
+Giữ app đang chạy để kiểm AC2.
+
+AC2 – Xem hướng dẫn phím
+------------------------
+Bước:
+    1. Bấm h (chữ thường)
+    2. Bấm h lần nữa
+    3. Bấm H (chữ hoa, Shift + h)
+Đạt khi:
+    [ ] Sau bước 1: hiện bảng phím, mỗi phím một dòng kèm giải thích (ít nhất "H  ẩn / hiện hướng dẫn", "Q  thoát app")
+    [ ] Sau bước 2: bảng phím ẩn đi
+    [ ] Sau bước 3: bảng phím hiện lại (chữ hoa cũng được)
+
+AC3 – Thoát app
+---------------
+Bước:
+    1. Bấm q. Sau khi về dấu nhắc của terminal, gõ:
+           echo "exit=$?"
+    2. Mở lại app (python3 -m rover), bấm Ctrl+C. Sau khi về dấu nhắc, gõ:
+           echo "exit=$?"
+    3. Sau mỗi lần thoát, gõ thử: ls rồi Enter
+Đạt khi:
+    [ ] Bấm q: app thoát ngay, in "exit=0"
+    [ ] Bấm Ctrl+C: app thoát ngay, KHÔNG in lỗi "Traceback" hay "KeyboardInterrupt", in "exit=0"
+    [ ] Sau khi thoát: con trỏ hiện lại, chữ gõ hiện lên màn hình, lệnh ls chạy và xuống dòng bình thường
+Nếu terminal bị "đơ" sau khi thoát (gõ không hiện chữ): gõ mù lệnh reset rồi Enter để khôi phục, và ghi AC3 là Không đạt.
+
+KIỂM TRA LẠI US-01 (lệnh cũ không bị hỏng)
+------------------------------------------
+Không phải AC của US-04, chỉ để chắc việc sửa cli.py không ảnh hưởng: bật mô phỏng như US-01, chạy
+    python3 -m rover connect; echo "exit=$?"
+    [ ] Vẫn in "Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER" và "exit=0"
+
+BẢNG KẾT QUẢ
+------------
+AC  | Kết quả (Đạt / Không đạt) | Ghi chú
+----+---------------------------+--------
+AC1 |                           |
+AC2 |                           |
+AC3 |                           |
+
+Kết luận US-04:
+
+NẾU CÓ AC KHÔNG ĐẠT
+-------------------
+1. Ghi lỗi vào docs/agile/bug-log.txt (trạng thái MO): lệnh đã chạy, kết quả thấy, kết quả mong đợi.
+2. Không chuyển US-04 sang XONG; báo lại để sửa rồi kiểm lại AC đó.
