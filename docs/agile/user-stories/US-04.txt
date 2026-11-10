@@ -49,7 +49,7 @@ T0  Hợp đồng kiểu dữ liệu và interface (làm ngay sau Sprint Plannin
 
     Test tự động: không (chỉ định nghĩa). Kiểm: pytest vẫn 14 passed; python -c "import rover .types, rover .hal" không lỗi.
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DONE
 
 T1  Bảng phím
     File code   : rover/keymap.py
@@ -79,7 +79,7 @@ T1  Bảng phím
          Ý nghĩa : AC2 (bảng phím đúng); phím không dùng thì bỏ qua, app không lỗi.
 
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T2  Dựng nội dung khung màn hình
     File code   : rover/screen.py

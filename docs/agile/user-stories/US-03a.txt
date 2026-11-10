@@ -79,7 +79,7 @@ T1  Logic mở / khóa xe
          Ý nghĩa : AC3.
 
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T2  Gửi lệnh mở / khóa và đọc phản hồi (driver MAVLink)
     File code   : rover/mavlink_link.py (thêm send_arm, đọc COMMAND_ACK trong poll)
