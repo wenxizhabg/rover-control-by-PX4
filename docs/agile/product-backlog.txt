@@ -1,21 +1,33 @@
 PRODUCT BACKLOG – Hệ thống điều khiển xe rover qua Wi-Fi dùng PX4
 ==================================================================
-Product Owner:  Vũ Duy Dương, Trương Nhật Hoàng, Đinh Trần Thảo Phương 
+Product Owner:  Vũ Duy Dương, Trương Nhật Hoàng, Đinh Trần Thảo Phương
 Quy tắc:
 - Mỗi dòng là một user story; thứ tự từ trên xuống = độ ưu tiên.
 - Chỉ thêm story mới sau khi kết thúc sprint (review + retrospective).
-- Chi tiết story (tiêu chí chấp nhận, task, yêu cầu test) nằm trong file US-xx.txt.
+- Chi tiết story (tiêu chí chấp nhận, task, yêu cầu test) nằm trong file docs/agile/user-stories/US-xx.txt.
 - Trạng thái: MOI (mới) | SAN_SANG (đã làm rõ, chờ sprint) | DANG_LAM (trong sprint) | XONG (đạt kiểm thử chấp nhận)
+- Điểm: story point, ước lượng tương đối, lấy US-01 = 5 điểm làm mốc so sánh.
 
-Ưu tiên | Mã    | Story (tóm tắt)                                   | Sprint | Trạng thái | File chi tiết
---------+-------+---------------------------------------------------+--------+------------+--------------
-1       | US-01 | Bật mô phỏng Gazebo và kết nối đến xe             |  S1    | XONG       | US-01.txt
-2       | US-02 | Theo dõi realtime trạng thái kết nối với xe       |        | MOI        |
-3       | US-03 | Ra lệnh cơ bản cho xe di chuyển                   |        | MOI        |
-4       | US-04 | App CLI đơn giản để người dùng dễ thao tác ra lệnh|        | MOI        |
+Ưu tiên | Mã     | Story (tóm tắt)                                    | Điểm | Sprint | Trạng thái | File chi tiết
+--------+--------+----------------------------------------------------+------+--------+------------+--------------
+1       | US-01  | Bật mô phỏng Gazebo và kết nối đến xe              |  5   |  S1    | XONG       | US-01.txt
+2       | US-04  | Khung app điều khiển bằng bàn phím                 |  5   |  S2    | DANG_LAM   | US-04.txt
+3       | US-02  | Thấy tình trạng kết nối với xe liên tục            |  3   |  S2    | DANG_LAM   | US-02.txt
+4       | US-03a | Mở khóa / khóa xe bằng phím                        |  3   |  S2    | DANG_LAM   | US-03a.txt
+5       | US-03b | Lái xe tiến, lùi, quay bằng phím                   |  8   |        | MOI        | US-03b.txt
+
+Ghi chú refinement (2026-11-10)
+-------------------------------
+- US-03 (Ra lệnh cơ bản cho xe di chuyển) tách thành US-03a (mở/khóa xe) và US-03b (lái xe), vì mỗi phần cho kết quả người vận hành thấy được riêng và US-03 gộp lại quá lớn cho một sprint.
+- US-04 làm rõ: app mở một lần, màn hình tự cập nhật, điều khiển bằng phím đơn (không gõ lệnh rồi Enter), khác lệnh "python -m rover connect" hiện có (chạy một lần rồi thoát). Lệnh connect của US-01 giữ nguyên.
+- US-04 lên ưu tiên 2 vì là khung app; US-02, US-03a, US-03b chỉ thêm phần của mình vào khung này.
+- US-02: báo mất kết nối khi quá 3 s không nhận HEARTBEAT.
+- US-03b: mỗi lần bấm phím lái, xe chạy khoảng 1 s rồi tự dừng; Space dừng ngay. Ước lượng 8 điểm còn chưa chắc (chưa chọn cách PX4 rover nhận lệnh di chuyển); cần spike trước khi đưa vào sprint, vì vậy giữ trạng thái MOI.
 
 Lịch sử thay đổi backlog
 ------------------------
+2026-11-10  US-04, US-02, US-03a: SAN_SANG -> DANG_LAM (bắt đầu Sprint 02, hạn 2026-11-11 23:59).
+2026-11-10  Refinement: US-03 tách thành US-03a, US-03b; làm rõ US-04; thêm cột Điểm; sắp lại ưu tiên (US-04 lên 2); US-04, US-02, US-03a: MOI -> SAN_SANG.
 2026-11-09  Thêm US-02, US-03, US-04 từ phản hồi của khách hàng ở sprint review Sprint 01.
 2026-11-09  US-01: DANG_LAM -> XONG (sprint review Sprint 01, AC1-AC4 đều Đạt)
 2026-11-08  Thêm US-01 (yêu cầu đầu tiên của khách hàng).
