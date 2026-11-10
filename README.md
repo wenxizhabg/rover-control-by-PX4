@@ -23,6 +23,11 @@ Agile (Scrum kết hợp các thực hành XP):
 ## Trạng thái hiện tại
 Sprint 1 – US-01: Bật mô phỏng Gazebo và kết nối đến xe.
 
+## Tổng quan hệ thống
+![Tổng quan hệ thống](docs/diagrams/system-overview/system-overview.svg)
+
+Chú thích ký hiệu và luồng chạy: [docs/diagrams/system-overview/system-overview.txt](docs/diagrams/system-overview/system-overview.txt)
+
 ## Quy trình làm việc theo Agile
 
 Một vòng lặp gồm các bước sau. Hết một vòng thì quay lại bước 1 cho sprint tiếp theo.
@@ -52,7 +57,7 @@ Một vòng lặp gồm các bước sau. Hết một vòng thì quay lại bư�
 - Viết tiêu chí chấp nhận: khách hàng kiểm tra bằng cách nào, kết quả thế nào thì đạt.
 - Chia story thành các task nhỏ. Với mỗi task, ghi rõ phần nào test tự động, phần nào kiểm bằng tay.
 - Đặt mục tiêu sprint, gói trong một câu.
-- File: `docs/agile/US-xx.txt`, `docs/agile/sprint-xx.txt`
+- File: `docs/agile/stories/US-xx.txt`, `docs/agile/sprints/sprint-xx.txt`
 
 ### 3. Thực hiện sprint – làm từng task
 Với mỗi task, làm theo thứ tự:
@@ -67,8 +72,8 @@ Trong suốt sprint, nhóm họp ngắn hằng ngày (daily stand-up). Mỗi ng�
 đã làm gì, sẽ làm gì, đang vướng gì.
 
 ### 4. Kiểm thử chấp nhận
-- Khi tất cả task đã `DONE`, nhóm tự chạy các tiêu chí chấp nhận (AC) với xe mô phỏng.
-- Ghi kết quả Đạt/Không đạt cho từng AC vào `docs/agile/sprint-xx.txt`.
+- Khi tất cả task đã `DONE`, nhóm tự chạy các tiêu chí chấp nhận (AC) với xe mô phỏng theo `docs/acceptance/US-xx-acceptance.txt`.
+- Ghi kết quả Đạt/Không đạt cho từng AC vào `docs/agile/sprints/sprint-xx.txt`.
 
 ### 5. Sprint review – đánh giá sản phẩm
 - Trình diễn phần mềm đã làm được trong sprint.
@@ -78,7 +83,7 @@ Trong suốt sprint, nhóm họp ngắn hằng ngày (daily stand-up). Mỗi ng�
 ### 6. Sprint retrospective – đánh giá cách làm
 - Điều gì làm tốt, điều gì cần cải thiện, hành động cụ thể cho sprint sau.
 - Cùng thống nhất story tiếp theo và thêm vào product backlog.
-- File: `docs/agile/sprint-xx.txt` (phần Retrospective)
+- File: `docs/agile/sprints/sprint-xx.txt` (phần Retrospective)
 
 ### Trạng thái dùng trong tài liệu
 | Đối tượng | Các trạng thái |
@@ -87,14 +92,21 @@ Trong suốt sprint, nhóm họp ngắn hằng ngày (daily stand-up). Mỗi ng�
 | Task  | `TODO` → `DOING` → `DONE` |
 | Lỗi   | `MO` → `DANG_SUA` → `DA_SUA` |
 
-## Tài liệu Agile
+## Tài liệu dự án
+Thư mục `docs/` chia theo người đọc:
+- `docs/agile/`: tài liệu nội bộ của nhóm phát triển (quy trình Scrum).
+- `docs/acceptance/`: tài liệu cho khách hàng / Product Owner tự chạy kiểm thử chấp nhận.
+- `docs/diagrams/`: các lưu đồ, sơ đồ dùng trong dự án; mỗi sơ đồ một thư mục gồm nguồn `.mmd`, ảnh `.svg`, chú thích `.txt`.
+
 | File | Nội dung |
 |---|---|
 | `docs/agile/product-backlog.txt` | Danh sách user story theo thứ tự ưu tiên và trạng thái |
-| `docs/agile/US-xx.txt` | Chi tiết từng story: tiêu chí chấp nhận, task, yêu cầu test |
-| `docs/agile/sprint-xx.txt` | Mục tiêu sprint, sprint backlog, kết quả review và retrospective |
 | `docs/agile/definition-of-done.txt` | Điều kiện để task và story được tính là xong |
 | `docs/agile/bug-log.txt` | Nhật ký lỗi |
+| `docs/agile/stories/US-xx.txt` | Chi tiết từng story: tiêu chí chấp nhận, task, yêu cầu test |
+| `docs/agile/sprints/sprint-xx.txt` | Mục tiêu sprint, sprint backlog, kết quả review và retrospective |
+| `docs/acceptance/US-xx-acceptance.txt` | Thủ tục kiểm thử chấp nhận từng story: lệnh chạy, kết quả mong đợi cho từng AC |
+| `docs/diagrams/system-overview/` | Sơ đồ tổng quan hệ thống và chú thích |
 
 ## Môi trường
 - Ubuntu, VS Code

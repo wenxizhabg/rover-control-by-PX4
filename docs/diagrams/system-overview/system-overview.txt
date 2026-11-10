@@ -1,0 +1,70 @@
+TỔNG QUAN HỆ THỐNG – CHÚ THÍCH SƠ ĐỒ
+====================================
+File nguồn : docs/diagrams/system-overview/system-overview.mmd (Mermaid, sửa sơ đồ ở file này)
+File ảnh   : docs/diagrams/system-overview/system-overview.svg (xuất từ file nguồn, dùng để xem và nhúng README; cần đưa vào Word/slide thì xuất thêm PNG từ mermaid.live)
+Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI). Bố cục có thể khác nhau giữa các phiên bản Mermaid, nên ảnh trong repo là bản chuẩn để cả nhóm cùng xem.
+Phiên bản  : kết quả đầu ra Sprint 1 (US-01). Các khối xám là dự kiến từ Sprint 2 (US-02, US-03, US-04), chưa refinement.
+
+1. MÔI TRƯỜNG CHẠY
+------------------
+Toàn bộ hệ thống chạy trên một máy Ubuntu, các thành phần nói chuyện với nhau qua localhost.
+- Terminal A: chạy mô phỏng bằng lệnh "make px4_sitl gz_r1_rover" (PX4 SITL + Gazebo).
+- Terminal B: chạy app rover của nhóm bằng lệnh "python -m rover connect".
+
+2. KÝ HIỆU KHỐI
+---------------
+Khối nền xanh, viền đen đậm      : đã có, code của nhóm (rover/cli.py, rover/connection.py, rover/vehicle_info.py).
+Khối nền vàng, viền đen đậm      : đã có, không do nhóm viết (người vận hành, PX4 SITL, Gazebo).
+Khối không màu, viền xám nét đứt : dự kiến cho story tiếp theo, chưa thiết kế chi tiết, tên và vị trí có thể đổi sau refinement.
+
+3. KÝ HIỆU MŨI TÊN
+------------------
+Mũi tên đen đậm, có số   : luồng chạy của app khi gõ lệnh connect; số tăng dần theo thứ tự xảy ra (xem mục 4).
+Mũi tên đen mảnh, không số: liên kết giữa phần mềm bên ngoài, không thuộc luồng của app (PX4 <-> Gazebo: PX4 đọc cảm biến và điều khiển động cơ của xe mô phỏng).
+Mũi tên xám nét đứt      : luồng dự kiến, chưa đánh số (xem mục 5).
+
+4. LUỒNG CHẠY ĐÃ CÓ (SPRINT 1)
+------------------------------
+1  Người vận hành -> rover/cli.py
+    Dữ liệu : lệnh python -m rover connect
+    Ý nghĩa : Người vận hành gõ lệnh trong Terminal B, có thể thêm --timeout, --url.
+
+2  rover/cli.py -> rover/connection.py
+    Dữ liệu : url, timeout
+    Ý nghĩa : cli.py đọc tùy chọn rồi gọi connect; mặc định url = udpin:0.0.0.0:14540, timeout = 10 s.
+
+3  PX4 SITL -> rover/connection.py
+    Dữ liệu : HEARTBEAT (MAVLink 2 / UDP)
+    Ý nghĩa : connection.py mở cổng 14540 và chờ; PX4 gửi HEARTBEAT khoảng 1 lần/giây từ cổng 14580 tới cổng 14540.
+
+4  rover/connection.py -> rover/vehicle_info.py
+    Dữ liệu : HEARTBEAT đã giải mã
+    Ý nghĩa : Mỗi HEARTBEAT nhận được chuyển cho parse_heartbeat để biết có phải của xe không.
+
+5 rover/vehicle_info.py -> rover/connection.py
+    Dữ liệu : VehicleInfo hoặc None
+    Ý nghĩa : Là xe thì trả VehicleInfo; là phần mềm khác (autopilot = INVALID) thì trả None, connection.py quay lại ③ chờ tiếp.
+
+6  rover/connection.py -> rover/cli.py
+    Dữ liệu : VehicleInfo hoặc ConnectionTimeout
+    Ý nghĩa : Thấy xe thì trả VehicleInfo; hết thời gian chờ mà không thấy xe thì ném ConnectionTimeout.
+
+7  rover/cli.py -> Người vận hành
+    Dữ liệu : dòng thông báo và mã thoát
+    Ý nghĩa : In "Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER" ra stdout (mã 0), hoặc "Không nhận được heartbeat từ xe sau 10 s" ra stderr (mã 1).
+
+Đặc điểm hiện tại: dữ liệu chỉ đi một chiều từ xe tới app; app dừng ngay sau HEARTBEAT đầu tiên của xe.
+
+5. LUỒNG DỰ KIẾN (CHƯA CHÍNH XÁC)
+---------------------------------
+- Người vận hành -> CLI tương tác (US-04): thao tác ra lệnh dễ hơn lệnh connect hiện có.
+- CLI tương tác -> Gửi lệnh di chuyển (US-03) -> PX4 SITL: lần đầu có chiều dữ liệu từ app tới xe.
+- PX4 SITL -> Theo dõi kết nối liên tục (US-02) -> CLI tương tác: nhận HEARTBEAT liên tục để biết kết nối còn hay mất theo thời gian thực.
+Phần này sẽ được viết lại sau khi refinement và sprint planning Sprint 2.
+
+6. QUY TẮC CẬP NHẬT
+-------------------
+- Khi story thay đổi cấu trúc hoặc luồng (DoD story, điều 4): sửa system-overview.mmd, xuất lại system-overview.svg, sửa file này (cả 3 file nằm trong docs/diagrams/system-overview/); giữ số trên sơ đồ khớp với mục 4.
+- Ba file (nguồn .mmd, ảnh .svg, chú thích .txt) luôn được commit cùng nhau trong một commit.
+- Đổi dòng "Phiên bản" ở đầu file và dòng title trong file .mmd theo sprint mới nhất.
+- Trong file .mmd, các dòng linkStyle tô màu mũi tên theo thứ tự khai báo (đếm từ 0); thêm hoặc bớt mũi tên thì sửa lại các số đó.

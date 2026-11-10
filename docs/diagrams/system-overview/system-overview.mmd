@@ -1,0 +1,53 @@
+---
+title: Tổng quan hệ thống – kết quả đầu ra Sprint 1 (US-01) – chú thích tại docs/system-overview.txt
+config:
+  flowchart:
+    curve: linear
+---
+flowchart LR
+    %% Khối đã có: người dùng và phần mềm không do nhóm viết
+    user["Người vận hành"]
+    px4["PX4 SITL - autopilot<br/>(Terminal A)"]
+    gz["Gazebo - xe r1_rover<br/>(Terminal A)"]
+
+    %% Khối đã có: code của nhóm (app rover, Terminal B)
+    cli["rover/cli.py<br/>main, run_connect"]
+    conn["rover/connection.py<br/>connect"]
+    vi["rover/vehicle_info.py<br/>parse_heartbeat"]
+
+    %% Khối dự kiến cho các story tiếp theo, chưa thiết kế chi tiết
+    ui2["CLI tương tác<br/>(US-04)"]
+    mon2["Theo dõi kết nối<br/>liên tục (US-02)"]
+    cmd2["Gửi lệnh di chuyển<br/>(US-03)"]
+
+    %% --- ĐỊNH HÌNH BỐ CỤC CHÍNH ---
+    user -->|"1"| cli
+    cli -->|"2"| conn
+    conn -->|"4"| vi
+    
+    px4 -->|"3"| conn
+    
+    vi -->|"5"| conn
+    conn -->|"6"| cli
+    cli -->|"7"| user
+
+    px4 <--> gz
+
+    %% Luồng dự kiến
+    user -.-> ui2
+    ui2 -.-> cmd2
+    cmd2 -.-> px4
+    px4 -.-> mon2
+    mon2 -.-> ui2
+
+    classDef done fill:#cfe2ff,stroke:#000,stroke-width:2px,color:#000
+    classDef ext fill:#ffe8a3,stroke:#000,stroke-width:2px,color:#000
+    classDef plan fill:none,stroke:#aaa,stroke-width:1px,stroke-dasharray:5 5,color:#aaa
+
+    class cli,conn,vi done
+    class user,px4,gz ext
+    class ui2,mon2,cmd2 plan
+
+    linkStyle 0,1,2,3,4,5,6 stroke:#000,stroke-width:2px,color:#000
+    linkStyle 7 stroke:#000,stroke-width:1px,color:#000
+    linkStyle 8,9,10,11,12 stroke:#aaa,stroke-width:1px,color:#aaa
