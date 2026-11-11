@@ -79,7 +79,7 @@ T1  Bảng phím
          Ý nghĩa : AC2 (bảng phím đúng); phím không dùng thì bỏ qua, app không lỗi.
 
     Kiểm tay    : không
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T2  Dựng nội dung khung màn hình
     File code   : rover/screen.py
@@ -109,7 +109,7 @@ T2  Dựng nội dung khung màn hình
          Ý nghĩa : AC1 (vùng trạng thái, vùng thông báo đúng chỗ) – chỗ để US-02, US-03a thêm dòng.
 
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T3  Driver terminal và đồng hồ
     File code   : rover/terminal.py, rover/clock.py
