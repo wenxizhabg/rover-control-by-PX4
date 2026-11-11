@@ -145,13 +145,13 @@ T3  Nối vào app
          Ý nghĩa : AC1, AC2, AC4 (chữ người dùng thấy).
 
     Kiểm tay    : AC1–AC4 theo docs/acceptance/US-02-acceptance.txt
-    Trạng thái  : TODO
+    Trạng thái  : DONE
 
 T4  Kiểm thử chấp nhận
     File        : docs/acceptance/US-02-acceptance.txt (bản hướng dẫn đã viết ở Sprint Planning; T4 là chạy và điền kết quả)
     Công việc   : chạy AC1–AC4, điền kết quả; AC không đạt thì ghi bug-log trước khi sửa.
     Test tự động: không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------
