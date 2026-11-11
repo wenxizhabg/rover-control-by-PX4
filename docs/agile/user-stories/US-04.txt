@@ -129,7 +129,7 @@ T3  Driver terminal và đồng hồ
 
     Test tự động: không (cần terminal thật); kiểm bằng AC1, AC3 sau T4.
     Kiểm tay    : sau T4: python -m rover hiện khung (AC1); bấm Q, Ctrl+C thoát, terminal bình thường (AC3)
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T4  RoverApp, lệnh "python -m rover", giả lập dùng chung, README
     File code   : rover/app.py, rover/cli.py (sửa), tests/fakes.py, README.md (mục chạy app)
@@ -173,7 +173,7 @@ T4  RoverApp, lệnh "python -m rover", giả lập dùng chung, README
          Ý nghĩa : AC1 (python -m rover mở app), lệnh connect của US-01 không bị hỏng.
 
     Kiểm tay    : AC1, AC2, AC3 theo docs/acceptance/US-04-acceptance.txt
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T5  Kiểm thử chấp nhận
     File        : docs/acceptance/US-04-acceptance.txt (bản hướng dẫn đã viết ở Sprint Planning; T5 là chạy và điền kết quả)
