@@ -73,7 +73,7 @@ T1  Logic trạng thái kết nối
          Ý nghĩa : AC1 (giữ "ĐÃ KẾT NỐI" suốt 30 s).
 
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T2  Đọc HEARTBEAT liên tục từ xe (driver MAVLink)
     File code   : rover/mavlink_link.py
@@ -111,7 +111,7 @@ T2  Đọc HEARTBEAT liên tục từ xe (driver MAVLink)
          Ý nghĩa : vòng lặp app không bị đơ khi mất xe (AC2: vẫn bấm H, Q được).
 
     Kiểm tay    : không bắt buộc (kiểm cùng AC sau T3)
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T3  Nối vào app
     File code   : rover/app.py, rover/screen.py (thêm format_link_status), tests/fakes.py (thêm FakeVehicleLink: poll, push, close)
