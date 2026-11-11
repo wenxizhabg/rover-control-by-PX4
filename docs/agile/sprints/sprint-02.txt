@@ -41,7 +41,7 @@ US-02/T3   | Phương  | Nối trạng thái kết nối vào app               
 US-02/T4   | Phương  | Chạy kiểm thử chấp nhận US-02                   | không        | US-02/T3                  | DONE       |
 US-03a/T1  | Dương   | ArmControl                                      | có (6 test)  | US-04/T0                  | DONE       | 4f7024f
 US-03a/T2  | Dương   | send_arm, ArmAck, giả lập PX4 hai chiều         | có (3 test)  | US-02/T2                  | DONE       | a9e91fe
-US-03a/T3  | Dương   | Nối mở / khóa xe vào app (phím R, F)            | có (5 test)  | US-02/T3, US-03a/T1, T2   | TODO       |
+US-03a/T3  | Dương   | Nối mở / khóa xe vào app (phím R, F)            | có (5 test)  | US-02/T3, US-03a/T1, T2   | DOING       |
 US-03a/T4  | Dương   | Chạy kiểm thử chấp nhận US-03a                  | không        | US-03a/T3                 | TODO       |
 S02/DOC    | Hoàng   | Cập nhật sơ đồ cuối sprint (overview, class)    | không        | cả 3 story XONG           | TODO       |
 

@@ -152,7 +152,7 @@ T3  Nối vào app
          Ý nghĩa : AC4.
 
     Kiểm tay    : AC1–AC4 theo docs/acceptance/US-03a-acceptance.txt
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T4  Kiểm thử chấp nhận
     File        : docs/acceptance/US-03a-acceptance.txt (bản hướng dẫn đã viết ở Sprint Planning; T4 là chạy và điền kết quả)
