@@ -38,7 +38,7 @@ US-04/T5   | Hoàng   | Chạy kiểm thử chấp nhận US-04                 
 US-02/T1   | Phương  | LinkMonitor                                     | có (5 test)  | US-04/T0                  | DONE       | 8423cd0
 US-02/T2   | Phương  | MavlinkVehicleLink .poll, tests/mavlink_sim.py  | có (4 test)  | US-04/T0                  | DONE       | 087dbe9
 US-02/T3   | Phương  | Nối trạng thái kết nối vào app                  | có (4 test)  | US-04/T4, US-02/T1, T2    | DONE       | df3b9fa
-US-02/T4   | Phương  | Chạy kiểm thử chấp nhận US-02                   | không        | US-02/T3                  | DOING      |
+US-02/T4   | Phương  | Chạy kiểm thử chấp nhận US-02                   | không        | US-02/T3                  | DONE       |
 US-03a/T1  | Dương   | ArmControl                                      | có (6 test)  | US-04/T0                  | DONE       | 4f7024f
 US-03a/T2  | Dương   | send_arm, ArmAck, giả lập PX4 hai chiều         | có (3 test)  | US-02/T2                  | DONE       | a9e91fe
 US-03a/T3  | Dương   | Nối mở / khóa xe vào app (phím R, F)            | có (5 test)  | US-02/T3, US-03a/T1, T2   | TODO       |
@@ -85,7 +85,7 @@ SPRINT REVIEW (điền khi kết thúc sprint)
 ----------------------------------------
 Kết quả kiểm thử chấp nhận:
   US-04 : AC1:      AC2:      AC3:
-  US-02 : AC1:      AC2:      AC3:      AC4:
+  US-02 : AC1: Đạt  AC2: Đạt  AC3: Đạt  AC4: Đạt
   US-03a: AC1:      AC2:      AC3:      AC4:
 Story đạt:
 Phản hồi của khách hàng:

@@ -1,78 +1,87 @@
-KIỂM THỬ CHẤP NHẬN – US-04: Khung app điều khiển bằng bàn phím
-==============================================================
-AC gốc: docs/agile/user-stories/US-04.txt (mục 2). File này chỉ ghi cách kiểm và kết quả.
+KIỂM THỬ CHẤP NHẬN – US-02: Thấy tình trạng kết nối với xe liên tục
+===================================================================
+AC gốc: docs/agile/user-stories/US-02.txt (mục 2). File này chỉ ghi cách kiểm và kết quả.
 
 THÔNG TIN LẦN KIỂM
 ------------------
-Ngày giờ kiểm      :
-Người kiểm         :
-Máy / hệ điều hành :
-Phiên bản code     :   (git log --oneline -1)
+Ngày giờ kiểm      : 2026-11-11
+Người kiểm         : Đinh Trần Thảo Phương
+Máy / hệ điều hành : Ubuntu
+Phiên bản code     : df3b9fa
 
 CHUẨN BỊ
 --------
-1. Mở 1 terminal ở thư mục gốc repo (story này không cần mô phỏng):
+1. Mở 2 terminal:
+   - Terminal A: dùng cho mô phỏng PX4.
+   - Terminal B: dùng cho app. Chạy ở thư mục gốc repo:
        source venv/bin/activate
-2. Kiểm tra test tự động đều pass:
+2. Kiểm tra test tự động đều pass (Terminal B):
        pytest
    Kết quả cần thấy: dòng cuối báo toàn bộ "passed".
-3. Cửa sổ terminal nên rộng ít nhất 80 cột, cao ít nhất 20 dòng (khung bị cắt nếu nhỏ hơn).
+3. Đảm bảo không còn mô phỏng cũ đang chạy (Terminal A):
+       pkill -9 -f "gz sim"; pkill -9 -f px4
+4. Tắt QGroundControl nếu đang mở.
 
-AC1 – Mở app
-------------
-Bước:
+AC4 – Mở app khi chưa có xe (kiểm trước vì mô phỏng đang tắt)
+-------------------------------------------------------------
+Bước (Terminal B):
     python3 -m rover
 Đạt khi:
-    [ ] Terminal chuyển sang màn hình của app (nội dung cũ trên terminal biến mất)
-    [ ] Có dòng tiêu đề "ROVER – điều khiển xe PX4 qua MAVLink"
-    [ ] Có vùng trạng thái (dòng "Trạng thái" hoặc các dòng trạng thái)
-    [ ] Có dòng "Thông báo:"
-    [ ] Có dòng gợi ý "H: hướng dẫn   Q: thoát"
-    [ ] Không có con trỏ nhấp nháy; bấm thử vài chữ (ví dụ x, y) thì chữ không bị in lên màn hình
-Giữ app đang chạy để kiểm AC2.
+    [v] Vùng trạng thái hiện "Kết nối  : ĐANG CHỜ XE"
+    [v] App không báo lỗi, không tự thoát; bấm H, Q vẫn hoạt động bình thường
+Giữ app đang chạy để kiểm tiếp AC1.
 
-AC2 – Xem hướng dẫn phím
-------------------------
+AC1 – Đang kết nối
+------------------
 Bước:
-    1. Bấm h (chữ thường)
-    2. Bấm h lần nữa
-    3. Bấm H (chữ hoa, Shift + h)
+    Terminal A:
+        cd ~/PX4-Autopilot
+        make px4_sitl gz_r1_rover
+    Chờ dấu nhắc "pxh>"; quan sát Terminal B trong khoảng 30 s.
 Đạt khi:
-    [ ] Sau bước 1: hiện bảng phím, mỗi phím một dòng kèm giải thích (ít nhất "H  ẩn / hiện hướng dẫn", "Q  thoát app")
-    [ ] Sau bước 2: bảng phím ẩn đi
-    [ ] Sau bước 3: bảng phím hiện lại (chữ hoa cũng được)
+    [v] Khi mô phỏng chạy lên, Terminal B tự chuyển sang "Kết nối  : ĐÃ KẾT NỐI"
+    [v] Giữ "ĐÃ KẾT NỐI" suốt 30 s
+    [v] Số HEARTBEAT đã nhận tăng dần đều (khoảng 1 lần mỗi giây)
+    [v] Số giây "lần cuối ... trước" luôn nhỏ (dưới 2 s)
+Giữ nguyên cả 2 terminal để kiểm AC2.
 
-AC3 – Thoát app
----------------
+AC2 – Mất kết nối
+-----------------
 Bước:
-    1. Bấm q. Sau khi về dấu nhắc của terminal, gõ:
-           echo "exit=$?"
-    2. Mở lại app (python3 -m rover), bấm Ctrl+C. Sau khi về dấu nhắc, gõ:
-           echo "exit=$?"
-    3. Sau mỗi lần thoát, gõ thử: ls rồi Enter
+    Terminal A: bấm Ctrl+C (hoặc gõ shutdown) để tắt mô phỏng PX4.
+    Quan sát Terminal B.
 Đạt khi:
-    [ ] Bấm q: app thoát ngay, in "exit=0"
-    [ ] Bấm Ctrl+C: app thoát ngay, KHÔNG in lỗi "Traceback" hay "KeyboardInterrupt", in "exit=0"
-    [ ] Sau khi thoát: con trỏ hiện lại, chữ gõ hiện lên màn hình, lệnh ls chạy và xuống dòng bình thường
-Nếu terminal bị "đơ" sau khi thoát (gõ không hiện chữ): gõ mù lệnh reset rồi Enter để khôi phục, và ghi AC3 là Không đạt.
+    [v] Khoảng 3 s sau khi tắt mô phỏng (chậm nhất 4 s), dòng kết nối chuyển sang "Kết nối  : MẤT KẾT NỐI"
+    [v] Số giây "lần cuối ... trước" tiếp tục tăng lên (> 3.0 s)
+    [v] App không bị đơ/treo, vẫn bấm H (ẩn/hiện hướng dẫn) và Q bình thường
+Giữ app đang chạy ở Terminal B để kiểm AC3.
 
-KIỂM TRA LẠI US-01 (lệnh cũ không bị hỏng)
-------------------------------------------
-Không phải AC của US-04, chỉ để chắc việc sửa cli.py không ảnh hưởng: bật mô phỏng như US-01, chạy
-    python3 -m rover connect; echo "exit=$?"
-    [ ] Vẫn in "Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER" và "exit=0"
+AC3 – Kết nối lại
+-----------------
+Bước:
+    Terminal B đang mở và hiện "MẤT KẾT NỐI".
+    Terminal A: bật lại mô phỏng:
+        make px4_sitl gz_r1_rover
+    Chờ dấu nhắc "pxh>". Không tắt mở lại app ở Terminal B.
+Đạt khi:
+    [v] Khi mô phỏng chạy lên (có dấu nhắc "pxh>"), Terminal B tự chuyển lại thành "Kết nối  : ĐÃ KẾT NỐI"
+    [v] Số đếm HEARTBEAT tiếp tục tăng tiếp từ số trước đó (không bị reset về 0)
+    [v] Không cần phải thoát app mở lại
+
+Kết thúc: bấm q ở Terminal B để thoát app; tắt mô phỏng ở Terminal A.
 
 BẢNG KẾT QUẢ
 ------------
 AC  | Kết quả (Đạt / Không đạt) | Ghi chú
-----+---------------------------+--------
-AC1 |                           |
-AC2 |                           |
-AC3 |                           |
+----+---------------------------+---------------------------------------------------
+AC1 | Đạt                       | Nhận HEARTBEAT đều đặn mỗi giây, thời gian < 2 s
+AC2 | Đạt                       | Đúng 3 s sau khi tắt xe chuyển sang MẤT KẾT NỐI
+AC3 | Đạt                       | Bật lại xe tự kết nối lại, giữ nguyên số đếm
+AC4 | Đạt                       | Mở app khi chưa có xe hiện ĐANG CHỜ XE, không lỗi
 
-Kết luận US-04:
+Kết luận US-02: ĐẠT TẤT CẢ TIÊU CHÍ CHẤP NHẬN
 
 NẾU CÓ AC KHÔNG ĐẠT
 -------------------
 1. Ghi lỗi vào docs/agile/bug-log.txt (trạng thái MO): lệnh đã chạy, kết quả thấy, kết quả mong đợi.
-2. Không chuyển US-04 sang XONG; báo lại để sửa rồi kiểm lại AC đó.
+2. Không chuyển US-02 sang XONG; báo lại để sửa rồi kiểm lại AC đó.
