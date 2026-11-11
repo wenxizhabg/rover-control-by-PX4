@@ -1,4 +1,4 @@
-"""US-02/T2: driver giao tiếp MAVLink qua UDP (tầng driver, hiện thực VehicleLink). Đọc gói HEARTBEAT không chờ và giải mã thành sự kiện Heartbeat."""
+"""US-02/T2 & US-03a/T2: driver giao tiếp MAVLink qua UDP (tầng driver, hiện thực VehicleLink). Đọc HEARTBEAT, COMMAND_ACK không chờ và gửi lệnh mở / khóa xe."""
 
 import os
 
@@ -9,7 +9,7 @@ from pymavlink import mavutil
 from pymavlink .dialects .v20 import common as mavlink
 
 from rover .connection import DEFAULT_URL
-from rover .types import Heartbeat, VehicleEvent
+from rover .types import ArmAck, Heartbeat, VehicleEvent
 from rover .vehicle_info import parse_heartbeat
 
 
@@ -41,12 +41,33 @@ class MavlinkVehicleLink:
                     self .last_component_id = info .component_id
                     armed = bool (msg .base_mode & mavlink .MAV_MODE_FLAG_SAFETY_ARMED)
                     events .append (Heartbeat (info = info, armed = armed))
+            elif msg_type == "COMMAND_ACK":
+                # Chỉ chuyển đổi phản hồi của lệnh mở / khóa (MAV_CMD_COMPONENT_ARM_DISARM = 400); bỏ qua ACK lệnh khác.
+                if msg .command == mavlink .MAV_CMD_COMPONENT_ARM_DISARM:
+                    accepted = msg .result == mavlink .MAV_RESULT_ACCEPTED
+                    events .append (ArmAck (accepted = accepted))
 
         return events
 
     def send_arm (self, arm: bool) -> None:
-        """Gửi lệnh mở/khóa xe (được cài đặt chi tiết trong US-03a/T2)."""
-        pass
+        """Gửi lệnh mở khóa (arm = True) hoặc khóa (arm = False) tới xe đã thấy gần nhất."""
+        # Với udpin, chỉ gửi được sau khi đã nhận HEARTBEAT để biết system_id, component_id và địa chỉ UDP của xe.
+        if self .last_system_id is None or self .last_component_id is None:
+            return
+
+        self .conn .mav .command_long_send (
+            target_system = self .last_system_id,
+            target_component = self .last_component_id,
+            command = mavlink .MAV_CMD_COMPONENT_ARM_DISARM,
+            confirmation = 0,
+            param1 = 1 if arm else 0,
+            param2 = 0,
+            param3 = 0,
+            param4 = 0,
+            param5 = 0,
+            param6 = 0,
+            param7 = 0,
+        )
 
     def close (self) -> None:
         """Đóng kết nối socket."""
