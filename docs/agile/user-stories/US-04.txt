@@ -173,7 +173,7 @@ T4  RoverApp, lệnh "python -m rover", giả lập dùng chung, README
          Ý nghĩa : AC1 (python -m rover mở app), lệnh connect của US-01 không bị hỏng.
 
     Kiểm tay    : AC1, AC2, AC3 theo docs/acceptance/US-04-acceptance.txt
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T5  Kiểm thử chấp nhận
     File        : docs/acceptance/US-04-acceptance.txt (bản hướng dẫn đã viết ở Sprint Planning; T5 là chạy và điền kết quả)
@@ -183,7 +183,7 @@ T5  Kiểm thử chấp nhận
 
     Test tự động: không
     Kiểm tay    : AC1–AC3
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------

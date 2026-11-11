@@ -86,3 +86,13 @@ def test_4_tuy_chon_url_va_timeout_duoc_truyen_dung_xuong_connect ():
 
     # Mong đợi: connect nhận đúng timeout = 3 (AC4) và url người dùng gõ.
     assert fake .calls == [("udpin:127.0.0.1:15000", 3)]
+
+def test_5_khong_co_lenh_con_thi_chay_app ():
+    calls = []
+
+    def fake_app ():
+        calls .append (True)
+        return 0
+
+    assert main ([], app_fn = fake_app) == 0
+    assert calls == [True]

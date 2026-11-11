@@ -160,6 +160,16 @@ Nếu lần bật sau báo lỗi do Gazebo cũ vẫn còn chạy:
 
     pkill -9 -f "gz sim"
 
+## Chạy app điều khiển
+
+Kích hoạt môi trường ảo rồi chạy:
+
+    source venv/bin/activate
+    python -m rover
+
+- Nhấn `H` để hiện hoặc ẩn bảng hướng dẫn.
+- Nhấn `Q` để thoát. `Ctrl+C` cũng thoát và khôi phục terminal.
+
 ## Quy ước đặt tên (theo PEP 8)
 
 | Loại tên | Kiểu | Ví dụ |

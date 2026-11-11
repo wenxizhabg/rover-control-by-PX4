@@ -6,16 +6,16 @@ import argparse
 import sys
 
 from rover .connection import DEFAULT_TIMEOUT, DEFAULT_URL, ConnectionTimeout, connect
-
+from rover.app import run_app
 # Mã thoát: 0 = thành công; 1 = không kết nối được xe. (Mã 2 do argparse tự dùng khi người dùng gõ sai lệnh.)
 EXIT_OK = 0
 EXIT_NO_VEHICLE = 1
 
 
 def build_parser ():
-    """Tạo bộ đọc lệnh: chương trình "rover" có lệnh con "connect" với 2 tùy chọn --url và --timeout."""
+    """Tạo bộ đọc lệnh; không có lệnh con thì chạy app."""
     parser = argparse .ArgumentParser (prog = "python -m rover", description = "Điều khiển xe rover PX4 qua MAVLink.")
-    commands = parser .add_subparsers (dest = "command", required = True)  # bắt buộc phải gõ một lệnh con
+    commands = parser .add_subparsers (dest = "command", required = False)
 
     connect_cmd = commands .add_parser ("connect", help = "kết nối tới xe và hiển thị thông tin xe")
     connect_cmd .add_argument ("--url", default = DEFAULT_URL, help = f"địa chỉ MAVLink (mặc định: {DEFAULT_URL})")
@@ -37,14 +37,11 @@ def run_connect (url, timeout, connect_fn):
     return EXIT_OK
 
 
-def main (argv = None, connect_fn = connect):
-    """Điểm bắt đầu của CLI.
-
-    Tham số:
-    1. argv: danh sách các phần người dùng gõ sau tên chương trình; None nghĩa là lấy từ dòng lệnh thật (test truyền danh sách tự tạo).
-    2. connect_fn: hàm dùng để kết nối; mặc định là connect thật của T4, test truyền hàm giả lập để không cần mạng.
-    """
+def main (argv = None, connect_fn = connect, app_fn = run_app):
+    """Chạy app nếu không có lệnh con; lệnh connect giữ nguyên hành vi."""
     args = build_parser () .parse_args (argv)
 
     if args .command == "connect":
         return run_connect (args .url, args .timeout, connect_fn)
+
+    return app_fn ()
