@@ -114,7 +114,7 @@ T2  Gửi lệnh mở / khóa và đọc phản hồi (driver MAVLink)
          Ý nghĩa : AC3.
 
     Kiểm tay    : không bắt buộc (kiểm cùng AC sau T3)
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T3  Nối vào app
     File code   : rover/keymap.py (thêm R, F), rover/screen.py (thêm format_arm_status), rover/app.py, tests/fakes.py (thêm send_arm, sent_arm cho FakeVehicleLink)
