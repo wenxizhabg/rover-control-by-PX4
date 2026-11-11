@@ -6,89 +6,18 @@
 3. Mỗi test dùng một cổng trống ngẫu nhiên, nên không đụng cổng 14540 của mô phỏng thật đang chạy (nếu có).
 """
 
-# socket: thư viện mạng có sẵn của Python, dùng để gửi gói UDP và để tìm một cổng còn trống.
-import socket
-# threading: chạy giả lập trong một luồng phụ, song song với hàm connect ở luồng chính.
-import threading
-# time: đo thời gian (kiểm tra hết giờ đúng lúc) và nghỉ giữa các lần gửi.
+# time: đo thời gian (kiểm tra hết giờ đúng lúc).
 import time
 
 # pytest .raises dùng để kiểm tra "đoạn code này phải ném ra lỗi X".
 import pytest
 
-# Bộ định nghĩa MAVLink 2, tập message chung "common": dùng để đóng gói HEARTBEAT thành dãy byte MAVLink 2, đúng định dạng PX4 gửi.
-from pymavlink .dialects .v20 import common as mavlink
+# Các hàm và giả lập MAVLink chuyển sang tests/mavlink_sim.py từ US-02/T2.
+from tests .mavlink_sim import GCS_HEARTBEAT, VEHICLE_HEARTBEAT, HeartbeatSimulator, find_free_port
 
 # Thứ cần kiểm tra (sẽ viết ở rover/connection.py). Lúc này file đó chưa có, nên chạy pytest sẽ báo lỗi ngay ở dòng import -> đúng như mong đợi.
 from rover .connection import ConnectionTimeout, connect
 from rover .vehicle_info import VehicleInfo
-
-
-def find_free_port ():
-    """Hỏi hệ điều hành một cổng UDP đang trống trên localhost rồi trả lại số cổng đó (bind vào cổng 0 nghĩa là "cho tôi cổng nào cũng được")."""
-    with socket .socket (socket .AF_INET, socket .SOCK_DGRAM) as s:
-        s .bind (("127.0.0.1", 0))
-        return s .getsockname () [1]
-
-
-def heartbeat_bytes (system_id, component_id, autopilot, vehicle_type):
-    """Đóng gói một HEARTBEAT thành dãy byte MAVLink 2, đúng như một gói UDP mà PX4 hoặc QGroundControl gửi đi."""
-    sender = mavlink .MAVLink (file = None, srcSystem = system_id, srcComponent = component_id)
-    msg = sender .heartbeat_encode (
-        type = vehicle_type,                        # loại thiết bị
-        autopilot = autopilot,                      # loại firmware
-        base_mode = 0,                              # các cờ trạng thái (không dùng trong test)
-        custom_mode = 0,                            # chế độ riêng của PX4 (không dùng trong test)
-        system_status = mavlink .MAV_STATE_STANDBY, # trạng thái: đang chờ
-    )
-    return bytes (msg .pack (sender))
-
-
-# Hai loại gói dùng trong các test: của xe PX4 rover và của trạm mặt đất (QGroundControl).
-VEHICLE_HEARTBEAT = heartbeat_bytes (
-    system_id = 1,
-    component_id = 1,
-    autopilot = mavlink .MAV_AUTOPILOT_PX4,
-    vehicle_type = mavlink .MAV_TYPE_GROUND_ROVER,
-)
-GCS_HEARTBEAT = heartbeat_bytes (
-    system_id = 255,
-    component_id = 190,
-    autopilot = mavlink .MAV_AUTOPILOT_INVALID,
-    vehicle_type = mavlink .MAV_TYPE_GCS,
-)
-
-
-class HeartbeatSimulator:
-    """Giả lập một bên gửi HEARTBEAT (xe hoặc trạm mặt đất) chạy trong luồng phụ.
-
-    Cách hoạt động:
-    1. Nhận vào một "kịch bản": danh sách các bước (gói cần gửi, số giây gửi gói đó). Ví dụ [(GCS_HEARTBEAT, 0.3), (VEHICLE_HEARTBEAT, 5)] nghĩa là gửi gói của trạm mặt đất trong 0,3 giây, sau đó gửi gói của xe trong 5 giây.
-    2. Trong mỗi bước, cứ 0,1 giây gửi một gói tới 127.0.0.1:<port>, giống PX4 gửi HEARTBEAT đều đặn.
-    3. Dùng với câu lệnh "with": vào khối with thì bắt đầu gửi, ra khỏi khối with thì dừng gửi và đóng socket.
-    """
-
-    def __init__ (self, port, script):
-        self .port = port
-        self .script = script
-        self ._stop = threading .Event ()                                  # cờ báo luồng phụ dừng lại
-        self ._thread = threading .Thread (target = self ._run, daemon = True)  # daemon: không giữ chương trình lại nếu test kết thúc bất thường
-
-    def _run (self):
-        with socket .socket (socket .AF_INET, socket .SOCK_DGRAM) as s:
-            for packet, duration in self .script:
-                end = time .monotonic () + duration
-                while time .monotonic () < end and not self ._stop .is_set ():
-                    s .sendto (packet, ("127.0.0.1", self .port))  # gửi một gói UDP, như PX4 gửi tới cổng 14540
-                    self ._stop .wait (0.1)                        # nghỉ 0,1 giây (hoặc dừng sớm nếu được báo dừng)
-
-    def __enter__ (self):
-        self ._thread .start ()
-        return self
-
-    def __exit__ (self, *exc):
-        self ._stop .set ()
-        self ._thread .join ()
 
 
 def test_1_ket_noi_duoc_voi_gia_lap_xe_px4 ():
