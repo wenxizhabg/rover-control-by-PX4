@@ -73,7 +73,7 @@ T1  Logic trạng thái kết nối
          Ý nghĩa : AC1 (giữ "ĐÃ KẾT NỐI" suốt 30 s).
 
     Kiểm tay    : không
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T2  Đọc HEARTBEAT liên tục từ xe (driver MAVLink)
     File code   : rover/mavlink_link.py
