@@ -1,4 +1,4 @@
-"""US-04/T1: ánh xạ phím bấm thành hành động và tạo bảng hướng dẫn."""
+"""US-04/T1 & US-03a/T3: ánh xạ phím bấm thành hành động và tạo bảng hướng dẫn."""
 
 from rover .types import Action
 
@@ -6,6 +6,8 @@ from rover .types import Action
 KEY_BINDINGS: list[tuple[str, Action, str]] = [
     ("h", Action .TOGGLE_HELP, "ẩn / hiện hướng dẫn"),
     ("q", Action .QUIT, "thoát app"),
+    ("r", Action .ARM, "mở khóa xe"),
+    ("f", Action .DISARM, "khóa xe"),
 ]
 
 

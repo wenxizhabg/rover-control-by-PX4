@@ -1,4 +1,4 @@
-"""US-04/T4: terminal và đồng hồ giả lập dùng trong test."""
+"""US-04/T4, US-02/T3 & US-03a/T3: terminal, đồng hồ và kênh xe giả lập dùng trong test."""
 
 from rover.screen import ViewModel, render
 from rover.types import VehicleEvent
@@ -22,7 +22,7 @@ class FakeClock:
 class FakeTerminal:
     """Terminal giả lập đọc lần lượt phím và lưu khung cuối được vẽ."""
 
-    def __init__ (self, keys: list[str] | None = None) -> None:
+    def __init__ (self, keys: list[str | None] | None = None) -> None:
         self ._keys = list (keys or [])
         self .last_lines: list[str] = []
         self .closed = False
@@ -43,10 +43,11 @@ class FakeTerminal:
 
 
 class FakeVehicleLink:
-    """Kênh xe giả lập, trả các sự kiện đã xếp sẵn cho lần poll kế tiếp."""
+    """Kênh xe giả lập, trả các sự kiện đã xếp sẵn cho lần poll kế tiếp và ghi lại lệnh send_arm."""
 
     def __init__ (self) -> None:
         self ._events: list[VehicleEvent] = []
+        self .sent_arm: list[bool] = []
         self .closed = False
 
     def push (self, event: VehicleEvent) -> None:
@@ -58,6 +59,10 @@ class FakeVehicleLink:
         events = self ._events
         self ._events = []
         return events
+
+    def send_arm (self, arm: bool) -> None:
+        """Ghi lại lệnh mở khóa (True) hoặc khóa (False) để test kiểm tra."""
+        self .sent_arm .append (arm)
 
     def close (self) -> None:
         """Đánh dấu link giả lập đã được đóng."""

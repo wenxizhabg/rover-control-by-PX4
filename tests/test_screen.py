@@ -1,5 +1,6 @@
-"""US-04/T2: kiểm tra nội dung khung màn hình được dựng từ ViewModel."""
+"""US-04/T2, US-02/T3 & US-03a/T3: kiểm tra nội dung khung màn hình được dựng từ ViewModel."""
 
+from rover import screen
 from rover .screen import ViewModel, format_link_status, render
 from rover .types import LinkState
 
@@ -56,3 +57,15 @@ def test_4_link_status_formats_waiting_connected_and_lost ():
         42,
         5.21,
     ) == "Kết nối  : MẤT KẾT NỐI  (HEARTBEAT: 42, lần cuối 5.2 s trước)"
+
+
+def test_5_arm_status_formats_unknown_armed_and_disarmed ():
+    # Đầu vào: gọi format_arm_status với None, True và False.
+    unknown = screen .format_arm_status (None)
+    armed = screen .format_arm_status (True)
+    disarmed = screen .format_arm_status (False)
+
+    # Mong đợi: đúng 3 chuỗi tiếng Việt người dùng thấy (phục vụ US-03a AC1, AC2).
+    assert unknown == "Khóa xe  : chưa rõ"
+    assert armed == "Khóa xe  : ĐÃ MỞ KHÓA"
+    assert disarmed == "Khóa xe  : ĐÃ KHÓA"

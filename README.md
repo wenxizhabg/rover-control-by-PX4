@@ -167,6 +167,7 @@ Kích hoạt môi trường ảo rồi chạy:
     source venv/bin/activate
     python -m rover
 
+- Nhấn `R` để mở khóa xe (arm), `F` để khóa xe (disarm).
 - Nhấn `H` để hiện hoặc ẩn bảng hướng dẫn.
 - Nhấn `Q` để thoát. `Ctrl+C` cũng thoát và khôi phục terminal.
 

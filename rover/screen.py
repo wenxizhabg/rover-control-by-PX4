@@ -1,4 +1,4 @@
-"""US-04/T2: dựng các dòng nội dung của khung màn hình từ ViewModel."""
+"""US-04/T2, US-02/T3 & US-03a/T3: dựng các dòng nội dung của khung màn hình từ ViewModel."""
 
 from dataclasses import dataclass, field
 
@@ -51,3 +51,13 @@ def format_link_status (
         return f"Kết nối  : MẤT KẾT NỐI  (HEARTBEAT: {count}, lần cuối {seconds:.1f} s trước)"
 
     raise ValueError (f"Trạng thái kết nối không hỗ trợ: {state}")
+
+
+def format_arm_status (armed: bool | None) -> str:
+    """Định dạng dòng hiển thị trạng thái mở / khóa xe theo cờ armed của HEARTBEAT."""
+    # None nghĩa là chưa nhận được HEARTBEAT nào để biết xe đang khóa hay mở khóa.
+    if armed is None:
+        return "Khóa xe  : chưa rõ"
+    if armed:
+        return "Khóa xe  : ĐÃ MỞ KHÓA"
+    return "Khóa xe  : ĐÃ KHÓA"
