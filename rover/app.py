@@ -4,9 +4,11 @@ from rover import keymap, screen
 from rover.clock import SystemClock
 from rover.hal import Clock, Terminal, VehicleLink
 from rover.keymap import help_lines
-from rover.screen import ViewModel, render
+from rover.link_monitor import LinkMonitor
+from rover.mavlink_link import MavlinkVehicleLink
+from rover.screen import ViewModel, format_link_status, render
 from rover.terminal import CursesTerminal
-from rover.types import Action
+from rover.types import Action, Heartbeat
 
 
 class RoverApp:
@@ -22,9 +24,16 @@ class RoverApp:
         self ._clock = clock
         self ._link = link
         self ._show_help = False
+        self ._link_monitor = LinkMonitor ()
 
     def step (self) -> bool:
         """Xử lý một phím và vẽ khung; trả False khi người dùng yêu cầu thoát."""
+        now = self ._clock .now ()
+        if self ._link is not None:
+            for event in self ._link .poll ():
+                if isinstance (event, Heartbeat):
+                    self ._link_monitor .on_heartbeat (now)
+
         action = keymap .action_for (self ._terminal .read_key ())
 
         if action == Action .QUIT:
@@ -32,7 +41,18 @@ class RoverApp:
         if action == Action .TOGGLE_HELP:
             self ._show_help = not self ._show_help
 
+        status_lines = []
+        if self ._link is not None:
+            status_lines .append (
+                format_link_status (
+                    self ._link_monitor .state (now),
+                    self ._link_monitor .heartbeat_count,
+                    self ._link_monitor .seconds_since_last (now),
+                )
+            )
+
         view = ViewModel (
+            status_lines = status_lines,
             show_help = self ._show_help,
             help_lines = help_lines (),
         )
@@ -58,5 +78,6 @@ class RoverApp:
 
 def run_app () -> int:
     """Tạo driver thật rồi chạy app."""
+    link = MavlinkVehicleLink ()
     terminal = CursesTerminal ()
-    return RoverApp (terminal, SystemClock ()) .run ()
+    return RoverApp (terminal, SystemClock (), link) .run ()

@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 
+from rover.types import LinkState
+
 
 @dataclass
 class ViewModel:
@@ -29,3 +31,23 @@ def render (view: ViewModel) -> list[str]:
 
     lines .append ("H: hướng dẫn   Q: thoát")
     return lines
+
+
+def format_link_status (
+    state: LinkState,
+    count: int,
+    seconds: float | None,
+) -> str:
+    """Định dạng trạng thái kết nối và thời điểm nhận HEARTBEAT gần nhất."""
+    if state == LinkState .WAITING:
+        return "Kết nối  : ĐANG CHỜ XE"
+
+    if seconds is None:
+        raise ValueError ("Trạng thái đã nhận HEARTBEAT phải có thời gian lần cuối.")
+
+    if state == LinkState .CONNECTED:
+        return f"Kết nối  : ĐÃ KẾT NỐI   (HEARTBEAT: {count}, lần cuối {seconds:.1f} s trước)"
+    if state == LinkState .LOST:
+        return f"Kết nối  : MẤT KẾT NỐI  (HEARTBEAT: {count}, lần cuối {seconds:.1f} s trước)"
+
+    raise ValueError (f"Trạng thái kết nối không hỗ trợ: {state}")

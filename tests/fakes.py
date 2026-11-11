@@ -1,6 +1,7 @@
 """US-04/T4: terminal và đồng hồ giả lập dùng trong test."""
 
 from rover.screen import ViewModel, render
+from rover.types import VehicleEvent
 
 
 class FakeClock:
@@ -38,4 +39,26 @@ class FakeTerminal:
 
     def close (self) -> None:
         """Đánh dấu terminal giả lập đã được đóng."""
+        self .closed = True
+
+
+class FakeVehicleLink:
+    """Kênh xe giả lập, trả các sự kiện đã xếp sẵn cho lần poll kế tiếp."""
+
+    def __init__ (self) -> None:
+        self ._events: list[VehicleEvent] = []
+        self .closed = False
+
+    def push (self, event: VehicleEvent) -> None:
+        """Xếp một sự kiện để app nhận trong lần poll kế tiếp."""
+        self ._events .append (event)
+
+    def poll (self) -> list[VehicleEvent]:
+        """Trả các sự kiện đang chờ rồi xóa chúng khỏi hàng đợi."""
+        events = self ._events
+        self ._events = []
+        return events
+
+    def close (self) -> None:
+        """Đánh dấu link giả lập đã được đóng."""
         self .closed = True

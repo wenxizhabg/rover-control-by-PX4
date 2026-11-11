@@ -1,6 +1,7 @@
 """US-04/T2: kiểm tra nội dung khung màn hình được dựng từ ViewModel."""
 
-from rover .screen import ViewModel, render
+from rover .screen import ViewModel, format_link_status, render
+from rover .types import LinkState
 
 
 def test_1_default_view_renders_basic_frame_without_help ():
@@ -40,3 +41,18 @@ def test_3_status_lines_precede_message_in_rendered_frame ():
 
     assert lines.index ("dòng A") < lines.index ("dòng B")
     assert lines.index ("dòng B") < lines.index ("Thông báo: xin chào")
+
+
+def test_4_link_status_formats_waiting_connected_and_lost ():
+    """US-02 AC1, AC2, AC4: dòng kết nối có trạng thái và thời gian đúng định dạng."""
+    assert format_link_status (LinkState .WAITING, 0, None) == "Kết nối  : ĐANG CHỜ XE"
+    assert format_link_status (
+        LinkState .CONNECTED,
+        42,
+        0.43,
+    ) == "Kết nối  : ĐÃ KẾT NỐI   (HEARTBEAT: 42, lần cuối 0.4 s trước)"
+    assert format_link_status (
+        LinkState .LOST,
+        42,
+        5.21,
+    ) == "Kết nối  : MẤT KẾT NỐI  (HEARTBEAT: 42, lần cuối 5.2 s trước)"
