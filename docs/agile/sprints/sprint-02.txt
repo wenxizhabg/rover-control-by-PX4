@@ -34,7 +34,7 @@ US-04/T1   | Hoàng   | KeyMap (H, Q)                                   | có (3
 US-04/T2   | Hoàng   | Screen .render, ViewModel                       | có (3 test)  | T0                        | DONE       |
 US-04/T3   | Hoàng   | CursesTerminal, SystemClock                     | không        | T0                        | DONE       |
 US-04/T4   | Hoàng   | RoverApp, python -m rover, fakes, README        | có (5 test)  | US-04/T1, T2, T3          | DONE       |
-US-04/T5   | Hoàng   | Chạy kiểm thử chấp nhận US-04                   | không        | US-04/T4                  | DOING      |
+US-04/T5   | Hoàng   | Chạy kiểm thử chấp nhận US-04                   | không        | US-04/T4                  | DONE       |
 US-02/T1   | Phương  | LinkMonitor                                     | có (5 test)  | US-04/T0                  | DONE       | 8423cd0
 US-02/T2   | Phương  | MavlinkVehicleLink .poll, tests/mavlink_sim.py  | có (4 test)  | US-04/T0                  | DONE       | 087dbe9
 US-02/T3   | Phương  | Nối trạng thái kết nối vào app                  | có (4 test)  | US-04/T4, US-02/T1, T2    | DONE       | df3b9fa

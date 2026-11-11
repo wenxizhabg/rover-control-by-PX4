@@ -23,11 +23,11 @@ AC1 – Mở app
 Bước:
     python3 -m rover
 Đạt khi:
-    [ ] Terminal chuyển sang màn hình của app (nội dung cũ trên terminal biến mất)
-    [ ] Có dòng tiêu đề "ROVER – điều khiển xe PX4 qua MAVLink"
-    [ ] Có vùng trạng thái (dòng "Trạng thái" hoặc các dòng trạng thái)
-    [ ] Có dòng "Thông báo:"
-    [ ] Có dòng gợi ý "H: hướng dẫn   Q: thoát"
+    [v] Terminal chuyển sang màn hình của app (nội dung cũ trên terminal biến mất)
+    [v] Có dòng tiêu đề "ROVER – điều khiển xe PX4 qua MAVLink"
+    [v] Có vùng trạng thái (dòng "Trạng thái" hoặc các dòng trạng thái)
+    [v] Có dòng "Thông báo:"
+    [v] Có dòng gợi ý "H: hướng dẫn   Q: thoát"
     [ ] Không có con trỏ nhấp nháy; bấm thử vài chữ (ví dụ x, y) thì chữ không bị in lên màn hình
 Giữ app đang chạy để kiểm AC2.
 
@@ -38,9 +38,9 @@ Bước:
     2. Bấm h lần nữa
     3. Bấm H (chữ hoa, Shift + h)
 Đạt khi:
-    [ ] Sau bước 1: hiện bảng phím, mỗi phím một dòng kèm giải thích (ít nhất "H  ẩn / hiện hướng dẫn", "Q  thoát app")
-    [ ] Sau bước 2: bảng phím ẩn đi
-    [ ] Sau bước 3: bảng phím hiện lại (chữ hoa cũng được)
+    [v] Sau bước 1: hiện bảng phím, mỗi phím một dòng kèm giải thích (ít nhất "H  ẩn / hiện hướng dẫn", "Q  thoát app")
+    [v] Sau bước 2: bảng phím ẩn đi
+    [v] Sau bước 3: bảng phím hiện lại (chữ hoa cũng được)
 
 AC3 – Thoát app
 ---------------
@@ -51,26 +51,26 @@ Bước:
            echo "exit=$?"
     3. Sau mỗi lần thoát, gõ thử: ls rồi Enter
 Đạt khi:
-    [ ] Bấm q: app thoát ngay, in "exit=0"
-    [ ] Bấm Ctrl+C: app thoát ngay, KHÔNG in lỗi "Traceback" hay "KeyboardInterrupt", in "exit=0"
-    [ ] Sau khi thoát: con trỏ hiện lại, chữ gõ hiện lên màn hình, lệnh ls chạy và xuống dòng bình thường
+    [v] Bấm q: app thoát ngay, in "exit=0"
+    [v] Bấm Ctrl+C: app thoát ngay, KHÔNG in lỗi "Traceback" hay "KeyboardInterrupt", in "exit=0"
+    [v] Sau khi thoát: con trỏ hiện lại, chữ gõ hiện lên màn hình, lệnh ls chạy và xuống dòng bình thường
 Nếu terminal bị "đơ" sau khi thoát (gõ không hiện chữ): gõ mù lệnh reset rồi Enter để khôi phục, và ghi AC3 là Không đạt.
 
 KIỂM TRA LẠI US-01 (lệnh cũ không bị hỏng)
 ------------------------------------------
 Không phải AC của US-04, chỉ để chắc việc sửa cli.py không ảnh hưởng: bật mô phỏng như US-01, chạy
     python3 -m rover connect; echo "exit=$?"
-    [ ] Vẫn in "Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER" và "exit=0"
+    [v] Vẫn in "Đã kết nối: system=1 component=1 autopilot=PX4 type=GROUND_ROVER" và "exit=0"
 
 BẢNG KẾT QUẢ
 ------------
 AC  | Kết quả (Đạt / Không đạt) | Ghi chú
 ----+---------------------------+--------
-AC1 |                           |
-AC2 |                           |
-AC3 |                           |
+AC1 | Đạt                       |
+AC2 | Đạt                       |
+AC3 | Đạt                       |
 
-Kết luận US-04:
+Kết luận US-04: Đạt
 
 NẾU CÓ AC KHÔNG ĐẠT
 -------------------

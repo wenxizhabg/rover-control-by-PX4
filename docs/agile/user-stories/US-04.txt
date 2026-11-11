@@ -183,7 +183,7 @@ T5  Kiểm thử chấp nhận
 
     Test tự động: không
     Kiểm tay    : AC1–AC3
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------
