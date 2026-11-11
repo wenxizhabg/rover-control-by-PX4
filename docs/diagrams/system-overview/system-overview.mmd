@@ -1,5 +1,5 @@
 ---
-title: Tổng quan hệ thống – khối màu là kết quả đầu ra Sprint 1 (US-01), khối xám là dự kiến Sprint 2
+title: Tổng quan hệ thống – khối màu là kết quả đầu ra Sprint 2 (US-01, US-04, US-02, US-03a), khối xám là dự kiến
 config:
   flowchart:
     curve: linear
@@ -11,48 +11,47 @@ flowchart LR
     gz["Gazebo - xe r1_rover<br/>(Terminal A)"]
 
     %% Khối đã có: code của nhóm (app rover, Terminal B)
-    cli["rover/cli.py<br/>main, run_connect"]
-    conn["rover/connection.py<br/>connect"]
-    vi["rover/vehicle_info.py<br/>parse_heartbeat"]
+    app["rover/app.py – RoverApp<br/>+ keymap, screen, terminal<br/>(US-04)"]
+    am["rover/arm_control.py<br/>ArmControl (US-03a)"]
+    lm["rover/link_monitor.py<br/>LinkMonitor (US-02)"]
+    ml["rover/mavlink_link.py<br/>MavlinkVehicleLink<br/>(US-02, US-03a)"]
+    vi["rover/vehicle_info.py<br/>parse_heartbeat (US-01)"]
+    cli["rover/cli.py<br/>main, run_connect (US-01)"]
+    conn["rover/connection.py<br/>connect (US-01)"]
 
-    %% Khối dự kiến Sprint 2 (US-04, US-02, US-03a) và US-03b (chưa vào sprint), theo kiến trúc trong docs/diagrams/class/
-    app2["rover/app.py – RoverApp<br/>màn hình + phím (US-04)"]
-    lm2["rover/link_monitor.py<br/>LinkMonitor (US-02)"]
-    arm2["rover/arm.py<br/>mở / khóa xe (US-03a)"]
-    ml2["rover/mavlink_link.py<br/>MavlinkVehicleLink<br/>(US-02, US-03a)"]
-    drv2["Lái xe<br/>(US-03b, sau spike)"]
+    %% Khối dự kiến: US-03b, chưa vào sprint
+    drv["Lái xe<br/>(US-03b, sau spike)"]
 
-    %% --- ĐỊNH HÌNH BỐ CỤC CHÍNH ---
-    user -->|"1"| cli
-    cli -->|"2"| conn
-    conn -->|"4"| vi
-    
-    px4 -->|"3"| conn
-    
-    vi -->|"5"| conn
-    conn -->|"6"| cli
-    cli -->|"7"| user
+    %% Luồng chính khi người vận hành bấm R để mở khóa xe, số tăng dần theo thứ tự xảy ra (cạnh 0 đến 9)
+    user -->|"1"| app
+    app -->|"2"| am
+    app -->|"3"| ml
+    ml -->|"4"| px4
+    px4 -->|"5"| ml
+    ml -->|"6"| vi
+    ml -->|"7"| app
+    app -->|"8"| lm
+    app -->|"8"| am
+    app -->|"9"| user
 
+    %% Liên kết không đánh số: phần mềm bên ngoài với nhau, và lệnh connect của US-01 (cạnh 10 đến 14)
     px4 <--> gz
+    user -->|"lệnh connect (US-01)"| cli
+    cli --> conn
+    conn --> vi
+    px4 -->|"HEARTBEAT"| conn
 
-    %% Luồng dự kiến, chưa đánh số (cạnh 8 trở đi)
-    user -.->|"phím"| app2
-    app2 -.-> lm2
-    app2 -.-> drv2
-    app2 -.-> ml2
-    ml2 -.-> arm2
-    ml2 -.->|"dùng lại"| vi
-    ml2 -.->|"lệnh mở / khóa"| px4
-    px4 -.->|"HEARTBEAT, ACK"| ml2
+    %% Luồng dự kiến, chưa đánh số (cạnh 15)
+    app -.-> drv
 
     classDef done fill:#cfe2ff,stroke:#000,stroke-width:2px,color:#000
     classDef ext fill:#ffe8a3,stroke:#000,stroke-width:2px,color:#000
     classDef plan fill:none,stroke:#aaa,stroke-width:1px,stroke-dasharray:5 5,color:#aaa
 
-    class cli,conn,vi done
+    class app,am,lm,ml,vi,cli,conn done
     class user,px4,gz ext
-    class app2,lm2,arm2,ml2,drv2 plan
+    class drv plan
 
-    linkStyle 0,1,2,3,4,5,6 stroke:#000,stroke-width:2px,color:#000
-    linkStyle 7 stroke:#000,stroke-width:1px,color:#000
-    linkStyle 8,9,10,11,12,13,14,15 stroke:#aaa,stroke-width:1px,color:#aaa
+    linkStyle 0,1,2,3,4,5,6,7,8,9 stroke:#000,stroke-width:2px,color:#000
+    linkStyle 10,11,12,13,14 stroke:#000,stroke-width:1px,color:#000
+    linkStyle 15 stroke:#aaa,stroke-width:1px,color:#aaa

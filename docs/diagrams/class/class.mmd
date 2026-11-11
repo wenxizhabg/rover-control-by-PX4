@@ -1,5 +1,5 @@
 ---
-title: Sơ đồ lớp – kiến trúc phần mềm Sprint 2 (US-04, US-02, US-03a) – chú thích và định nghĩa API tại docs/diagrams/class/class.txt
+title: Sơ đồ lớp – kiến trúc phần mềm cuối Sprint 2 (US-01, US-04, US-02, US-03a) – chú thích và định nghĩa API tại docs/diagrams/class/class.txt
 ---
 classDiagram
     direction TB
@@ -8,6 +8,9 @@ classDiagram
     namespace Layer1_Application {
         class cli {
             <<module>>
+            +EXIT_OK: int = 0
+            +EXIT_NO_VEHICLE: int = 1
+            +build_parser() ArgumentParser
             +main(argv, connect_fn, app_fn) int
             +run_connect(url, timeout, connect_fn) int
         }
@@ -87,8 +90,9 @@ classDiagram
     %% Tầng 4 – Driver: hiện thực các interface của tầng 3; chỉ tầng này dùng pymavlink, curses, time
     namespace Layer4_Drivers {
         class MavlinkVehicleLink {
-            -conn
-            -target_system: int | None
+            +conn
+            +last_system_id: int | None
+            +last_component_id: int | None
             +poll() list~VehicleEvent~
             +send_arm(arm) None
             +close() None

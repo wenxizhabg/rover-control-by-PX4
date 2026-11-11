@@ -29,23 +29,24 @@ SPRINT BACKLOG (cập nhật trạng thái mỗi khi task đổi trạng thái)
 ---------------------------------------------------------------
 Task       | Người   | Mô tả ngắn                                      | Test tự động | Phụ thuộc                 | Trạng thái | Commit
 -----------+---------+-------------------------------------------------+--------------+---------------------------+------------+-------
-US-04/T0   | Hoàng   | Hợp đồng: rover/types.py, rover/hal.py          | không        | –                         | DONE       |
+US-04/T0   | Hoàng   | Hợp đồng: rover/types.py, rover/hal.py          | không        | –                         | DONE       | 3356715
 US-04/T1   | Hoàng   | KeyMap (H, Q)                                   | có (3 test)  | T0                        | DONE       | 
 US-04/T2   | Hoàng   | Screen .render, ViewModel                       | có (3 test)  | T0                        | DONE       |
 US-04/T3   | Hoàng   | CursesTerminal, SystemClock                     | không        | T0                        | DONE       |
 US-04/T4   | Hoàng   | RoverApp, python -m rover, fakes, README        | có (5 test)  | US-04/T1, T2, T3          | DONE       |
-US-04/T5   | Hoàng   | Chạy kiểm thử chấp nhận US-04                   | không        | US-04/T4                  | DONE       |
+US-04/T5   | Hoàng   | Chạy kiểm thử chấp nhận US-04                   | không        | US-04/T4                  | DONE       | 037370e
 US-02/T1   | Phương  | LinkMonitor                                     | có (5 test)  | US-04/T0                  | DONE       | 8423cd0
 US-02/T2   | Phương  | MavlinkVehicleLink .poll, tests/mavlink_sim.py  | có (4 test)  | US-04/T0                  | DONE       | 087dbe9
 US-02/T3   | Phương  | Nối trạng thái kết nối vào app                  | có (4 test)  | US-04/T4, US-02/T1, T2    | DONE       | df3b9fa
-US-02/T4   | Phương  | Chạy kiểm thử chấp nhận US-02                   | không        | US-02/T3                  | DONE       |
+US-02/T4   | Phương  | Chạy kiểm thử chấp nhận US-02                   | không        | US-02/T3                  | DONE       | 2a9625b
 US-03a/T1  | Dương   | ArmControl                                      | có (6 test)  | US-04/T0                  | DONE       | 4f7024f
 US-03a/T2  | Dương   | send_arm, ArmAck, giả lập PX4 hai chiều         | có (3 test)  | US-02/T2                  | DONE       | a9e91fe
 US-03a/T3  | Dương   | Nối mở / khóa xe vào app (phím R, F)            | có (5 test)  | US-02/T3, US-03a/T1, T2   | DONE       | 813be51
-US-03a/T4  | Dương   | Chạy kiểm thử chấp nhận US-03a                  | không        | US-03a/T3                 | DONE       |
-S02/DOC    | Hoàng   | Cập nhật sơ đồ cuối sprint (overview, class)    | không        | cả 3 story XONG           | TODO       |
+US-03a/T4  | Dương   | Chạy kiểm thử chấp nhận US-03a                  | không        | US-03a/T3                 | DONE       | f4bfd32
+S02/DOC    | Hoàng   | Cập nhật sơ đồ cuối sprint (overview, class)    | không        | cả 3 story XONG           | DONE       |
 
 Tổng test tự động mới: 38 (US-04: 11, US-02: 13, US-03a: 14); cộng 14 test US-01 = 52.
+Thực tế cuối sprint: 58 passed (thêm 6 test trong tests/test_terminal.py cho CursesTerminal).
 
 THỨ TỰ VÀ CHỖ PHẢI CHỜ NHAU
 --------------------------

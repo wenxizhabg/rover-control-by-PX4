@@ -2,7 +2,7 @@ SƠ ĐỒ LỚP – KIẾN TRÚC PHẦN MỀM VÀ ĐỊNH NGHĨA API (SPRINT 2)
 ==========================================================
 File nguồn : docs/diagrams/class/class.mmd (Mermaid classDiagram, sửa sơ đồ ở file này)
 File ảnh   : docs/diagrams/class/class.svg (xuất từ file nguồn khi cần; cách xuất giống docs/diagrams/system-overview/system-overview.txt)
-Phiên bản  : Sprint Planning Sprint 2 (2026-11-10). Phủ US-01 (đã có), US-04, US-02, US-03a. US-03b chưa vào sprint nên chưa có trong sơ đồ (xem mục 7).
+Phiên bản  : cuối Sprint 2 (2026-11-11), khớp code commit 5514ead. Phủ US-01, US-04, US-02, US-03a. US-03b chưa làm nên chưa có trong sơ đồ (xem mục 7). Bản đầu: Sprint Planning Sprint 2 (2026-11-10).
 
 Sơ đồ lớp này là bản mô tả kiến trúc phần mềm của app, đồng thời là "hợp đồng" giữa các task trong Sprint 2: mọi người code đúng tên hàm, tham số, kết quả ở mục 4 thì các phần ghép được với nhau mà không phải chờ nhau (hành động Retro Sprint 1 số 1).
 
@@ -75,7 +75,7 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
 4.2 rover/hal.py – interface (typing.Protocol)                                       (Task US-04/T0)
     class VehicleLink (Protocol)          kênh nói chuyện với xe
         poll () -> list [VehicleEvent]    đọc MỌI gói đang chờ, KHÔNG chờ gói mới; chỉ trả gói của xe (bỏ gói autopilot = INVALID như QGroundControl); không có gì thì trả [].   AC: US-02 AC1–AC4, US-03a AC1–AC3
-        send_arm (arm : bool) -> None     gửi lệnh mở khóa (True) hoặc khóa (False) tới xe đã thấy gần nhất; kết quả về sau qua ArmAck trong poll ().                         AC: US-03a AC1–AC3
+        send_arm (arm : bool) -> None     gửi lệnh mở khóa (True) hoặc khóa (False) tới xe đã thấy gần nhất; kết quả về sau qua ArmAck trong poll (). Chưa thấy HEARTBEAT nào của xe thì không gửi gì (lớp bảo vệ thứ hai, sau ArmControl .request).   AC: US-03a AC1–AC4
         close () -> None                  đóng cổng.
     class Terminal (Protocol)             màn hình + bàn phím
         read_key () -> str | None         phím vừa bấm (một ký tự, ví dụ "h"); chờ tối đa 50 ms, không có phím thì trả None.   AC: US-04 AC2, AC3
@@ -143,15 +143,23 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
     rover/clock.py     class SystemClock             (Task US-04/T3)   now () = time .monotonic ().
     rover/mavlink_link.py class MavlinkVehicleLink   (Task US-02/T2; US-03a/T2 thêm send_arm và ArmAck)
         __init__ (url : str = DEFAULT_URL)          mở cổng ngay (udpin không chờ ai); DEFAULT_URL lấy từ connection.py (US-01).
-        poll ()                                     recv_match (blocking = False) tới khi hết gói; HEARTBEAT -> parse_heartbeat (US-01) -> Heartbeat (info, armed); COMMAND_ACK của lệnh ARM_DISARM -> ArmAck.
-        send_arm (arm)                              COMMAND_LONG MAV_CMD_COMPONENT_ARM_DISARM, param1 = 1 / 0, gửi tới system_id, component_id của xe đã thấy gần nhất.
+        conn                                        kết nối pymavlink (mavutil .mavlink_connection).
+        last_system_id, last_component_id : int | None   số hiệu của xe trong HEARTBEAT gần nhất; None khi chưa thấy xe.
+        poll ()                                     recv_match (blocking = False) tới khi hết gói; HEARTBEAT -> parse_heartbeat (US-01) -> Heartbeat (info, armed), đồng thời ghi last_system_id, last_component_id; COMMAND_ACK của lệnh ARM_DISARM (400) -> ArmAck, ACK lệnh khác bị bỏ qua.
+        send_arm (arm)                              COMMAND_LONG MAV_CMD_COMPONENT_ARM_DISARM, param1 = 1 / 0, gửi tới last_system_id, last_component_id; hai số này còn None thì trả về, không gửi.
         close ()
 
-5. KIỂU GIẢ LẬP DÙNG TRONG TEST (tests/fakes.py)
-------------------------------------------------
+4.10 rover/cli.py – phần có từ US-01, liệt kê cho đủ
+    EXIT_OK = 0, EXIT_NO_VEHICLE = 1              mã thoát của lệnh connect.
+    build_parser () -> ArgumentParser            lệnh con connect (--url, --timeout); lệnh con không bắt buộc (US-04/T4).
+
+5. KIỂU GIẢ LẬP DÙNG TRONG TEST (tests/fakes.py, tests/mavlink_sim.py)
+---------------------------------------------------------------------
 FakeClock (start = 0.0)      : now () trả giá trị đang đặt; advance (seconds) tăng thời gian. Dùng để kiểm 3 s mà không chờ thật.     (US-04/T4)
 FakeTerminal (keys)          : read_key () lần lượt trả các phím trong danh sách keys, hết thì trả None; draw () lưu lại khung cuối vào last_lines; close () đặt closed = True.   (US-04/T4)
 FakeVehicleLink ()           : push (event) thêm sự kiện cho lần poll () kế tiếp; poll () trả rồi xóa; send_arm () ghi vào sent_arm (danh sách bool); close () đặt closed = True.   (US-02/T3 tạo poll, push; US-03a/T3 thêm send_arm)
+HeartbeatSimulator (port, script)   : (tests/mavlink_sim.py) giả lập xe / QGroundControl gửi HEARTBEAT một chiều tới cổng của app theo kịch bản; dùng cho test connect (US-01) và poll ().   (US-02/T2 chuyển từ test_connection.py)
+TwoWayVehicleSimulator (port, ack_packets) : (tests/mavlink_sim.py) giả lập PX4 hai chiều: gửi HEARTBEAT, nhận COMMAND_LONG app gửi (wait_commands), gửi COMMAND_ACK theo kịch bản.   (US-03a/T2)
 
 6. MỖI THÀNH PHẦN PHỤC VỤ AC NÀO
 --------------------------------
