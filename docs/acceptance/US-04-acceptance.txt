@@ -4,10 +4,10 @@ AC gốc: docs/agile/user-stories/US-04.txt (mục 2). File này chỉ ghi cách
 
 THÔNG TIN LẦN KIỂM
 ------------------
-Ngày giờ kiểm      :
-Người kiểm         :
-Máy / hệ điều hành :
-Phiên bản code     :   (git log --oneline -1)
+Ngày giờ kiểm      : November 11 18h40
+Người kiểm         : Truong Nhat Hoang
+Máy / hệ điều hành : Linux
+Phiên bản code     : b5bd02d  (git log --oneline -1)
 
 CHUẨN BỊ
 --------
@@ -28,7 +28,7 @@ Bước:
     [v] Có vùng trạng thái (dòng "Trạng thái" hoặc các dòng trạng thái)
     [v] Có dòng "Thông báo:"
     [v] Có dòng gợi ý "H: hướng dẫn   Q: thoát"
-    [ ] Không có con trỏ nhấp nháy; bấm thử vài chữ (ví dụ x, y) thì chữ không bị in lên màn hình
+    [v] Không có con trỏ nhấp nháy; bấm thử vài chữ (ví dụ x, y) thì chữ không bị in lên màn hình
 Giữ app đang chạy để kiểm AC2.
 
 AC2 – Xem hướng dẫn phím
