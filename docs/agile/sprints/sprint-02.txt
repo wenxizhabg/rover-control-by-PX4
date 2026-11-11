@@ -31,8 +31,8 @@ Task       | Người   | Mô tả ngắn                                      |
 -----------+---------+-------------------------------------------------+--------------+---------------------------+------------+-------
 US-04/T0   | Hoàng   | Hợp đồng: rover/types.py, rover/hal.py          | không        | –                         | DONE       |
 US-04/T1   | Hoàng   | KeyMap (H, Q)                                   | có (3 test)  | T0                        | DONE       | 
-US-04/T2   | Hoàng   | Screen .render, ViewModel                       | có (3 test)  | T0                        | DOING      |
-US-04/T3   | Hoàng   | CursesTerminal, SystemClock                     | không        | T0                        | TODO       |
+US-04/T2   | Hoàng   | Screen .render, ViewModel                       | có (3 test)  | T0                        | DONE       |
+US-04/T3   | Hoàng   | CursesTerminal, SystemClock                     | không        | T0                        | DOING      |
 US-04/T4   | Hoàng   | RoverApp, python -m rover, fakes, README        | có (5 test)  | US-04/T1, T2, T3          | TODO       |
 US-04/T5   | Hoàng   | Chạy kiểm thử chấp nhận US-04                   | không        | US-04/T4                  | TODO       |
 US-02/T1   | Phương  | LinkMonitor                                     | có (5 test)  | US-04/T0                  | DONE       | 8423cd0
