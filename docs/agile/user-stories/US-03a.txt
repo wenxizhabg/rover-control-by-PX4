@@ -158,7 +158,7 @@ T4  Kiểm thử chấp nhận
     File        : docs/acceptance/US-03a-acceptance.txt (bản hướng dẫn đã viết ở Sprint Planning; T4 là chạy và điền kết quả)
     Công việc   : chạy AC1–AC4, điền kết quả; AC không đạt thì ghi bug-log trước khi sửa.
     Test tự động: không
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------

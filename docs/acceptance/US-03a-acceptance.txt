@@ -4,10 +4,10 @@ AC gốc: docs/agile/user-stories/US-03a.txt (mục 2). File này chỉ ghi các
 
 THÔNG TIN LẦN KIỂM
 ------------------
-Ngày giờ kiểm      :
-Người kiểm         :
-Máy / hệ điều hành :
-Phiên bản code     :   (git log --oneline -1)
+Ngày giờ kiểm      : 2026-11-11 18:48–19:02
+Người kiểm         : Vũ Duy Dương
+Máy / hệ điều hành : Ubuntu Linux (PX4 SITL v1.18.0-beta1 + Gazebo gz_r1_rover)
+Phiên bản code     : b5bd02d (code US-03a/T3: 813be51)
 
 CHUẨN BỊ
 --------
@@ -28,8 +28,8 @@ Bước (Terminal B):
     python3 -m rover
 App hiện "ĐANG CHỜ XE". Bấm r.
 Đạt khi:
-    [ ] Vùng thông báo hiện "Chưa kết nối xe"
-    [ ] Dòng "Khóa xe" vẫn là "chưa rõ"
+    [v] Vùng thông báo hiện "Chưa kết nối xe"
+    [v] Dòng "Khóa xe" vẫn là "chưa rõ"
 Giữ app đang chạy.
 
 AC1 – Mở khóa xe
@@ -41,18 +41,18 @@ Bước:
     Chờ dấu nhắc "pxh>"; Terminal B hiện "ĐÃ KẾT NỐI" và "Khóa xe  : ĐÃ KHÓA".
     Terminal B: bấm r.
 Đạt khi:
-    [ ] Vùng thông báo hiện "Đã gửi lệnh mở khóa" (sau đó có thể đổi thành "Xe chấp nhận lệnh mở khóa")
-    [ ] Trong vòng 2 s, dòng "Khóa xe" chuyển sang "ĐÃ MỞ KHÓA"
-    [ ] Đối chiếu: Terminal A (console PX4) có dòng báo đã arm (ví dụ "Armed by external command")
+    [v] Vùng thông báo hiện "Đã gửi lệnh mở khóa" (sau đó có thể đổi thành "Xe chấp nhận lệnh mở khóa")
+    [v] Trong vòng 2 s, dòng "Khóa xe" chuyển sang "ĐÃ MỞ KHÓA"
+    [v] Đối chiếu: Terminal A (console PX4) có dòng báo đã arm (ví dụ "Armed by external command")
 Làm ngay AC2 sau khi AC1 đạt (xem lưu ý cuối file về tự khóa).
 
 AC2 – Khóa xe
 -------------
 Bước (Terminal B): bấm f.
 Đạt khi:
-    [ ] Vùng thông báo hiện "Đã gửi lệnh khóa"
-    [ ] Trong vòng 2 s, dòng "Khóa xe" chuyển sang "ĐÃ KHÓA"
-    [ ] Đối chiếu: console PX4 có dòng báo đã disarm
+    [v] Vùng thông báo hiện "Đã gửi lệnh khóa"
+    [v] Trong vòng 2 s, dòng "Khóa xe" chuyển sang "ĐÃ KHÓA"
+    [v] Đối chiếu: console PX4 có dòng báo đã disarm
 
 AC3 – Xe từ chối lệnh
 ---------------------
@@ -61,15 +61,16 @@ Bước:
     Terminal A (pxh>), ghi lại giá trị cũ trước khi đổi:
         param show COM_RC_IN_MODE
         param set COM_RC_IN_MODE 0
+    (Trên PX4 v1.18, gz_r1_rover mặc định ở mode Hold nên gõ thêm `commander mode manual` để chuyển sang mode cần RC.)
     Chờ khoảng 5 s. Terminal B: bấm r.
 Đạt khi:
-    [ ] Vùng thông báo hiện "Xe từ chối lệnh mở khóa"
-    [ ] Dòng "Khóa xe" vẫn là "ĐÃ KHÓA"
-    [ ] App không treo (bấm h vẫn hiện / ẩn bảng phím)
-    [ ] Đối chiếu: console PX4 có dòng "Arming denied" kèm lý do
+    [v] Vùng thông báo hiện "Xe từ chối lệnh mở khóa"
+    [v] Dòng "Khóa xe" vẫn là "ĐÃ KHÓA"
+    [v] App không treo (bấm h vẫn hiện / ẩn bảng phím)
+    [v] Đối chiếu: console PX4 có dòng "Arming denied" kèm lý do
 Trả lại như cũ sau khi kiểm (Terminal A):
         param set COM_RC_IN_MODE <giá trị cũ đã ghi>
-Giá trị cũ của COM_RC_IN_MODE:
+Giá trị cũ của COM_RC_IN_MODE: 1
 Nếu sau khi đổi tham số mà PX4 vẫn cho mở khóa (dòng "Khóa xe" thành "ĐÃ MỞ KHÓA"): ghi AC3 là "Chưa kiểm được", ghi lại dòng console PX4, báo PO chọn cách khác để làm xe từ chối; khóa xe lại bằng f rồi trả tham số về như cũ.
 
 Kết thúc: bấm q để thoát app.
@@ -78,12 +79,12 @@ BẢNG KẾT QUẢ
 ------------
 AC  | Kết quả (Đạt / Không đạt) | Ghi chú
 ----+---------------------------+--------
-AC1 |                           |
-AC2 |                           |
-AC3 |                           |
-AC4 |                           |
+AC1 | Đạt                       | App hiện thông báo và ĐÃ MỞ KHÓA; PX4: Armed by external command
+AC2 | Đạt                       | App hiện thông báo và ĐÃ KHÓA; PX4: Disarmed by external command
+AC3 | Đạt                       | COM_RC_IN_MODE=0 + commander mode manual -> app báo từ chối, giữ ĐÃ KHÓA, không treo; PX4: Arming denied: Resolve system health failures first
+AC4 | Đạt                       | Chưa bật PX4 bấm R -> app báo Chưa kết nối xe, Khóa xe giữ chưa rõ
 
-Kết luận US-03a:
+Kết luận US-03a: ĐẠT TẤT CẢ TIÊU CHÍ CHẤP NHẬN
 
 LƯU Ý
 -----

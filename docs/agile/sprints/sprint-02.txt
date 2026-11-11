@@ -42,7 +42,7 @@ US-02/T4   | Phương  | Chạy kiểm thử chấp nhận US-02                
 US-03a/T1  | Dương   | ArmControl                                      | có (6 test)  | US-04/T0                  | DONE       | 4f7024f
 US-03a/T2  | Dương   | send_arm, ArmAck, giả lập PX4 hai chiều         | có (3 test)  | US-02/T2                  | DONE       | a9e91fe
 US-03a/T3  | Dương   | Nối mở / khóa xe vào app (phím R, F)            | có (5 test)  | US-02/T3, US-03a/T1, T2   | DONE       | 813be51
-US-03a/T4  | Dương   | Chạy kiểm thử chấp nhận US-03a                  | không        | US-03a/T3                 | DOING      |
+US-03a/T4  | Dương   | Chạy kiểm thử chấp nhận US-03a                  | không        | US-03a/T3                 | DONE       |
 S02/DOC    | Hoàng   | Cập nhật sơ đồ cuối sprint (overview, class)    | không        | cả 3 story XONG           | TODO       |
 
 Tổng test tự động mới: 38 (US-04: 11, US-02: 13, US-03a: 14); cộng 14 test US-01 = 52.
@@ -86,7 +86,7 @@ SPRINT REVIEW (điền khi kết thúc sprint)
 Kết quả kiểm thử chấp nhận:
   US-04 : AC1:      AC2:      AC3:
   US-02 : AC1: Đạt  AC2: Đạt  AC3: Đạt  AC4: Đạt
-  US-03a: AC1:      AC2:      AC3:      AC4:
+  US-03a: AC1: Đạt  AC2: Đạt  AC3: Đạt  AC4: Đạt
 Story đạt:
 Phản hồi của khách hàng:
 
