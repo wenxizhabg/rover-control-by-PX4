@@ -215,7 +215,7 @@ T4  Kiểm thử chấp nhận
     Người làm   : Phương
     Công việc   : chạy kiểm hồi quy sau refactor và AC1–AC5, điền kết quả; AC không đạt thì ghi bug-log trước khi sửa.
     Test tự động: không
-    Trạng thái  : TODO
+    Trạng thái  : DONE
 
 T5  Bảng thông báo có thời gian giữ (tầng xử lý)
     File code   : rover/core/view.py (thêm MESSAGE_HOLD_S, lớp MessageBoard)

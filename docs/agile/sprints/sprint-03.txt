@@ -31,7 +31,7 @@ US-03b/T0    | Hoàng   | Spike: chọn cách PX4 rover nhận lệnh lái (4 gi
 US-03b/T1    | Phương  | DriveController, Action lái                         | có (6 test)      | US-03b/T0                  | DONE       | 6379ae5
 US-03b/T2    | Hoàng   | send_drive (+ đổi chế độ nếu cần) trong driver      | có (3–4 test)    | US-03b/T0                  | DONE       |
 US-03b/T3    | Dương   | Nối phím W/S/A/D/Space vào app                      | có (6 test)      | US-03b/T1, T2, T6          | DONE       | dba7909
-US-03b/T4    | Phương  | Kiểm hồi quy + kiểm thử chấp nhận US-03b            | không            | US-03b/T3                  | TODO       |
+US-03b/T4    | Phương  | Kiểm hồi quy + kiểm thử chấp nhận US-03b            | không            | US-03b/T3                  | DONE       |
 US-03b/T5    | Dương   | MessageBoard: giữ mỗi thông báo ít nhất 0.5 s       | có (6 test)      | S03/REFACTOR               | DONE       | 496b889
 US-03b/T6    | Dương   | Nối MessageBoard vào app                            | có (2 test)      | US-03b/T5                  | DONE       | 37a7c19
 S03/DIAG-1   | Phương  | Sơ đồ tổng quan rút gọn + use case                  | không            | –                          | DONE       |
@@ -151,9 +151,9 @@ Hướng dẫn chung: docs/agile/sprint-workflow.txt (nếu đã thêm vào repo
 
 SPRINT REVIEW (điền khi kết thúc sprint)
 ----------------------------------------
-Kiểm hồi quy sau refactor (US-04, US-02, US-03a):
-Kết quả kiểm thử chấp nhận US-03b: AC1:      AC2:      AC3:      AC4:      AC5:
-Story đạt:
+Kiểm hồi quy sau refactor (US-04, US-02, US-03a): ĐẠT (màn hình, kết nối liên tục, mở/khóa xe)
+Kết quả kiểm thử chấp nhận US-03b: AC1: ĐẠT  AC2: ĐẠT  AC3: ĐẠT  AC4: ĐẠT  AC5: ĐẠT
+Story đạt: US-03b
 Phản hồi của khách hàng:
 
 SPRINT RETROSPECTIVE (điền khi kết thúc sprint)
