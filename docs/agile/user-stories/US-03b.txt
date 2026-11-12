@@ -118,7 +118,7 @@ T1  Logic lái 1 giây (tầng xử lý)
          Ý nghĩa : AC1, AC2 (màn hình hiện hướng và "còn x s").
 
     Kiểm tay    : không
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T2  Gửi lệnh lái tới PX4 (driver MAVLink)
     File code   : rover/hal.py (thêm send_drive vào VehicleLink, và hàm đổi chế độ nếu spike cần), rover/drivers/mavlink.py
