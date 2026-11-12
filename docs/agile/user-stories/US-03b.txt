@@ -208,7 +208,7 @@ T3  Nối lái xe vào app
          Ý nghĩa : AC4 (b).
 
     Kiểm tay    : AC1–AC4 theo docs/acceptance/US-03b-acceptance.txt
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T4  Kiểm thử chấp nhận
     File        : docs/acceptance/US-03b-acceptance.txt (bản hướng dẫn viết ở Sprint Planning; Phương bổ sung bước đổi chế độ / tham số theo kết quả spike trước khi chạy)
