@@ -30,10 +30,10 @@ S03/REFACTOR | Hoàng   | Sắp code theo 4 tầng, bỏ lệnh connect         
 US-03b/T0    | Hoàng   | Spike: chọn cách PX4 rover nhận lệnh lái (4 giờ)    | không            | S03/REFACTOR               | DONE       |
 US-03b/T1    | Phương  | DriveController, Action lái                         | có (6 test)      | US-03b/T0                  | DONE       | 6379ae5
 US-03b/T2    | Hoàng   | send_drive (+ đổi chế độ nếu cần) trong driver      | có (3–4 test)    | US-03b/T0                  | DONE       |
-US-03b/T3    | Dương   | Nối phím W/S/A/D/Space vào app                      | có (6 test)      | US-03b/T1, T2, T6          | TODO       |
+US-03b/T3    | Dương   | Nối phím W/S/A/D/Space vào app                      | có (6 test)      | US-03b/T1, T2, T6          | DOING      |
 US-03b/T4    | Phương  | Kiểm hồi quy + kiểm thử chấp nhận US-03b            | không            | US-03b/T3                  | TODO       |
 US-03b/T5    | Dương   | MessageBoard: giữ mỗi thông báo ít nhất 0.5 s       | có (6 test)      | S03/REFACTOR               | DONE       | 496b889
-US-03b/T6    | Dương   | Nối MessageBoard vào app                            | có (2 test)      | US-03b/T5                  | DOING      |
+US-03b/T6    | Dương   | Nối MessageBoard vào app                            | có (2 test)      | US-03b/T5                  | DONE       | 37a7c19
 S03/DIAG-1   | Phương  | Sơ đồ tổng quan rút gọn + use case                  | không            | –                          | TODO       |
 S03/DIAG-2   | Hoàng   | Sơ đồ lớp theo cấu trúc mới + hoạt động (vòng lặp)  | không            | S03/REFACTOR, US-03b/T3    | TODO       |
 S03/DIAG-3   | Dương   | Sơ đồ tuần tự (bấm R, bấm W) + trạng thái           | không            | US-03b/T2                  | TODO       |
