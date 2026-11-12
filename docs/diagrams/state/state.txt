@@ -1,0 +1,38 @@
+SƠ ĐỒ TRẠNG THÁI HỆ THỐNG – CHÚ THÍCH SƠ ĐỒ
+===========================================
+File nguồn : docs/diagrams/state/state.mmd (Mermaid stateDiagram-v2)
+File ảnh   : docs/diagrams/state/state.svg (xuất từ file nguồn nếu cần)
+Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI).
+Phiên bản  : Sprint 3 (LinkMonitor US-02, DriveController US-03b/T1, MessageBoard US-03b/T5).
+
+1. MỤC ĐÍCH
+-----------
+Mô tả 3 máy trạng thái theo thời gian nằm ở Tầng 2 (rover/core/):
+1) Trạng thái kết nối xe (LinkMonitor)
+2) Trạng thái lái xe (DriveController)
+3) Trạng thái hiển thị của bảng thông báo (MessageBoard)
+
+Các máy trạng thái này hoàn toàn thuần túy, nhận thời điểm now từ bên ngoài để có thể kiểm thử tất định không phụ thuộc đồng hồ thật.
+
+2. CHI TIẾT TỪNG MÁY TRẠNG THÁI
+-------------------------------
+(1) Kết nối xe (LinkMonitor, timeout = 3.0 s):
+    - ĐANG CHỜ XE (WAITING): Trạng thái khởi đầu lúc mở app khi chưa nhận được gói HEARTBEAT nào từ xe.
+    - ĐÃ KẾT NỐI (CONNECTED): Khi nhận HEARTBEAT; mỗi gói mới làm mới mốc thời gian nhận cuối. Đúng 3.0 s vẫn tính là ĐÃ KẾT NỐI.
+    - MẤT KẾT NỐI (LOST): Khi khoảng thời gian không nhận HEARTBEAT vượt quá 3.0 s (> 3.0 s). Khi nhận lại HEARTBEAT, quay về ĐÃ KẾT NỐI.
+
+(2) Lái xe (DriveController, duration = 1.0 s):
+    - ĐỨNG YÊN (IDLE): Trạng thái ban đầu; setpoint(now) trả (0.0, 0.0).
+    - ĐANG CHẠY (DRIVING): Vào trạng thái này khi người vận hành bấm W / S / A / D lúc xe ĐÃ KẾT NỐI và ĐÃ MỞ KHÓA; đặt hạn chạy tới now + 1.0 s. Nếu bấm tiếp phím lái khi đang chạy thì gia hạn thêm 1.0 s từ thời điểm bấm mới (hoặc đổi hướng mới).
+    - Quay về ĐỨNG YÊN ngay khi hết 1.0 s (now >= expires_at), khi bấm Space (stop()), hoặc khi xe bị khóa / mất kết nối.
+
+(3) Bảng thông báo (MessageBoard, hold = 0.5 s):
+    - TRỐNG (EMPTY): Lúc mới mở app, chưa có thông báo nào (current(now) trả "").
+    - ĐANG HIỆN (SHOWING): Ngay khi nhận post() đầu tiên, chuyển sang ĐANG HIỆN ngay lập tức để người dùng thấy phản hồi tức thì.
+    - Khi có thông báo mới đến trước lúc thông báo hiện tại giữ đủ 0.5 s, thông báo mới vào hàng đợi FIFO (không bị bỏ sót).
+    - Khi đã giữ >= 0.5 s và hàng đợi còn phần tử, current(now) hoặc post(..., now) chuyển sang phần tử kế tiếp ở đầu hàng đợi và bắt đầu đếm lại 0.5 s từ now.
+    - Khi hàng đợi rỗng, bảng giữ nguyên thông báo cuối trên màn hình để người vận hành đọc kịp.
+
+3. QUY TẮC CẬP NHẬT
+-------------------
+- Khi thêm trạng thái mới hoặc thay đổi ngưỡng thời gian (timeout, duration, hold), sửa trực tiếp state.mmd và chú thích trong file này.

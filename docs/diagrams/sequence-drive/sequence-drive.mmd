@@ -1,0 +1,37 @@
+---
+title: Sơ đồ tuần tự – Lái xe tiến 1 s rồi tự dừng (bấm W)
+---
+sequenceDiagram
+    actor User as Người vận hành
+    participant App as RoverApp<br/>(Tầng 1)
+    participant Drive as DriveController<br/>(Tầng 2)
+    participant Link as MavlinkVehicleLink<br/>(Tầng 4)
+    participant PX4 as PX4 SITL
+
+    Note over User,PX4: Điều kiện ban đầu: xe ĐÃ KẾT NỐI và ĐÃ MỞ KHÓA (armed = True)
+
+    User->>App: Bấm phím W
+    App->>Link: send_manual_mode()
+    Link->>PX4: COMMAND_LONG (MAV_CMD_DO_SET_MODE = 176, param1 = 1, param2 = 1 Manual)
+    App->>Drive: start(Action.FORWARD, now)
+    Note right of Drive: Đặt hạn chạy tới now + 1.0 s
+
+    loop Mỗi vòng lặp khi chưa hết 1.0 s (khoảng 20 lần/giây)
+        App->>Drive: setpoint(now)
+        Drive-->>App: (1.0, 0.0)
+        App->>Link: send_drive(1.0, 0.0)
+        Link->>PX4: MANUAL_CONTROL (target = 1, z = 1000, y = 0, x = 0, r = 0)
+        App->>Drive: active_action(now), remaining_s(now)
+        Drive-->>App: (FORWARD, số giây còn lại)
+        App-->>User: Vẽ màn hình: "Lái xe   : TIẾN (còn x.x s)"
+    end
+
+    Note over App,PX4: Sau 1.0 s (hoặc ngay khi người dùng bấm Space gọi DriveController.stop())
+
+    App->>Drive: setpoint(now)
+    Drive-->>App: (0.0, 0.0)
+    App->>Link: send_drive(0.0, 0.0)
+    Link->>PX4: MANUAL_CONTROL (target = 1, z = 500, y = 0, x = 0, r = 0)
+    App->>Drive: active_action(now), remaining_s(now)
+    Drive-->>App: (None, 0.0)
+    App-->>User: Vẽ màn hình: "Lái xe   : ĐỨNG YÊN"

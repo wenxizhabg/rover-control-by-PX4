@@ -1,0 +1,42 @@
+---
+title: Sơ đồ tuần tự – Mở khóa xe (bấm R)
+---
+sequenceDiagram
+    actor User as Người vận hành
+    participant App as RoverApp<br/>(Tầng 1)
+    participant Arm as ArmControl<br/>(Tầng 2)
+    participant Board as MessageBoard<br/>(Tầng 2)
+    participant Link as MavlinkVehicleLink<br/>(Tầng 4)
+    participant PX4 as PX4 SITL
+
+    Note over User,PX4: Điều kiện ban đầu: xe đã ĐÃ KẾT NỐI (đang nhận HEARTBEAT, armed = False)
+
+    User->>App: Bấm phím R
+    App->>Arm: request(arm = True, link_state = CONNECTED)
+    Arm-->>App: (True, "Đã gửi lệnh mở khóa")
+    App->>Board: post("Đã gửi lệnh mở khóa", now)
+    App->>Link: send_arm(True)
+    Link->>PX4: COMMAND_LONG (MAV_CMD_COMPONENT_ARM_DISARM, param1 = 1)
+    App->>Board: current(now)
+    Board-->>App: "Đã gửi lệnh mở khóa"
+    App-->>User: Vẽ màn hình: "Đã gửi lệnh mở khóa"
+
+    Note over Link,PX4: Sau vài ms, PX4 xử lý lệnh và gửi phản hồi về app
+
+    PX4-->>Link: COMMAND_ACK (ACCEPTED) + HEARTBEAT (armed = True)
+    App->>Link: poll()
+    Link-->>App: [ArmAck(True), Heartbeat(armed = True)]
+    App->>Arm: on_ack(ArmAck(True))
+    Arm-->>App: "Xe chấp nhận lệnh mở khóa"
+    App->>Board: post("Xe chấp nhận lệnh mở khóa", now)
+    Note right of Board: Chưa đủ 0.5 s -> xếp vào hàng đợi FIFO
+    App->>Arm: on_heartbeat(armed = True)
+    App->>Board: current(now)
+    Board-->>App: "Đã gửi lệnh mở khóa" (giữ đủ 0.5 s)
+    App-->>User: Màn hình: "ĐÃ MỞ KHÓA", vẫn giữ "Đã gửi lệnh mở khóa"
+
+    loop Các vòng lặp sau khi đã đủ MESSAGE_HOLD_S = 0.5 s
+        App->>Board: current(now)
+        Board-->>App: "Xe chấp nhận lệnh mở khóa"
+        App-->>User: Vẽ màn hình: "Xe chấp nhận lệnh mở khóa" + "ĐÃ MỞ KHÓA"
+    end

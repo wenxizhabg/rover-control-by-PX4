@@ -1,0 +1,42 @@
+SƠ ĐỒ TUẦN TỰ LÁI XE (BẤM W) – CHÚ THÍCH SƠ ĐỒ
+=============================================
+File nguồn : docs/diagrams/sequence-drive/sequence-drive.mmd (Mermaid sequenceDiagram)
+File ảnh   : docs/diagrams/sequence-drive/sequence-drive.svg (xuất từ file nguồn nếu cần)
+Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI).
+Phiên bản  : Sprint 3 (US-03b/T0 spike, T1, T2, T3).
+
+1. MỤC ĐÍCH
+-----------
+Mô tả trình tự khi người vận hành bấm phím W để cho xe tiến trong 1.0 s rồi tự dừng (hoặc nhấn Space để dừng ngay), phản ánh đúng kết quả spike US-03b/T0 (chuyển chế độ Manual + gửi MANUAL_CONTROL liên tục mỗi vòng lặp).
+
+2. CÁC THÀNH PHẦN THAM GIA
+--------------------------
+- Người vận hành: Bấm phím W / S / A / D / Space và theo dõi trạng thái lái trên terminal.
+- RoverApp (Tầng 1): Kiểm tra kết nối và khóa xe, ra lệnh đổi chế độ Manual, cập nhật DriveController và gửi setpoint ở mọi vòng lặp khi đang kết nối.
+- DriveController (Tầng 2): Giữ hướng lái hiện tại và thời điểm hết hạn (now + DRIVE_DURATION_S = 1.0 s); tính (forward, turn).
+- MavlinkVehicleLink (Tầng 4): Đổi setpoint [-1, 1] thành gói MANUAL_CONTROL (z = 500 + round(500 * forward), y = round(1000 * turn)) và gửi lệnh chuyển Manual (176).
+- PX4 SITL: Nhận lệnh chế độ Manual và dòng MANUAL_CONTROL để điều khiển xe r1_rover.
+
+3. DIỄN BIẾN LUỒNG CHÍNH
+------------------------
+(1) Bấm phím W (khi ĐÃ KẾT NỐI và ĐÃ MỞ KHÓA):
+    - RoverApp gọi MavlinkVehicleLink.send_manual_mode() gửi COMMAND_LONG 176 (param1 = 1, param2 = 1) để chắc chắn xe về chế độ Manual (tránh trường hợp xe vừa ở Hold hoặc mới failsafe mất tay điều khiển).
+    - Sau đó gọi DriveController.start(Action.FORWARD, now) để chạy tiến trong 1.0 s.
+
+(2) Trong vòng 1.0 s (các vòng lặp 50 ms):
+    - DriveController.setpoint(now) trả về (DRIVE_SPEED = 1.0, 0.0).
+    - MavlinkVehicleLink.send_drive(1.0, 0.0) gửi MANUAL_CONTROL với z = 1000 (tiến hết ga), y = 0, x = 0, r = 0.
+    - Màn hình hiển thị dòng "Lái xe   : TIẾN (còn x.x s)".
+
+(3) Hết 1.0 s (hoặc bấm phím Space):
+    - DriveController hết hạn (now >= expires_at) hoặc gọi stop().
+    - setpoint(now) trả về (0.0, 0.0); send_drive(0.0, 0.0) gửi MANUAL_CONTROL với z = 500 (mức đứng yên ở PX4), y = 0.
+    - Màn hình chuyển về "Lái xe   : ĐỨNG YÊN".
+
+(4) Ghi chú chính sách gửi đều đặn (spike Q2, Q3):
+    - Ngay cả khi chưa mở khóa hoặc đang đứng yên, miễn đang ĐÃ KẾT NỐI thì mỗi vòng lặp RoverApp vẫn gửi send_drive(0.0, 0.0) (z = 500) để PX4 không kích hoạt failsafe COM_RC_LOSS_T (0.5 s) và cho phép mở khóa ở chế độ Manual.
+    - Các phím S (lùi: forward = -1.0, z = 0), A (quay trái: turn = -0.5, y = -500), D (quay phải: turn = +0.5, y = +500) chạy cùng trình tự.
+
+4. QUY TẮC CẬP NHẬT
+-------------------
+- Khi thay đổi thời lượng chạy, mức tốc độ hoặc thông điệp MAVLink dùng để lái xe, cập nhật lại sequence-drive.mmd và chú thích này.

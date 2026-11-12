@@ -1,0 +1,36 @@
+---
+title: Sơ đồ trạng thái – Kết nối, Lái xe và Bảng thông báo
+---
+stateDiagram-v2
+    state "1. Kết nối xe (LinkMonitor)" as link_sm {
+        [*] --> WAITING
+        WAITING: ĐANG CHỜ XE
+        CONNECTED: ĐÃ KẾT NỐI
+        LOST: MẤT KẾT NỐI
+
+        WAITING --> CONNECTED: nhận HEARTBEAT
+        CONNECTED --> CONNECTED: nhận HEARTBEAT (làm mới thời gian)
+        CONNECTED --> LOST: quá 3.0 s không có HEARTBEAT
+        LOST --> CONNECTED: nhận HEARTBEAT trở lại
+    }
+
+    state "2. Lái xe (DriveController)" as drive_sm {
+        [*] --> IDLE
+        IDLE: ĐỨNG YÊN
+        DRIVING: ĐANG CHẠY (hướng)
+
+        IDLE --> DRIVING: bấm W / S / A / D (đã kết nối và mở khóa)
+        DRIVING --> DRIVING: bấm phím lái (tính lại hạn 1.0 s từ now)
+        DRIVING --> IDLE: hết 1.0 s hoặc bấm Space / mất kết nối / khóa xe
+    }
+
+    state "3. Bảng thông báo (MessageBoard)" as msg_sm {
+        [*] --> EMPTY
+        EMPTY: TRỐNG
+        SHOWING: ĐANG HIỆN (thông báo)
+
+        EMPTY --> SHOWING: post() khi bảng trống (hiện ngay)
+        SHOWING --> SHOWING: post() khi chưa đủ 0.5 s (xếp vào hàng đợi FIFO)
+        SHOWING --> SHOWING: đã hiện >= 0.5 s và hàng đợi còn (hiện thông báo kế)
+        SHOWING --> SHOWING: hàng đợi rỗng (giữ thông báo cuối)
+    }

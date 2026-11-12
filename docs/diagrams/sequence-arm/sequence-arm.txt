@@ -1,0 +1,40 @@
+SƠ ĐỒ TUẦN TỰ MỞ KHÓA XE (BẤM R) – CHÚ THÍCH SƠ ĐỒ
+====================================================
+File nguồn : docs/diagrams/sequence-arm/sequence-arm.mmd (Mermaid sequenceDiagram)
+File ảnh   : docs/diagrams/sequence-arm/sequence-arm.svg (xuất từ file nguồn nếu cần)
+Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI).
+Phiên bản  : Sprint 3 (US-03a + US-03b/T5, T6 MessageBoard).
+
+1. MỤC ĐÍCH
+-----------
+Mô tả trình tự tương tác giữa Người vận hành, các thành phần trong App rover và PX4 SITL khi bấm phím R để mở khóa xe, bao gồm cả cơ chế giữ thông báo tối thiểu 0.5 s của MessageBoard (US-03b AC5).
+
+2. CÁC THÀNH PHẦN THAM GIA
+--------------------------
+- Người vận hành: Nhấn phím R và quan sát khung hiển thị trên terminal.
+- RoverApp (Tầng 1): Điều phối vòng lặp chính 50 ms: đọc phím, gọi tầng xử lý, gọi driver và vẽ lại khung.
+- ArmControl (Tầng 2): Kiểm tra điều kiện kết nối khi request(), lưu lệnh gần nhất và dịch ArmAck thành thông báo tiếng Việt.
+- MessageBoard (Tầng 2): Hàng đợi thông báo FIFO, đảm bảo mỗi thông báo nằm trên màn hình tối thiểu MESSAGE_HOLD_S = 0.5 s.
+- MavlinkVehicleLink (Tầng 4): Gửi/nhận gói MAVLink 2 qua UDP 14540.
+- PX4 SITL: Autopilot nhận lệnh mở khóa và phản hồi COMMAND_ACK cùng HEARTBEAT mới.
+
+3. DIỄN BIẾN LUỒNG CHÍNH
+------------------------
+(1) Bấm phím R:
+    - RoverApp gọi ArmControl.request(True, CONNECTED) -> nhận (True, "Đã gửi lệnh mở khóa").
+    - Thông báo "Đã gửi lệnh mở khóa" được đưa vào MessageBoard.post(..., now); vì bảng đang trống hoặc thông báo cũ đã giữ đủ lâu nên thông báo này hiện ngay trên màn hình.
+    - MavlinkVehicleLink.send_arm(True) gửi gói COMMAND_LONG (MAV_CMD_COMPONENT_ARM_DISARM, param1 = 1) tới PX4.
+
+(2) PX4 phản hồi nhanh (sau vài ms):
+    - PX4 gửi COMMAND_ACK (MAV_RESULT_ACCEPTED) và HEARTBEAT mang cờ armed = True.
+    - Trong poll(), RoverApp nhận ArmAck(True), gọi ArmControl.on_ack() ra chuỗi "Xe chấp nhận lệnh mở khóa" rồi đưa vào MessageBoard.post(..., now).
+    - Do lúc này thông báo "Đã gửi lệnh mở khóa" chưa hiện đủ 0.5 s, MessageBoard đẩy thông báo mới vào hàng đợi FIFO và vẫn trả về "Đã gửi lệnh mở khóa" ở current(now).
+    - Đồng thời ArmControl.on_heartbeat(True) cập nhật trạng thái khóa thành "ĐÃ MỞ KHÓA".
+
+(3) Sau mốc 0.5 s:
+    - Ở vòng lặp khi (now - shown_at) >= 0.5 s, MessageBoard.current(now) tự động chuyển sang thông báo kế tiếp trong hàng đợi là "Xe chấp nhận lệnh mở khóa" và giữ nguyên cho đến khi có thông báo mới.
+    - Trường hợp từ chối (ArmAck(False)) hoặc bấm F (khóa xe) đi theo trình tự tương tự với thông báo tương ứng ("Xe từ chối lệnh mở khóa", "Đã gửi lệnh khóa", "Xe chấp nhận lệnh khóa").
+
+4. QUY TẮC CẬP NHẬT
+-------------------
+- Nếu thay đổi cơ chế giữ thông báo hoặc giao thức gửi/nhận lệnh mở/khóa trong RoverApp, cập nhật lại sequence-arm.mmd và chú thích này.
