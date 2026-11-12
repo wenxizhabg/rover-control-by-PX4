@@ -1,0 +1,55 @@
+SƠ ĐỒ USE CASE – CHÚ THÍCH SƠ ĐỒ
+================================
+File nguồn : docs/diagrams/use-case/use-case.mmd (Mermaid flowchart vẽ use case)
+File ảnh   : docs/diagrams/use-case/use-case.svg (xuất từ file nguồn)
+Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI).
+Phiên bản  : Sprint 3 (US-04, US-02, US-03a, US-03b).
+
+1. PHẠM VI HỆ THỐNG
+-------------------
+Khung viền "Hệ thống: App rover" định ranh giới phần mềm ứng dụng điều khiển xe.
+Các hình elip/stadium (["..."]) đại diện cho các trường hợp sử dụng (Use Case) của ứng dụng.
+
+2. CÁC TÁC NHÂN (ACTORS)
+------------------------
+- Người vận hành (Actor chính - Primary Actor):
+  Người dùng trực tiếp tương tác với ứng dụng qua bàn phím và giao diện màn hình terminal để điều khiển xe.
+- PX4 SITL (Actor phụ - Secondary / Supporting Actor):
+  Hệ thống lái tự động mô phỏng (autopilot) bên ngoài, tiếp nhận các gói tin MAVLink từ app, xử lý và phản hồi dữ liệu trạng thái.
+
+3. DANH SÁCH CÁC USE CASE
+-------------------------
+(1) Mở app (US-04):
+    - Người vận hành khởi chạy ứng dụng rover trên terminal ("python -m rover").
+    - Hệ thống khởi tạo màn hình curses, nạp cấu hình phím và bắt đầu vòng lặp ứng dụng.
+
+(2) Kết nối tới xe (Tự động khi mở app):
+    - Hệ thống tự động lắng nghe cổng UDP 14540 để nhận gói tin HEARTBEAT từ PX4 SITL.
+    - Duy trì việc nhận diện và xác thực xe trong suốt thời gian app hoạt động.
+
+(3) Quan sát tình trạng kết nối (US-02):
+    - Người vận hành theo dõi tình trạng kết nối trên màn hình: ĐANG CHỜ XE, ĐÃ KẾT NỐI (kèm số heartbeat và thời gian trôi qua), hoặc MẤT KẾT NỐI nếu mất tín hiệu quá 3 giây.
+
+(4) Mở / khóa xe (US-03a):
+    - Người vận hành nhấn phím R để gửi yêu cầu mở khóa (ARM) hoặc nhấn phím F để khóa xe (DISARM).
+    - Hệ thống gửi lệnh MAVLink tới PX4 SITL và hiển thị phản hồi từ chối / chấp nhận trên MessageBoard và trạng thái khóa xe trên màn hình.
+
+(5) Điều khiển cơ bản: tiến, lùi, quay, dừng (US-03b):
+    - Khi xe đã kết nối và đã mở khóa, người vận hành nhấn các phím W (tiến), S (lùi), A (quay trái), D (quay phải), Space (dừng khẩn cấp).
+    - Hệ thống gửi lệnh lái tới PX4 SITL trong vòng 1 giây cho mỗi lần nhấn phím và hiển thị trạng thái chuyển động trên màn hình.
+
+4. CÁC MỐI QUAN HỆ (RELATIONSHIPS)
+----------------------------------
+- Quan hệ tương tác (Association):
+  + Người vận hành tham gia vào 4 use case: Mở app, Quan sát tình trạng kết nối, Mở / khóa xe, Điều khiển cơ bản.
+  + PX4 SITL tham gia trao đổi dữ liệu trong: Kết nối tới xe (gửi HEARTBEAT), Mở / khóa xe (nhận lệnh ARM/DISARM, trả ACK), Điều khiển cơ bản (nhận lệnh lái).
+- Quan hệ bao hàm (<<include>>):
+  + 3 use case nghiệp vụ chính của khách hàng gồm:
+      * "Quan sát tình trạng kết nối"
+      * "Mở / khóa xe"
+      * "Điều khiển cơ bản"
+    đều phụ thuộc và bắt buộc bao hàm use case "Kết nối tới xe". Nếu không có kết nối tới xe, hệ thống không thể lấy thông tin trạng thái, không cho phép mở khóa xe và không gửi lệnh lái.
+
+5. QUY TẮC CẬP NHẬT
+-------------------
+- Khi bổ sung tính năng hoặc User Story mới (ví dụ: chế độ tự hành, dẫn đường waypoint ở các sprint sau), bổ sung use case tương ứng vào trong ranh giới hệ thống và liên kết với Actor phù hợp.
