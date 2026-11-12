@@ -11,10 +11,10 @@ Quy tắc:
 Ưu tiên | Mã     | Story (tóm tắt)                                    | Điểm | Sprint | Trạng thái | File chi tiết
 --------+--------+----------------------------------------------------+------+--------+------------+--------------
 1       | US-01  | Bật mô phỏng Gazebo và kết nối đến xe              |  5   |  S1    | XONG       | US-01.txt
-2       | US-04  | Khung app điều khiển bằng bàn phím                 |  5   |  S2    | DANG_LAM   | US-04.txt
-3       | US-02  | Thấy tình trạng kết nối với xe liên tục            |  3   |  S2    | DANG_LAM   | US-02.txt
-4       | US-03a | Mở khóa / khóa xe bằng phím                        |  3   |  S2    | DANG_LAM   | US-03a.txt
-5       | US-03b | Lái xe tiến, lùi, quay bằng phím                   |  8   |        | MOI        | US-03b.txt
+2       | US-04  | Khung app điều khiển bằng bàn phím                 |  5   |  S2    | XONG       | US-04.txt
+3       | US-02  | Thấy tình trạng kết nối với xe liên tục            |  3   |  S2    | XONG       | US-02.txt
+4       | US-03a | Mở khóa / khóa xe bằng phím                        |  3   |  S2    | XONG       | US-03a.txt
+5       | US-03b | Lái xe tiến, lùi, quay bằng phím                   | 10   |  S3    | DANG_LAM   | US-03b.txt
 
 Ghi chú refinement (2026-11-10)
 -------------------------------
@@ -24,8 +24,18 @@ Ghi chú refinement (2026-11-10)
 - US-02: báo mất kết nối khi quá 3 s không nhận HEARTBEAT.
 - US-03b: mỗi lần bấm phím lái, xe chạy khoảng 1 s rồi tự dừng; Space dừng ngay. Ước lượng 8 điểm còn chưa chắc (chưa chọn cách PX4 rover nhận lệnh di chuyển); cần spike trước khi đưa vào sprint, vì vậy giữ trạng thái MOI.
 
+Ghi chú sprint review Sprint 02 (2026-11-12)
+--------------------------------------------
+- Khách hàng: sản phẩm là MỘT app với 3 khả năng: quan sát tình trạng kết nối (US-01, US-04, US-02), gửi lệnh mở / khóa (US-03a), điều khiển cơ bản (US-03b). Làm xong US-03b là đủ 3 khả năng.
+- Khách hàng: mở app là tự kết nối tới xe; bỏ lệnh "python -m rover connect" của US-01 từ Sprint 03. Chức năng "biết đã kết nối được tới xe" của US-01 nay do màn hình kết nối của app đảm nhận (US-02 AC1, AC4). US-01 giữ trạng thái XONG; docs/acceptance/US-01-acceptance.txt giữ làm lịch sử, không dùng để kiểm hồi quy nữa.
+- US-03b vào Sprint 03, kèm spike có giới hạn nửa ngày ở đầu sprint; ước lượng lại sau spike.
+- Khách hàng: thông báo gửi lệnh trôi quá nhanh, không kịp đọc. Đưa vào US-03b thành AC5: mỗi thông báo giữ trên màn hình ít nhất 0.5 s.
+
 Lịch sử thay đổi backlog
 ------------------------
+2026-11-12  Phản hồi khách hàng (thông báo trôi quá nhanh) đưa vào refinement US-03b thành AC5 (mỗi thông báo giữ ít nhất 0.5 s); US-03b: 8 -> 10 điểm.
+2026-11-12  US-03b: MOI -> SAN_SANG (refinement: AC, task chốt; ước lượng lại sau spike) -> DANG_LAM (bắt đầu Sprint 03, 2026-11-12 – 2026-11-13).
+2026-11-12  Sprint review Sprint 02: US-04, US-02, US-03a: DANG_LAM -> XONG (toàn bộ AC Đạt). Quyết định bỏ lệnh connect của US-01 (phản hồi khách hàng).
 2026-11-10  US-04, US-02, US-03a: SAN_SANG -> DANG_LAM (bắt đầu Sprint 02, hạn 2026-11-11 23:59).
 2026-11-10  Refinement: US-03 tách thành US-03a, US-03b; làm rõ US-04; thêm cột Điểm; sắp lại ưu tiên (US-04 lên 2); US-04, US-02, US-03a: MOI -> SAN_SANG.
 2026-11-09  Thêm US-02, US-03, US-04 từ phản hồi của khách hàng ở sprint review Sprint 01.

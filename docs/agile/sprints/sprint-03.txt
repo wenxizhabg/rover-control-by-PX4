@@ -1,0 +1,162 @@
+SPRINT 03
+Thời gian    : 2026-11-12 – 2026-11-13
+=========
+Mục tiêu     : Người vận hành mở app, mở khóa xe rồi lái xe trong Gazebo bằng W / S / A / D (mỗi lần bấm chạy khoảng 1 s), bấm Space thì dừng ngay; mọi thông báo đọc kịp. Code được sắp lại theo 4 tầng, sơ đồ đúng mức trừu tượng.
+Story chọn   : US-03b (10 điểm: lái xe 8 + đọc kịp thông báo AC5 2; ước lượng lại sau spike). Chi tiết: docs/agile/user-stories/US-03b.txt
+
+
+PHÂN CÔNG
+---------
+Thành viên             | Việc                                                     | Lý do
+-----------------------+----------------------------------------------------------+-----------------------------------------------------------------
+Trương Nhật Hoàng      | Giai đoạn 1: S03/REFACTOR, US-03b/T0 spike; sau đó T2, DIAG-2 | Viết khung app và hợp đồng API ở Sprint 02; làm spike thì viết luôn driver lái
+Vũ Duy Dương           | DIAG-3; giai đoạn 2: US-03b/T5, T6, rồi T3               | Đã nối mở / khóa xe vào app (US-03a/T3); T5, T6 và T3 cùng sửa app.py nên một người làm nối tiếp
+Đinh Trần Thảo Phương  | DIAG-1; giai đoạn 2: US-03b/T1; cuối: US-03b/T4          | Đã làm LinkMonitor (máy trạng thái theo thời gian, cùng kiểu DriveController)
+
+CẢI TIẾN TỪ RETROSPECTIVE SPRINT 02
+-----------------------------------
+1. Refactor 4 tầng: S03/REFACTOR (mục REFACTOR bên dưới).
+2. Sơ đồ đúng mức trừu tượng: S03/DIAGRAMS (mục SƠ ĐỒ bên dưới).
+3. Commit message đúng mẫu "US-03b/Tx: <nội dung>" hoặc "S03/<mã>: <nội dung>"; điền mã commit vào bảng ngay khi task DONE.
+4. Tên nhánh viết thường: s03/refactor, us-03b/t0, us-03b/t1, ..., s03/diag-1.
+5. Spike có giới hạn thời gian trước phần code nhiều rủi ro (US-03b/T0, 4 giờ).
+6. Ghi Daily Scrum vào mục DAILY SCRUM của file này mỗi buổi (một người ghi).
+
+SPRINT BACKLOG (cập nhật trạng thái mỗi khi task đổi trạng thái)
+---------------------------------------------------------------
+Task         | Người   | Mô tả ngắn                                          | Test tự động     | Phụ thuộc                  | Trạng thái | Commit
+-------------+---------+-----------------------------------------------------+------------------+----------------------------+------------+-------
+S03/REFACTOR | Hoàng   | Sắp code theo 4 tầng, bỏ lệnh connect               | giữ 49 test      | –                          | TODO       |
+US-03b/T0    | Hoàng   | Spike: chọn cách PX4 rover nhận lệnh lái (4 giờ)    | không            | S03/REFACTOR               | TODO       |
+US-03b/T1    | Phương  | DriveController, Action lái                         | có (6 test)      | US-03b/T0                  | TODO       |
+US-03b/T2    | Hoàng   | send_drive (+ đổi chế độ nếu cần) trong driver      | có (3–4 test)    | US-03b/T0                  | TODO       |
+US-03b/T3    | Dương   | Nối phím W/S/A/D/Space vào app                      | có (6 test)      | US-03b/T1, T2, T6          | TODO       |
+US-03b/T4    | Phương  | Kiểm hồi quy + kiểm thử chấp nhận US-03b            | không            | US-03b/T3                  | TODO       |
+US-03b/T5    | Dương   | MessageBoard: giữ mỗi thông báo ít nhất 0.5 s       | có (6 test)      | S03/REFACTOR               | TODO       |
+US-03b/T6    | Dương   | Nối MessageBoard vào app                            | có (2 test)      | US-03b/T5                  | TODO       |
+S03/DIAG-1   | Phương  | Sơ đồ tổng quan rút gọn + use case                  | không            | –                          | TODO       |
+S03/DIAG-2   | Hoàng   | Sơ đồ lớp theo cấu trúc mới + hoạt động (vòng lặp)  | không            | S03/REFACTOR, US-03b/T3    | TODO       |
+S03/DIAG-3   | Dương   | Sơ đồ tuần tự (bấm R, bấm W) + trạng thái           | không            | US-03b/T2                  | TODO       |
+
+Số test dự kiến cuối sprint: 49 (sau refactor) + 6 (US-03b/T1) + 3–4 (US-03b/T2) + 6 (US-03b/T3) + 8 (US-03b/T5, T6) = 72–73.
+
+THỨ TỰ VÀ CHỖ PHẢI CHỜ NHAU
+--------------------------
+Giai đoạn 1:
+  Hoàng : S03/REFACTOR ── merge ──▶ US-03b/T0 spike ── ghi kết quả vào US-03b.txt mục 5, báo nhóm
+  Dương : S03/DIAG-3 phần không cần spike (sequence-arm, trạng thái kết nối) – chỉ sửa docs/diagrams/
+  Phương: S03/DIAG-1 (tổng quan rút gọn, use case) – chỉ sửa docs/diagrams/
+  Không ai khác sửa rover/ hoặc tests/ trong giai đoạn 1.
+
+Giai đoạn 2:
+  Phương: US-03b/T1 ─────────────┐
+  Hoàng : US-03b/T2 ─────────────┼──▶ Dương: US-03b/T5 -> T6 -> T3 (test T3 viết trước theo US-03b.txt mục 3.5; code nối khi T1, T2 đã merge)
+                                 │
+Giai đoạn 3:
+  Phương: US-03b/T4 (kiểm hồi quy + AC)
+  Hoàng : S03/DIAG-2 (lớp, hoạt động)
+  Dương : S03/DIAG-3 phần còn lại (sequence-drive, trạng thái lái)
+
+Đường găng: S03/REFACTOR -> US-03b/T0 -> US-03b/T2 -> US-03b/T3 -> US-03b/T4 (T5, T6 nằm song song, không kéo dài đường găng).
+
+LỊCH ĐỀ XUẤT
+------------
+2026-11-12 : Daily Scrum. Giai đoạn 1: Hoàng S03/REFACTOR; Dương DIAG-3 (phần không cần spike); Phương DIAG-1. Refactor merge -> Hoàng spike T0. Cuối ngày Hoàng báo kết quả spike, PO quyết nếu cần thu hẹp.
+2026-11-13 : Daily Scrum. Giai đoạn 2: Phương T1, Hoàng T2, Dương US-03b/T5 -> T6. T1, T2 merge -> Dương xong US-03b/T3 -> Phương US-03b/T4 (gồm AC5). Hoàng DIAG-2, Dương DIAG-3 phần còn lại. Cuối ngày: sprint review (trình diễn trọn luồng) + retrospective, điền 2 phần cuối file.
+
+REFACTOR – HƯỚNG DẪN CHO S03/REFACTOR (Hoàng)
+---------------------------------------------
+Mục đích: sắp code theo 4 tầng, giảm từ 13 file code xuống 7, bỏ lệnh connect (quyết định sprint review 02). KHÔNG đổi hành vi của app (python -m rover chạy y như cuối Sprint 02).
+
+Cấu trúc đích:
+    rover/
+    ├── __init__.py
+    ├── __main__.py              python -m rover -> sys .exit (app .run_app ())
+    ├── app.py                   TẦNG 1  RoverApp (vòng lặp chính) + run_app (nơi DUY NHẤT tạo driver)
+    ├── core/                    TẦNG 2  xử lý thuần: không import pymavlink, curses, time
+    │   ├── __init__.py
+    │   ├── model.py             LinkState, Action, Heartbeat, ArmAck, VehicleInfo
+    │   ├── vehicle.py           LINK_TIMEOUT_S, LinkMonitor, ArmControl
+    │   └── view.py              KEY_BINDINGS, action_for, help_lines, ViewModel, render, format_link_status, format_arm_status
+    ├── hal.py                   TẦNG 3  VehicleLink, Terminal, Clock (chỉ interface)
+    └── drivers/                 TẦNG 4
+        ├── __init__.py
+        ├── mavlink.py           DEFAULT_URL, parse_heartbeat, MavlinkVehicleLink
+        └── terminal.py          CursesTerminal, SystemClock
+
+Bảng chuyển code (cũ -> mới):
+    rover/types.py           -> rover/core/model.py        (+ lớp VehicleInfo từ vehicle_info.py; bỏ mẹo TYPE_CHECKING vì VehicleInfo đã ở cùng file)
+    rover/link_monitor.py    -> rover/core/vehicle.py
+    rover/arm_control.py     -> rover/core/vehicle.py
+    rover/keymap.py          -> rover/core/view.py
+    rover/screen.py          -> rover/core/view.py
+    rover/hal.py             -> rover/hal.py               (chỉ sửa import)
+    rover/mavlink_link.py    -> rover/drivers/mavlink.py
+    rover/vehicle_info.py    -> rover/drivers/mavlink.py   (hàm parse_heartbeat; lớp VehicleInfo sang core/model.py)
+    rover/connection.py      -> rover/drivers/mavlink.py   (chỉ giữ DEFAULT_URL; bỏ connect, ConnectionTimeout, DEFAULT_TIMEOUT)
+    rover/terminal.py        -> rover/drivers/terminal.py
+    rover/clock.py           -> rover/drivers/terminal.py
+    rover/app.py             -> rover/app.py               (chỉ sửa import)
+    rover/cli.py             -> bỏ (__main__.py gọi thẳng run_app)
+
+Bảng chuyển test (cũ -> mới), số test:
+    test_link_monitor.py (5) + test_arm_control.py (6)   -> tests/test_vehicle.py  (11)
+    test_keymap.py (4) + test_screen.py (5)              -> tests/test_view.py     (9)
+    test_mavlink_link.py (7) + test_vehicle_info.py (4)  -> tests/test_mavlink.py  (11)
+    test_terminal.py (6)                                 -> tests/test_terminal.py (6, chỉ sửa import)
+    test_app.py (10)                                     -> tests/test_app.py      (10, chỉ sửa import)
+    test_setup.py (2)                                    -> giữ                    (2)
+    test_connection.py (4), test_cli.py (5)              -> bỏ (lệnh connect không còn)
+    tests/fakes.py, tests/mavlink_sim.py                 -> giữ (sửa import)
+    Tổng: 58 - 9 = 49 test.
+    Lưu ý: hành vi "bỏ qua QGroundControl, chờ tới khi gặp xe" của test_connection.py vẫn được kiểm bởi test poll () trong test_mavlink.py (chỉ trả gói của xe).
+
+Các bước (mỗi bước chạy pytest, pass thì commit; không làm gộp một lần):
+    B1. git checkout main && git pull && git checkout -b s03/refactor
+    B2. Tạo rover/core/__init__.py, rover/drivers/__init__.py (rỗng, chỉ một dòng docstring nói tầng).
+    B3. core/model.py: chép nội dung types.py + lớp VehicleInfo; sửa mọi import "rover .types" và "rover .vehicle_info import VehicleInfo" sang "rover .core .model". Xóa types.py (git rm). pytest -> commit "S03/REFACTOR: types -> core/model".
+    B4. core/vehicle.py (LinkMonitor + ArmControl), gộp test thành tests/test_vehicle.py, đánh lại số thứ tự test liền nhau. pytest -> commit.
+    B5. core/view.py (keymap + screen), gộp test thành tests/test_view.py. pytest -> commit.
+    B6. drivers/terminal.py (CursesTerminal + SystemClock). pytest -> commit.
+    B7. drivers/mavlink.py (DEFAULT_URL + parse_heartbeat + MavlinkVehicleLink), gộp test thành tests/test_mavlink.py; xóa connection.py, cli.py, vehicle_info.py, mavlink_link.py, test_connection.py, test_cli.py; __main__.py gọi run_app. pytest -> commit.
+    B8. Docstring đầu mỗi file mô tả TRÁCH NHIỆM của file (ví dụ "Tầng 2 – trạng thái của xe: kết nối, khóa"), bỏ tiền tố "US-xx/Tx:". Docstring của hàm / lớp giữ nguyên ý.
+    B9. README: sửa mục cấu trúc code và cách chạy (chỉ còn python -m rover, bỏ mọi chỗ nhắc lệnh connect); docs/diagrams/class/class.txt mục 3, 4: đổi đường dẫn file theo bảng trên, thêm quy tắc "chỉ app .run_app () được import cả hal và drivers" (sơ đồ lớp vẽ lại ở DIAG-2).
+    B10. Kiểm cuối (DoD của S03/REFACTOR):
+         [ ] pytest: 49 passed
+         [ ] grep -rn "pymavlink\|curses\|import time" rover/core  -> không có dòng nào (tầng 2 thuần)
+         [ ] grep -rn "rover .drivers" rover/core rover/hal.py  -> không có dòng nào (chiều gọi đúng)
+         [ ] Kiểm tay nhanh với mô phỏng: python -m rover hiện ĐANG CHỜ XE -> ĐÃ KẾT NỐI; R / F mở / khóa; H, Q như cũ
+         [ ] git checkout main && git merge s03/refactor && git push; báo cả nhóm để tách nhánh từ main mới
+
+SƠ ĐỒ – HƯỚNG DẪN CHO S03/DIAGRAMS
+----------------------------------
+Mỗi sơ đồ một thư mục docs/diagrams/<tên>/ gồm <tên>.mmd (nguồn), <tên>.svg (ảnh), <tên>.txt (chú thích), như system-overview.
+DIAG-1 (Phương):
+    system-overview : rút gọn còn 4 khối: Người vận hành – App rover (Terminal B) – PX4 SITL – Gazebo (Terminal A). Mũi tên: phím / màn hình (người – app); MAVLink 2 qua UDP 14540: HEARTBEAT, COMMAND_ACK về app, lệnh mở / khóa, lệnh lái tới PX4 (app – PX4); cảm biến / động cơ (PX4 – Gazebo). Không có tên file, không đánh số. Chú thích .txt viết lại theo đúng mức này.
+    use-case        : actor Người vận hành; actor phụ PX4 SITL; 3 use case theo khách hàng: Quan sát tình trạng kết nối (US-02), Mở / khóa xe (US-03a), Điều khiển cơ bản (US-03b); thêm Mở app (US-04) và quan hệ <<include>> từ 3 use case tới "Kết nối tới xe" (tự động khi mở app). Mermaid không có loại use case: vẽ bằng flowchart, use case là khối hình bầu dục (["..."]), có khung "Hệ thống: App rover".
+DIAG-2 (Hoàng):
+    class           : vẽ lại theo cấu trúc mới (namespace app, core, hal, drivers), thêm DriveController, send_drive, MESSAGE_HOLD_S, MessageBoard (RoverApp sở hữu MessageBoard thay cho thuộc tính _message); chú thích .txt = class.txt hiện tại đã sửa đường dẫn ở B9 + mục 3.5 của US-03b.txt.
+    activity-main-loop : một vòng RoverApp .step (): đọc gói (poll) -> cập nhật LinkMonitor, ArmControl; ArmAck -> đẩy thông báo vào MessageBoard (post) -> đọc phím -> xử lý hành động (thoát, help, mở / khóa, lái; mỗi thông báo sinh ra đều post vào MessageBoard) -> gửi setpoint lái nếu đã kết nối và mở khóa -> lấy thông báo đang hiện (MessageBoard .current) -> dựng khung, vẽ. Dùng flowchart có nhánh quyết định.
+DIAG-3 (Dương; sequence-arm và trạng thái kết nối làm ở giai đoạn 1, phần MessageBoard sau T6, phần lái sau T2):
+    sequence-arm    : bấm R -> ArmControl .request -> MessageBoard .post ("Đã gửi lệnh mở khóa") -> send_arm -> COMMAND_LONG -> PX4 -> COMMAND_ACK + HEARTBEAT (armed) -> poll -> MessageBoard .post ("Xe chấp nhận lệnh mở khóa", xếp hàng) -> màn hình: "Đã gửi lệnh mở khóa" giữ 0.5 s rồi mới tới "Xe chấp nhận lệnh mở khóa", "ĐÃ MỞ KHÓA" (thay luồng đánh số 1–9 của tổng quan cũ). Vẽ phần MessageBoard sau khi xong US-03b/T6; trước đó vẽ phần còn lại.
+    sequence-drive  : bấm W -> DriveController .start -> mỗi vòng send_drive -> message lái (theo spike) -> PX4 -> hết 1 s gửi (0, 0) -> màn hình ĐỨNG YÊN; có thể thêm đổi chế độ nếu spike cần.
+    state           : ba máy trạng thái (cùng một file hoặc ba thư mục): kết nối (ĐANG CHỜ XE -> ĐÃ KẾT NỐI <-> MẤT KẾT NỐI, điều kiện "nhận HEARTBEAT", "quá 3 s"); lái (ĐỨNG YÊN -> ĐANG CHẠY (hướng) -> ĐỨNG YÊN, điều kiện "bấm W/S/A/D", "hết 1 s", "Space"); thông báo (TRỐNG -> ĐANG HIỆN (thông báo X) -> ĐANG HIỆN (thông báo kế), điều kiện "post khi trống", "đã hiện >= 0.5 s và hàng đợi còn"; hàng đợi rỗng thì ở lại ĐANG HIỆN). Mermaid stateDiagram-v2. Trạng thái kết nối làm ở giai đoạn 1; lái sau T1, thông báo sau T5.
+
+QUY ƯỚC
+-------
+Nhánh  : viết thường, một nhánh một task: s03/refactor, us-03b/t0 ... us-03b/t4, s03/diag-1 ... s03/diag-3. Tách từ main mới nhất.
+Commit : "US-03b/Tx: <nội dung>" hoặc "S03/<mã>: <nội dung>". Điền mã commit vào bảng khi DONE.
+Đổi hợp đồng API (US-03b.txt mục 3.5, class.txt): báo cả nhóm trước, sửa tài liệu trong cùng commit.
+Hướng dẫn chung: docs/agile/sprint-workflow.txt (nếu đã thêm vào repo).
+
+SPRINT REVIEW (điền khi kết thúc sprint)
+----------------------------------------
+Kiểm hồi quy sau refactor (US-04, US-02, US-03a):
+Kết quả kiểm thử chấp nhận US-03b: AC1:      AC2:      AC3:      AC4:      AC5:
+Story đạt:
+Phản hồi của khách hàng:
+
+SPRINT RETROSPECTIVE (điền khi kết thúc sprint)
+-----------------------------------------------
+Điều cần cải thiện:
+Hành động cho sprint sau:

@@ -75,24 +75,35 @@ Nhánh  : một nhánh cho một task, tên theo mã task viết thường, ví 
 Commit : "US-xx/Tx: <nội dung>", ví dụ "US-03a/T1: ArmControl quyết định gửi lệnh và thông báo".
 Đổi chữ ký hàm trong class.txt mục 4: báo cả nhóm trước, sửa class.mmd + class.txt trong cùng commit.
 
-DAILY SCRUM (mỗi người 3 câu: đã làm gì, sẽ làm gì, đang vướng gì)
------------------------------------------------------------------
-2026-11-11 sáng:
-  Hoàng  :
-  Dương  :
-  Phương :
-
-SPRINT REVIEW (điền khi kết thúc sprint)
-----------------------------------------
-Kết quả kiểm thử chấp nhận:
-  US-04 : AC1:      AC2:      AC3:
+SPRINT REVIEW 
+--------------------------
+Kết quả kiểm thử chấp nhận (chi tiết: docs/acceptance/US-xx-acceptance.txt):
+  US-04 : AC1: Đạt  AC2: Đạt  AC3: Đạt
   US-02 : AC1: Đạt  AC2: Đạt  AC3: Đạt  AC4: Đạt
   US-03a: AC1: Đạt  AC2: Đạt  AC3: Đạt  AC4: Đạt
-Story đạt:
-Phản hồi của khách hàng:
+Story đạt: US-04, US-02, US-03a -> XONG (product-backlog.txt). Mục tiêu sprint đạt.
+Trình diễn: mở app bằng python -m rover, thấy ĐANG CHỜ XE -> ĐÃ KẾT NỐI khi bật mô phỏng, tắt mô phỏng thì MẤT KẾT NỐI, R mở khóa / F khóa xe.
 
-SPRINT RETROSPECTIVE (điền khi kết thúc sprint)
------------------------------------------------
+Phản hồi của khách hàng:
+1. Muốn sản phẩm là MỘT app với 3 khả năng: quan sát tình trạng kết nối, gửi lệnh mở / khóa, điều khiển cơ bản (tiến, lùi, quay, dừng).
+2. Mở app là app tự kết nối tới xe; không cần lệnh "python -m rover connect" riêng (lệnh của US-01). Quyết định: bỏ lệnh connect ở Sprint 3; chức năng của US-01 được thay bằng màn hình kết nối của app (US-02).
+3. Ưu tiên tiếp theo: điều khiển cơ bản (US-03b), để sản phẩm đủ trình diễn trọn luồng.
+4. Thông báo gửi lệnh trôi quá nhanh, không kịp đọc (ví dụ "Đã gửi lệnh mở khóa" bị thay ngay bằng "Xe chấp nhận lệnh mở khóa"). Quyết định: mỗi thông báo giữ trên màn hình ít nhất 0.5 s, thông báo đến sau xếp hàng hiện lần lượt; làm trong refinement US-03b (AC5, Sprint 3).
+
+SPRINT RETROSPECTIVE 
+---------------------------------
 Điều làm tốt:
+- Chốt hợp đồng API trước (US-04/T0 + docs/diagrams/class/class.txt): ba người làm song song đúng kế hoạch, ghép lại không phải sửa chữ ký hàm.
+- Viết test trước; 58 test, toàn bộ AC của 3 story đạt ngay lần kiểm đầu.
+- Đi đúng đường găng (T0 -> US-04/T4 -> US-02/T3 -> US-03a/T3), xong trong 2 ngày.
+
 Điều cần cải thiện:
-Hành động cho sprint sau:
+- Code chia file theo task, 15 file nằm ngang hàng trong rover/, nhiều file rất nhỏ; đọc code không thấy phân tầng.
+- Sơ đồ tổng quan quá chi tiết (tên file, luồng đánh số) nên rối; chi tiết đó thuộc các sơ đồ khác (lớp, tuần tự).
+- Commit message chưa đúng mẫu (ví dụ "US04: xong T2 qua T3", "US-04;: xong T1"); cột Commit trong sprint backlog còn trống ở US-04/T1–T4; tên nhánh lẫn chữ hoa (US-04/T1).
+- Chưa ghi Daily Scrum vào file.
+
+Hành động cho Sprint 3:
+1. Refactor code theo 4 tầng (S03/REFACTOR, làm đầu sprint, một người làm, những người khác chờ merge rồi tách nhánh).
+2. Mỗi sơ đồ một mức trừu tượng: tổng quan chỉ còn khoảng 4 khối; thêm use case, tuần tự, trạng thái, hoạt động (S03/DIAGRAMS).
+3. Story nhiều rủi ro kỹ thuật làm spike có giới hạn thời gian trước khi code (spike US-03b).

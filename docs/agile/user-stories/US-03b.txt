@@ -2,41 +2,341 @@ USER STORY US-03b – Lái xe tiến, lùi, quay bằng phím
 ===================================================
 Yêu cầu gốc của khách hàng (sprint review Sprint 01): "Giờ thêm các lệnh cơ bản của PX4 (nếu PX4 có một số lệnh có sẵn thì ưu tiên dùng lệnh đó để đơn giản) để điều khiển xe di chuyển."
 Tách ở refinement 2026-11-10: US-03 -> US-03a (mở / khóa xe) và US-03b (lái xe, story này).
-Người làm  : (chọn ở Sprint Planning của sprint đưa story này vào)
-Điểm       : 8 (chưa chắc; ước lượng lại sau spike)
-Sprint     : chưa chọn
-Trạng thái : MOI – chờ spike
+Sprint review Sprint 02 (2026-11-12): khách hàng xác nhận "điều khiển cơ bản" là khả năng thứ 3 và cuối cùng của app; thêm yêu cầu "thông báo gửi lệnh bị refresh nhanh quá không kịp đọc, hãy để thời gian refresh là 0.5 giây" (AC5).
+Người làm  : Trương Nhật Hoàng (T0, T2), Đinh Trần Thảo Phương (T1, T4), Vũ Duy Dương (T3, T5, T6)
+Điểm       : 10 (8 phần lái + 2 phần thông báo AC5; ước lượng lại sau spike T0)
+Sprint     : S3
 
 1. STORY
 --------
-Là người vận hành, tôi có thể cho xe tiến, lùi, quay trái, quay phải bằng phím, mỗi lần bấm xe chạy khoảng 1 s rồi tự dừng, và dừng xe ngay khi cần, để điều khiển xe trong Gazebo.
+Là người vận hành, tôi có thể cho xe tiến, lùi, quay trái, quay phải bằng phím, mỗi lần bấm xe chạy khoảng 1 s rồi tự dừng, và dừng xe ngay khi cần, để điều khiển xe trong Gazebo; mọi thông báo khi ra lệnh đều đọc kịp.
 
-Ngoài phạm vi story này: chỉnh tốc độ, giữ phím để chạy liên tục, chạy theo lộ trình / tọa độ.
+Ngoài phạm vi story này: chỉnh tốc độ khi đang chạy, giữ phím để chạy liên tục, chạy theo lộ trình / tọa độ, vừa tiến vừa quay cùng lúc; xem lại lịch sử thông báo cũ.
 
-2. TIÊU CHÍ CHẤP NHẬN (bản nháp, chốt khi đưa vào sprint)
----------------------------------------------------------
+2. TIÊU CHÍ CHẤP NHẬN (khách hàng tự kiểm, thủ tục: docs/acceptance/US-03b-acceptance.txt)
+----------------------------------------------------------------------------------------
 AC1  Tiến
-     Cách kiểm : xe đã mở khóa (US-03a), bấm W một lần
-     Đạt khi   : xe trong Gazebo chạy tới khoảng 1 s rồi tự dừng; màn hình hiện lệnh đang chạy, hết 1 s hiện đã dừng
+     Cách kiểm : app hiện "ĐÃ KẾT NỐI", xe đã mở khóa (bấm R, app hiện "ĐÃ MỞ KHÓA"); bấm W một lần
+     Đạt khi   : xe trong Gazebo chạy tới khoảng 1 s rồi tự dừng; dòng "Lái xe" hiện "TIẾN" trong lúc chạy, sau đó hiện "ĐỨNG YÊN"
 
 AC2  Lùi, quay trái, quay phải
-     Cách kiểm : bấm lần lượt S, A, D
-     Đạt khi   : xe đi đúng hướng tương ứng, mỗi lần khoảng 1 s rồi tự dừng
+     Cách kiểm : bấm lần lượt S, A, D, mỗi lần chờ xe dừng rồi mới bấm phím sau
+     Đạt khi   : S: xe lùi; A: xe quay sang trái; D: xe quay sang phải; mỗi lần khoảng 1 s rồi tự dừng; dòng "Lái xe" hiện đúng "LÙI", "QUAY TRÁI", "QUAY PHẢI"
 
 AC3  Dừng ngay
-     Cách kiểm : bấm W liên tiếp vài lần để xe đang chạy, rồi bấm Space
-     Đạt khi   : xe đứng yên trong vòng 1 s
+     Cách kiểm : bấm W liên tiếp 3–4 lần để xe đang chạy, rồi bấm Space
+     Đạt khi   : bấm W liên tiếp thì xe chạy liền mạch không giật dừng; sau khi bấm Space, xe đứng yên trong vòng 1 s và dòng "Lái xe" hiện "ĐỨNG YÊN"
 
-AC4  Xe chưa mở khóa
-     Cách kiểm : xe đang "ĐÃ KHÓA", bấm W
-     Đạt khi   : vùng thông báo hiện "Xe chưa mở khóa"; xe không chạy
+AC4  Xe chưa mở khóa hoặc chưa kết nối
+     Cách kiểm : (a) xe đang "ĐÃ KHÓA", bấm W; (b) tắt mô phỏng, app hiện "MẤT KẾT NỐI", bấm W
+     Đạt khi   : (a) vùng thông báo hiện "Xe chưa mở khóa", xe không chạy; (b) vùng thông báo hiện "Chưa kết nối xe"
 
-3. VIỆC CẦN LÀM TRƯỚC KHI ĐƯA VÀO SPRINT
-----------------------------------------
-Spike (XP, giới hạn nửa ngày): chạy thử với mô phỏng để chọn cách đơn giản nhất mà PX4 rover có sẵn để nhận lệnh di chuyển từ app qua MAVLink (ví dụ điều khiển tay MANUAL_CONTROL ở chế độ Manual, hoặc chế độ Offboard), ghi kết quả: cách chọn, chế độ cần chuyển, tần số phải gửi, PX4 làm gì khi app ngừng gửi. Sau spike: ước lượng lại điểm, chia task theo docs/diagrams/class/class.txt mục 7.
+AC5  Đọc kịp thông báo
+     Cách kiểm : (a) app hiện "ĐÃ KẾT NỐI" và "ĐÃ KHÓA", bấm R; (b) xe đang mở khóa, bấm F rồi bấm R thật nhanh (trong vòng nửa giây); (c) sau đó không bấm gì trong 10 s
+     Đạt khi   : (a) "Đã gửi lệnh mở khóa" hiện ít nhất khoảng nửa giây (đọc kịp), sau đó mới chuyển sang "Xe chấp nhận lệnh mở khóa"; (b) các thông báo hiện lần lượt đúng thứ tự xảy ra, mỗi thông báo đọc kịp, không thông báo nào bị bỏ qua; (c) thông báo cuối vẫn nằm trên màn hình
+
+3. TASK – YÊU CẦU TEST
+----------------------
+Trạng thái task: TODO | DOING | DONE
+Thứ tự: T0 sau S03/REFACTOR (Hoàng làm cả hai); T1, T2, T5 bắt đầu cùng lúc sau T0; Dương làm T5 -> T6 rồi T3 (test T3 viết trước, code nối khi T1, T2, T6 đã merge); T4 cuối.
+Đường dẫn file dưới đây theo cấu trúc mới sau S03/REFACTOR (rover/app.py, rover/core/, rover/hal.py, rover/drivers/).
+Hợp đồng API: docs/diagrams/class/class.txt (cập nhật trong S03/REFACTOR và mục 3.5 dưới đây). Tên trong code bằng tiếng Anh, chữ hiện cho người dùng và comment bằng tiếng Việt.
+
+T0  Spike: chọn cách PX4 rover nhận lệnh lái từ app (giới hạn 4 giờ)
+    File        : tools/spike_drive.py (script thử, KHÔNG nằm trong rover/, không cần test); kết quả ghi vào mục 5 của file này
+    Người làm   : Hoàng
+
+    Kiến thức:
+      - Spike (XP): task giới hạn thời gian để THỬ và TRẢ LỜI câu hỏi kỹ thuật, không phải để giao chức năng. Code spike có thể bỏ đi sau đó.
+      - PX4 không có lệnh "tiến 1 giây". Hai cách thường dùng để lái từ app MAVLink:
+        (a) Chế độ Manual + message MANUAL_CONTROL: app đóng vai tay điều khiển, gửi giá trị các kênh (x, y, z, r, phạm vi -1000..1000) đều đặn nhiều lần mỗi giây; ngừng gửi quá lâu thì PX4 báo mất tay điều khiển (manual control lost) và vào chế độ an toàn.
+        (b) Chế độ Offboard + message SET_POSITION_TARGET_LOCAL_NED (vận tốc): phải gửi setpoint đều đặn (trên 2 lần/giây) TRƯỚC khi chuyển sang Offboard; ngừng gửi thì PX4 thoát Offboard.
+      - Đổi chế độ: COMMAND_LONG MAV_CMD_DO_SET_MODE, param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED (1), param2 = main mode của PX4 (Manual = 1, Offboard = 6).
+      - PX4 có nhận điều khiển tay qua MAVLink hay không phụ thuộc tham số COM_RC_IN_MODE (xem trên pxh>: param show COM_RC_IN_MODE).
+      - Nguyên mẫu cũ (rover_cli.py) đã lái được xe bằng cách (a), qua cổng 14550; chưa rõ rover đọc tiến / lùi ở kênh x hay z, quay ở kênh r hay y.
+
+    Câu hỏi spike phải trả lời (ghi vào mục 5):
+      Q1. Chọn cách (a) hay (b)? Lý do.
+      Q2. Cần chuyển sang chế độ nào, gửi lệnh đổi chế độ ra sao, lúc nào (khi mở khóa, hay khi bấm phím lái đầu tiên)?
+      Q3. Phải gửi bao nhiêu lần mỗi giây? Ngừng gửi thì PX4 làm gì (sau bao lâu)?
+      Q4. Tiến / lùi nằm ở kênh / trường nào, quay nằm ở kênh / trường nào; dấu nào là tiến, dấu nào là quay phải?
+      Q5. Làm được qua cổng 14540 (instance Onboard, như app hiện tại) không? Có phải đổi tham số PX4 nào không?
+      Q6. Giá trị nào cho tốc độ vừa phải (xe đi được vài mét trong 1 s, quay rõ ràng)?
+
+    Cách làm gợi ý:
+      1. Bật mô phỏng; chạy script nhận HEARTBEAT ở udpin:0.0.0.0:14540 như app; arm bằng COMMAND_LONG 400 (đã có ở US-03a).
+      2. Thử cách (a): đổi Manual, gửi MANUAL_CONTROL 10 lần/giây trong 1 s với x = 500, rồi gửi x = 0; quan sát Gazebo và console PX4. Lặp lại cho z, r, y để biết kênh.
+      3. Nếu (a) không được qua cổng 14540 sau 2 giờ: thử (b), hoặc thử cổng 14550 và ghi lại.
+      4. Hết 4 giờ: dừng, ghi những gì đã biết vào mục 5, báo nhóm trong Daily Scrum để PO quyết định (thu hẹp story, đổi tham số PX4, hay dời story).
+
+    Test tự động: không (script thử)
+    Kiểm tay    : xe trong Gazebo chạy theo lệnh của script
+    Trạng thái  : TODO
+
+T1  Logic lái 1 giây (tầng xử lý)
+    File code   : rover/core/model.py (thêm Action), rover/core/vehicle.py (thêm DriveController)
+    File test   : tests/test_vehicle.py (thêm)
+    Người làm   : Phương
+    Phụ thuộc   : S03/REFACTOR (bắt đầu ở giai đoạn 2 cùng T2, T3; KHÔNG phụ thuộc kết quả spike)
+
+    Kiến thức:
+      - DriveController là máy trạng thái theo thời gian, giống LinkMonitor: không đọc đồng hồ, thời điểm now được truyền vào. Hai trạng thái: đứng yên, đang chạy (kèm hướng và thời điểm hết hạn = lúc bấm + 1 s).
+      - Lớp chỉ trả "mức lái" (forward, turn) trong khoảng [-1, 1]; không biết MAVLink, không biết kênh x / z / r. Đổi mức lái thành message MAVLink là việc của driver (T2).
+      - Quy ước dấu: forward > 0 là tiến, < 0 là lùi; turn > 0 là quay phải, < 0 là quay trái.
+
+    Công việc:
+      1. rover/core/model.py: thêm vào Action: FORWARD, BACKWARD, TURN_LEFT, TURN_RIGHT, STOP.
+      2. rover/core/vehicle.py: hằng số DRIVE_DURATION_S = 1.0, DRIVE_SPEED = 0.5, TURN_SPEED = 0.5 (giá trị tốc độ chỉnh lại theo spike Q6); lớp DriveController theo mục 3.5.
+
+    Mục đích:
+      Toàn bộ quyết định "đang lái hướng nào, còn bao lâu, lúc nào dừng" của AC1–AC3, test được không cần xe.
+
+    Test tự động (6 test, thời gian giả lập, không cần mạng):
+      1. Mới tạo thì đứng yên
+         Đầu vào : DriveController (); setpoint (0.0), active_action (0.0), remaining_s (0.0)
+         Mong đợi: (0.0, 0.0), None, 0.0
+         Ý nghĩa : AC1 (dòng "Lái xe" là ĐỨNG YÊN khi chưa bấm gì).
+      2. Tiến 1 giây rồi tự dừng
+         Đầu vào : start (Action .FORWARD, 10.0); setpoint (10.5); setpoint (10.99); setpoint (11.0)
+         Mong đợi: (DRIVE_SPEED, 0.0), (DRIVE_SPEED, 0.0), (0.0, 0.0)
+         Ý nghĩa : AC1.
+      3. Lùi, quay trái, quay phải
+         Đầu vào : start (BACKWARD, 0) -> setpoint (0.5); start (TURN_LEFT, 0) -> setpoint (0.5); start (TURN_RIGHT, 0) -> setpoint (0.5)
+         Mong đợi: (-DRIVE_SPEED, 0.0), (0.0, -TURN_SPEED), (0.0, TURN_SPEED)
+         Ý nghĩa : AC2 (đúng hướng).
+      4. Dừng ngay
+         Đầu vào : start (FORWARD, 0); stop (); setpoint (0.2); active_action (0.2)
+         Mong đợi: (0.0, 0.0), None
+         Ý nghĩa : AC3.
+      5. Bấm liên tiếp thì tính lại 1 giây từ lần bấm cuối
+         Đầu vào : start (FORWARD, 0.0); start (FORWARD, 0.8); setpoint (1.5); setpoint (1.8)
+         Mong đợi: (DRIVE_SPEED, 0.0), (0.0, 0.0)
+         Ý nghĩa : AC3 (bấm W liên tiếp xe chạy liền mạch).
+      6. Thời gian còn lại và hướng đang chạy
+         Đầu vào : start (TURN_RIGHT, 2.0); active_action (2.4); remaining_s (2.4); remaining_s (3.5)
+         Mong đợi: Action .TURN_RIGHT; 0.6 (sai số 1e-9); 0.0
+         Ý nghĩa : AC1, AC2 (màn hình hiện hướng và "còn x s").
+
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T2  Gửi lệnh lái tới PX4 (driver MAVLink)
+    File code   : rover/hal.py (thêm send_drive vào VehicleLink, và hàm đổi chế độ nếu spike cần), rover/drivers/mavlink.py
+    File test   : tests/test_mavlink.py (thêm), tests/mavlink_sim.py (mở rộng giả lập PX4 hai chiều để ghi lại message lái)
+    Người làm   : Hoàng
+    Phụ thuộc   : T0
+
+    Kiến thức:
+      - Theo kết quả spike (mục 5). Phần dưới viết theo cách (a) MANUAL_CONTROL; nếu spike chọn (b) thì thay message tương ứng và sửa mục 3.5 trước khi code (báo cả nhóm vì đổi hợp đồng API).
+      - MANUAL_CONTROL: target = system_id của xe, các kênh x, y, z, r kiểu int16 trong [-1000, 1000], buttons = 0. Đổi mức lái [-1, 1] thành [-1000, 1000] bằng nhân 1000 và làm tròn.
+      - Như send_arm: chưa thấy HEARTBEAT của xe (last_system_id = None) thì không gửi gì.
+
+    Công việc:
+      1. rover/hal.py: VehicleLink thêm send_drive (forward: float, turn: float) -> None. Nếu spike Q2 cần đổi chế độ riêng: thêm send_manual_mode () -> None (hoặc tên theo spike) và ghi vào mục 3.5.
+      2. rover/drivers/mavlink.py: hiện thực send_drive (và hàm đổi chế độ nếu có) theo spike Q1–Q5.
+      3. tests/mavlink_sim.py: giả lập PX4 hai chiều ghi lại MANUAL_CONTROL (hoặc message spike chọn) và COMMAND_LONG đổi chế độ.
+
+    Mục đích:
+      Phần nói chuyện thật với PX4 của AC1–AC3.
+
+    Test tự động (3 test, giả lập PX4 hai chiều, không cần mô phỏng; chốt nội dung kiểm cụ thể sau spike):
+      1. Gửi lệnh tiến
+         Đầu vào : giả lập xe gửi HEARTBEAT; poll () thấy xe; send_drive (0.5, 0.0)
+         Mong đợi: giả lập nhận message lái, kênh tiến / lùi (theo spike Q4) = 500, kênh quay = 0, gửi đúng system_id của xe
+         Ý nghĩa : AC1.
+      2. Gửi lệnh quay trái
+         Đầu vào : như test 1, send_drive (0.0, -0.5)
+         Mong đợi: kênh tiến / lùi = 0, kênh quay = -500 (hoặc dấu theo spike Q4)
+         Ý nghĩa : AC2.
+      3. Chưa thấy xe thì không gửi
+         Đầu vào : chưa có HEARTBEAT; send_drive (0.5, 0.0)
+         Mong đợi: giả lập không nhận message nào
+         Ý nghĩa : AC4 (không gửi lệnh khi chưa có xe).
+      (Nếu có hàm đổi chế độ: thêm test 4 – giả lập nhận COMMAND_LONG MAV_CMD_DO_SET_MODE với đúng param theo spike Q2.)
+
+    Kiểm tay    : không bắt buộc (kiểm cùng AC sau T3)
+    Trạng thái  : TODO
+
+T3  Nối lái xe vào app
+    File code   : rover/core/view.py (thêm phím W, S, A, D, Space và format_drive_status), rover/app.py, tests/fakes.py (FakeVehicleLink thêm send_drive, sent_drive)
+    File test   : tests/test_view.py (thêm), tests/test_app.py (thêm)
+    Người làm   : Dương
+    Phụ thuộc   : T1, T2, T6 (thông báo "Xe chưa mở khóa", "Chưa kết nối xe" gửi qua MessageBoard .post)
+
+    Kiến thức:
+      - Phím Space: curses trả ký tự " ". Trong KEY_BINDINGS dùng " " và mô tả "Space  dừng ngay" ở bảng hướng dẫn.
+      - Chính sách gửi (mặc định, chỉnh theo spike Q3): mỗi vòng lặp, nếu đã kết nối và xe đang mở khóa thì gửi link .send_drive (*drive .setpoint (now)), kể cả khi setpoint là (0, 0), để PX4 luôn nhận dòng lệnh đều đặn và dừng xe đúng lúc. Vòng lặp khoảng 20 lần/giây; nếu spike cho biết tần số khác, giới hạn tần số trong driver.
+
+    Công việc:
+      1. core/view.py: KEY_BINDINGS thêm ("w", FORWARD, "tiến"), ("s", BACKWARD, "lùi"), ("a", TURN_LEFT, "quay trái"), ("d", TURN_RIGHT, "quay phải"), (" ", STOP, "dừng ngay"); format_drive_status (action, remaining_s) theo mục 3.5.
+      2. app.py: tạo DriveController; phím lái: chưa kết nối -> thông báo "Chưa kết nối xe"; chưa mở khóa (arm_control .armed khác True) -> "Xe chưa mở khóa"; còn lại -> drive .start (action, now) (STOP -> drive .stop ()); mỗi vòng gửi setpoint theo chính sách trên; thêm dòng format_drive_status vào vùng trạng thái. Nếu spike cần đổi chế độ: gọi hàm đổi chế độ khi xe vừa chuyển sang mở khóa (hoặc thời điểm spike Q2 chỉ ra).
+      3. tests/fakes.py: FakeVehicleLink thêm send_drive () ghi vào sent_drive (danh sách tuple).
+
+    Mục đích:
+      Người vận hành bấm phím và thấy xe chạy, màn hình hiện đúng trạng thái lái.
+
+    Test tự động (6 test):
+      1. Phím lái (test_view.py)
+         Đầu vào : action_for ("w"), ("S"), ("a"), ("D"), (" "); help_lines ()
+         Mong đợi: FORWARD, BACKWARD, TURN_LEFT, TURN_RIGHT, STOP; help_lines có các dòng "W  tiến", "S  lùi", "A  quay trái", "D  quay phải", "Space  dừng ngay"
+         Ý nghĩa : AC1–AC3; bảng phím H hiện đủ phím mới.
+      2. Dòng trạng thái lái (test_view.py)
+         Đầu vào : format_drive_status (None, 0.0), (FORWARD, 0.63), (BACKWARD, 0.2), (TURN_LEFT, 0.5), (TURN_RIGHT, 1.0)
+         Mong đợi: "Lái xe   : ĐỨNG YÊN", "Lái xe   : TIẾN (còn 0.6 s)", "Lái xe   : LÙI (còn 0.2 s)", "Lái xe   : QUAY TRÁI (còn 0.5 s)", "Lái xe   : QUAY PHẢI (còn 1.0 s)"
+         Ý nghĩa : AC1, AC2 (chữ người dùng thấy).
+      3. Bấm W khi xe đã mở khóa (test_app.py)
+         Đầu vào : push (Heartbeat (armed = True)); bấm "w"; step (); clock .advance (0.5); step (); clock .advance (0.6); step ()
+         Mong đợi: sent_drive có (DRIVE_SPEED, 0.0) ở 2 vòng đầu và (0.0, 0.0) ở vòng cuối; khung lần 1 có "TIẾN", khung cuối có "ĐỨNG YÊN"
+         Ý nghĩa : AC1.
+      4. Bấm Space khi đang chạy (test_app.py)
+         Đầu vào : xe đã mở khóa; bấm "w", step (); bấm " ", step ()
+         Mong đợi: lần gửi cuối là (0.0, 0.0); khung có "ĐỨNG YÊN"
+         Ý nghĩa : AC3.
+      5. Xe chưa mở khóa (test_app.py)
+         Đầu vào : push (Heartbeat (armed = False)); bấm "w"; step ()
+         Mong đợi: sent_drive không có giá trị khác (0.0, 0.0); khung có "Xe chưa mở khóa"
+         Ý nghĩa : AC4 (a).
+      6. Chưa kết nối (test_app.py)
+         Đầu vào : không có Heartbeat; bấm "w"; step ()
+         Mong đợi: sent_drive rỗng; khung có "Chưa kết nối xe"
+         Ý nghĩa : AC4 (b).
+
+    Kiểm tay    : AC1–AC4 theo docs/acceptance/US-03b-acceptance.txt
+    Trạng thái  : TODO
+
+T4  Kiểm thử chấp nhận
+    File        : docs/acceptance/US-03b-acceptance.txt (bản hướng dẫn viết ở Sprint Planning; Phương bổ sung bước đổi chế độ / tham số theo kết quả spike trước khi chạy)
+    Người làm   : Phương
+    Công việc   : chạy kiểm hồi quy sau refactor và AC1–AC5, điền kết quả; AC không đạt thì ghi bug-log trước khi sửa.
+    Test tự động: không
+    Trạng thái  : TODO
+
+T5  Bảng thông báo có thời gian giữ (tầng xử lý)
+    File code   : rover/core/view.py (thêm MESSAGE_HOLD_S, lớp MessageBoard)
+    File test   : tests/test_view.py (thêm)
+    Người làm   : Dương
+    Phụ thuộc   : S03/REFACTOR (KHÔNG phụ thuộc kết quả spike)
+
+    Kiến thức:
+      - Nguyên nhân thông báo trôi nhanh: RoverApp gán self ._message = ... mỗi khi có sự kiện; "Đã gửi lệnh mở khóa" bị thay bằng "Xe chấp nhận lệnh mở khóa" ngay ở vòng lặp sau (khoảng 50 ms) vì PX4 trả COMMAND_ACK sau vài ms.
+      - Máy trạng thái theo thời gian, cùng kiểu LinkMonitor, DriveController: không đọc đồng hồ, thời điểm now được truyền vào; test bằng thời gian giả lập.
+      - Hàng đợi FIFO (collections .deque): thông báo đến trước hiện trước; giống bộ đệm vòng UART trên vi điều khiển, phía ghi là post (), phía đọc là current ().
+      - Thông báo đang hiện chỉ được thay khi đã hiện đủ MESSAGE_HOLD_S VÀ hàng đợi còn thông báo mới; hàng đợi rỗng thì giữ nguyên thông báo cuối.
+
+    Công việc:
+      MESSAGE_HOLD_S = 0.5 (khách hàng chốt 2026-11-12) và lớp MessageBoard theo mục 3.5.
+
+    Mục đích:
+      Toàn bộ quyết định "hiện thông báo nào, lúc nào" của AC5.
+
+    Test tự động (6 test, thời gian giả lập):
+      1. Chưa có thông báo
+         Đầu vào : MessageBoard (); current (0.0)
+         Mong đợi: ""
+         Ý nghĩa : vùng thông báo trống lúc mở app.
+      2. Thông báo đầu hiện ngay
+         Đầu vào : post ("A", 1.0); current (1.0)
+         Mong đợi: "A"
+         Ý nghĩa : AC5 (a) (bấm R thấy ngay "Đã gửi lệnh mở khóa").
+      3. Thông báo sau phải chờ đủ 0.5 s
+         Đầu vào : post ("A", 0.0); current (0.0); post ("B", 0.01); current (0.3); current (0.5)
+         Mong đợi: "A", "A", "B"
+         Ý nghĩa : AC5 (a) (ACK đến sau vài ms không ghi đè ngay).
+      4. Nhiều thông báo hiện lần lượt, không mất
+         Đầu vào : post A, B, C tại 0.0 (C sau B sau A); current tại 0.0, 0.49, 0.5, 0.99, 1.0
+         Mong đợi: "A", "A", "B", "B", "C"
+         Ý nghĩa : AC5 (b) (đúng thứ tự, không bỏ thông báo nào).
+      5. Không có thông báo mới thì giữ thông báo cuối
+         Đầu vào : post ("A", 0.0); current (100.0)
+         Mong đợi: "A"
+         Ý nghĩa : AC5 (c).
+      6. Thông báo cũ đã đủ thời gian thì thông báo mới hiện ngay
+         Đầu vào : post ("A", 0.0); current (0.0); post ("B", 2.0); current (2.0)
+         Mong đợi: "B"
+         Ý nghĩa : AC5 (a) (không làm chậm thông báo khi không cần chờ).
+
+    Kiểm tay    : không
+    Trạng thái  : TODO
+
+T6  Nối bảng thông báo vào app
+    File code   : rover/app.py
+    File test   : tests/test_app.py (thêm)
+    Người làm   : Dương
+    Phụ thuộc   : T5
+
+    Kiến thức:
+      - Mọi chỗ trong RoverApp đang gán self ._message = ... đổi thành self ._messages .post (..., now); khi dựng ViewModel, message = self ._messages .current (now).
+      - Từ T6 trở đi, mọi thông báo mới (kể cả "Xe chưa mở khóa", "Chưa kết nối xe" của T3) đều đi qua post ().
+
+    Công việc:
+      RoverApp tạo MessageBoard; thay mọi chỗ gán thông báo như trên. Các test cũ của test_app.py phải vẫn pass (nếu test cũ kiểm thông báo ngay sau một vòng có ACK, sửa test cho đúng hành vi mới và ghi lý do trong comment).
+
+    Mục đích:
+      Đưa hành vi giữ thông báo lên màn hình người vận hành thấy.
+
+    Test tự động (2 test, FakeVehicleLink, FakeClock, FakeTerminal):
+      1. Gửi lệnh rồi nhận ACK ngay
+         Đầu vào : push (Heartbeat (armed = False)); step (); bấm "r"; step (); push (ArmAck (True)); clock .advance (0.05); step (); clock .advance (0.5); step ()
+         Mong đợi: khung sau vòng có ACK vẫn là "Đã gửi lệnh mở khóa"; khung cuối là "Xe chấp nhận lệnh mở khóa"
+         Ý nghĩa : AC5 (a).
+      2. Thông báo cuối được giữ
+         Đầu vào : không có Heartbeat; bấm "r"; step (); clock .advance (10.0); step ()
+         Mong đợi: khung cuối vẫn có "Chưa kết nối xe"
+         Ý nghĩa : AC5 (c).
+
+    Kiểm tay    : AC5 theo docs/acceptance/US-03b-acceptance.txt
+    Trạng thái  : TODO
+
+3.5 HỢP ĐỒNG API THÊM CHO US-03b (chép vào docs/diagrams/class/class.txt khi làm T1–T3)
+-------------------------------------------------------------------------------------
+rover/core/model.py
+    Action thêm: FORWARD, BACKWARD, TURN_LEFT, TURN_RIGHT, STOP
+
+rover/core/vehicle.py
+    DRIVE_DURATION_S = 1.0    thời gian xe chạy cho mỗi lần bấm phím lái (PO chốt 2026-11-10)
+    DRIVE_SPEED = 0.5         mức tiến / lùi trong [0, 1] (chỉnh theo spike Q6)
+    TURN_SPEED = 0.5          mức quay trong [0, 1] (chỉnh theo spike Q6)
+    class DriveController
+        start (action : Action, now : float) -> None       FORWARD / BACKWARD / TURN_LEFT / TURN_RIGHT: chạy hướng đó tới now + DRIVE_DURATION_S; bấm lại thì tính lại từ now
+        stop () -> None                                    dừng ngay
+        setpoint (now : float) -> tuple [float, float]     (forward, turn); hết thời gian hoặc đã stop thì (0.0, 0.0)
+        active_action (now : float) -> Action | None       hướng đang chạy; None nếu đứng yên
+        remaining_s (now : float) -> float                 số giây còn lại; 0.0 nếu đứng yên
+
+rover/core/view.py
+    KEY_BINDINGS thêm ("w", FORWARD, "tiến"), ("s", BACKWARD, "lùi"), ("a", TURN_LEFT, "quay trái"), ("d", TURN_RIGHT, "quay phải"), (" ", STOP, "dừng ngay")
+    format_drive_status (action : Action | None, remaining_s : float) -> str
+        None       -> "Lái xe   : ĐỨNG YÊN"
+        FORWARD    -> "Lái xe   : TIẾN (còn 0.6 s)"        (BACKWARD -> LÙI, TURN_LEFT -> QUAY TRÁI, TURN_RIGHT -> QUAY PHẢI; số giây 1 chữ số thập phân)
+    MESSAGE_HOLD_S = 0.5      thời gian tối thiểu mỗi thông báo nằm trên màn hình (khách hàng chốt 2026-11-12)
+    class MessageBoard
+        post (text : str, now : float) -> None       thêm thông báo vào cuối hàng đợi
+        current (now : float) -> str                  thông báo đang hiện; đã hiện >= MESSAGE_HOLD_S và hàng đợi còn thì chuyển sang thông báo kế tiếp (tính giờ từ now); chưa có thông báo thì ""
+
+rover/app.py
+    RoverApp dùng MessageBoard thay cho thuộc tính _message (T6).
+
+rover/hal.py
+    VehicleLink thêm send_drive (forward : float, turn : float) -> None    gửi mức lái tới xe đã thấy gần nhất; chưa thấy xe thì không gửi
+    (thêm hàm đổi chế độ nếu spike Q2 cần; ghi tên và ý nghĩa vào đây trước khi code)
+
+tests/fakes.py
+    FakeVehicleLink thêm send_drive () ghi vào sent_drive : list [tuple [float, float]]
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------
 - 2026-11-10: Mỗi lần bấm phím lái, xe chạy khoảng 1 s rồi tự dừng (không dùng kiểu giữ phím: terminal không báo lúc thả phím).
 - 2026-11-10: Phím W / S / A / D: tiến / lùi / quay trái / quay phải; Space: dừng ngay.
 - 2026-11-10: Ưu tiên lệnh có sẵn của PX4.
+- 2026-11-12: Phản hồi khách hàng "thông báo trôi quá nhanh" đưa vào story này thành AC5 (T5, T6). PO chọn cách A: mỗi thông báo giữ ít nhất 0.5 s, thông báo đến sau xếp hàng; không chọn vẽ lại cả khung 0.5 s một lần vì có thể làm mất thông báo và làm chậm phản hồi khi bấm phím. Phần thông báo không phụ thuộc spike: nếu phần lái phải dời sprint, PO có thể tách AC5 ra giao trước.
+- 2026-11-12: Đưa vào Sprint 03, kèm spike T0 giới hạn 4 giờ. Nếu spike cho thấy không làm kịp: PO chọn thu hẹp (chỉ tiến và dừng), chấp nhận đổi tham số PX4 (ghi vào README), hoặc dời sang sprint sau.
+
+5. KẾT QUẢ SPIKE (Hoàng điền khi xong T0)
+-----------------------------------------
+Q1 Cách lái chọn         :
+Q2 Chế độ, lệnh đổi chế độ:
+Q3 Tần số gửi, ngừng gửi  :
+Q4 Kênh / trường, dấu      :
+Q5 Cổng 14540, tham số PX4 :
+Q6 Mức tốc độ hợp lý       :
+Ước lượng lại US-03b      :      điểm

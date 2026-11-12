@@ -1,42 +1,133 @@
-USER STORY US-03b – Lái xe tiến, lùi, quay bằng phím
-===================================================
-Yêu cầu gốc của khách hàng (sprint review Sprint 01): "Giờ thêm các lệnh cơ bản của PX4 (nếu PX4 có một số lệnh có sẵn thì ưu tiên dùng lệnh đó để đơn giản) để điều khiển xe di chuyển."
-Tách ở refinement 2026-11-10: US-03 -> US-03a (mở / khóa xe) và US-03b (lái xe, story này).
-Người làm  : (chọn ở Sprint Planning của sprint đưa story này vào)
-Điểm       : 8 (chưa chắc; ước lượng lại sau spike)
-Sprint     : chưa chọn
-Trạng thái : MOI – chờ spike
+KIỂM THỬ CHẤP NHẬN – US-03b: Lái xe tiến, lùi, quay bằng phím
+=============================================================
+AC gốc: docs/agile/user-stories/US-03b.txt (mục 2). File này chỉ ghi cách kiểm và kết quả.
+Vì Sprint 03 có refactor toàn bộ code, lần kiểm này gồm 2 phần: kiểm hồi quy (chức năng cũ vẫn chạy) rồi mới kiểm AC của US-03b.
 
-1. STORY
+THÔNG TIN LẦN KIỂM
+------------------
+Ngày giờ kiểm      :
+Người kiểm         :
+Máy / hệ điều hành :
+Phiên bản code     :   (git log --oneline -1)
+
+CHUẨN BỊ
 --------
-Là người vận hành, tôi có thể cho xe tiến, lùi, quay trái, quay phải bằng phím, mỗi lần bấm xe chạy khoảng 1 s rồi tự dừng, và dừng xe ngay khi cần, để điều khiển xe trong Gazebo.
+1. Mở 2 terminal:
+   - Terminal A: dùng cho mô phỏng.
+   - Terminal B: dùng cho app. Chạy ở thư mục gốc repo:
+       git checkout main && git pull
+       source venv/bin/activate
+2. Kiểm tra test tự động đều pass (Terminal B):
+       pytest
+   Kết quả cần thấy: dòng cuối báo toàn bộ "passed", không có "failed".
+3. Đảm bảo không còn mô phỏng cũ đang chạy (Terminal A):
+       pkill -9 -f "gz sim"; pkill -9 -f px4
+4. Tắt QGroundControl nếu đang mở.
+5. Bật mô phỏng (Terminal A), chờ dấu nhắc "pxh>" và cửa sổ Gazebo hiện xe r1_rover:
+       cd ~/PX4-Autopilot
+       make px4_sitl gz_r1_rover
+6. Nếu kết quả spike (US-03b.txt mục 5) yêu cầu đổi tham số PX4: làm theo đúng mục đó tại pxh> và ghi lại ở đây:
+       Tham số đã đổi:                      Giá trị cũ:              Giá trị mới:
+7. Sắp xếp màn hình để nhìn thấy cùng lúc Terminal B (app) và cửa sổ Gazebo (xe).
 
-Ngoài phạm vi story này: chỉnh tốc độ, giữ phím để chạy liên tục, chạy theo lộ trình / tọa độ.
+PHẦN 1 – KIỂM HỒI QUY SAU REFACTOR
+----------------------------------
+Bước (Terminal B):
+    python3 -m rover
+Đạt khi:
+    [ ] App mở màn hình, có dòng gợi ý phím; bấm H hiện bảng phím có đủ: H, Q, R, F, W, S, A, D, Space      (US-04)
+    [ ] Vùng trạng thái hiện "ĐÃ KẾT NỐI", số HEARTBEAT tăng khoảng 1 mỗi giây                            (US-02 AC1)
+    [ ] Dòng "Khóa xe" hiện "ĐÃ KHÓA"                                                                     (US-03a)
+    [ ] Lệnh cũ "python3 -m rover connect" không còn (bỏ theo quyết định sprint review 02): nếu chạy thử thì app vẫn mở bình thường hoặc báo lệnh không hợp lệ, không có lỗi traceback
+Giữ app đang chạy.
 
-2. TIÊU CHÍ CHẤP NHẬN (bản nháp, chốt khi đưa vào sprint)
----------------------------------------------------------
-AC1  Tiến
-     Cách kiểm : xe đã mở khóa (US-03a), bấm W một lần
-     Đạt khi   : xe trong Gazebo chạy tới khoảng 1 s rồi tự dừng; màn hình hiện lệnh đang chạy, hết 1 s hiện đã dừng
+PHẦN 2 – KIỂM AC CỦA US-03b
+---------------------------
 
-AC2  Lùi, quay trái, quay phải
-     Cách kiểm : bấm lần lượt S, A, D
-     Đạt khi   : xe đi đúng hướng tương ứng, mỗi lần khoảng 1 s rồi tự dừng
+AC4 (a) – Xe chưa mở khóa (kiểm trước, vì xe đang khóa)
+-------------------------------------------------------
+Bước (Terminal B): bấm w.
+Đạt khi:
+    [ ] Vùng thông báo hiện "Xe chưa mở khóa"
+    [ ] Xe trong Gazebo đứng yên; dòng "Lái xe" hiện "ĐỨNG YÊN"
 
-AC3  Dừng ngay
-     Cách kiểm : bấm W liên tiếp vài lần để xe đang chạy, rồi bấm Space
-     Đạt khi   : xe đứng yên trong vòng 1 s
+AC5 (a) – Đọc kịp thông báo khi mở khóa
+---------------------------------------
+Bước (Terminal B): bấm r, nhìn vùng "Thông báo".
+Đạt khi:
+    [ ] Thấy rõ "Đã gửi lệnh mở khóa" (đọc kịp, khoảng nửa giây)
+    [ ] Sau đó vùng thông báo chuyển sang "Xe chấp nhận lệnh mở khóa"; dòng "Khóa xe" chuyển sang "ĐÃ MỞ KHÓA"
 
-AC4  Xe chưa mở khóa
-     Cách kiểm : xe đang "ĐÃ KHÓA", bấm W
-     Đạt khi   : vùng thông báo hiện "Xe chưa mở khóa"; xe không chạy
+AC1 – Tiến
+----------
+Bước (Terminal B):
+    1. Xe đã mở khóa ở bước AC5 (a) (nếu PX4 đã tự khóa lại thì bấm r lần nữa).
+       Nếu kết quả spike yêu cầu thao tác thêm (ví dụ đổi chế độ), ghi lại ở đây:
+    2. Bấm w MỘT lần, quan sát Gazebo và dòng "Lái xe".
+Đạt khi:
+    [ ] Xe chạy tới trong khoảng 1 s rồi tự dừng
+    [ ] Trong lúc chạy dòng "Lái xe" hiện "TIẾN (còn x s)", sau đó hiện "ĐỨNG YÊN"
+Làm tiếp AC2 ngay (xem lưu ý cuối file về tự khóa).
 
-3. VIỆC CẦN LÀM TRƯỚC KHI ĐƯA VÀO SPRINT
-----------------------------------------
-Spike (XP, giới hạn nửa ngày): chạy thử với mô phỏng để chọn cách đơn giản nhất mà PX4 rover có sẵn để nhận lệnh di chuyển từ app qua MAVLink (ví dụ điều khiển tay MANUAL_CONTROL ở chế độ Manual, hoặc chế độ Offboard), ghi kết quả: cách chọn, chế độ cần chuyển, tần số phải gửi, PX4 làm gì khi app ngừng gửi. Sau spike: ước lượng lại điểm, chia task theo docs/diagrams/class/class.txt mục 7.
+AC2 – Lùi, quay trái, quay phải
+-------------------------------
+Bước (Terminal B): bấm lần lượt s, a, d; mỗi lần chờ dòng "Lái xe" về "ĐỨNG YÊN" rồi mới bấm phím sau.
+Đạt khi:
+    [ ] s: xe lùi khoảng 1 s rồi dừng; dòng "Lái xe" hiện "LÙI"
+    [ ] a: xe quay sang trái khoảng 1 s rồi dừng; dòng "Lái xe" hiện "QUAY TRÁI"
+    [ ] d: xe quay sang phải khoảng 1 s rồi dừng; dòng "Lái xe" hiện "QUAY PHẢI"
 
-4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
-------------------------------
-- 2026-11-10: Mỗi lần bấm phím lái, xe chạy khoảng 1 s rồi tự dừng (không dùng kiểu giữ phím: terminal không báo lúc thả phím).
-- 2026-11-10: Phím W / S / A / D: tiến / lùi / quay trái / quay phải; Space: dừng ngay.
-- 2026-11-10: Ưu tiên lệnh có sẵn của PX4.
+AC3 – Dừng ngay
+---------------
+Bước (Terminal B):
+    1. Bấm w liên tiếp 3–4 lần (khoảng mỗi nửa giây một lần).
+    2. Trong lúc xe đang chạy, bấm Space; đếm thời gian từ lúc bấm tới lúc xe đứng yên.
+Đạt khi:
+    [ ] Ở bước 1, xe chạy liền mạch, không giật dừng giữa các lần bấm
+    [ ] Sau khi bấm Space, xe đứng yên trong vòng 1 s
+    [ ] Dòng "Lái xe" hiện "ĐỨNG YÊN" ngay sau khi bấm Space
+
+AC5 (b), (c) – Nhiều thông báo liên tiếp, thông báo cuối được giữ
+---------------------------------------------------------------
+Bước (Terminal B): xe đang "ĐÃ MỞ KHÓA" (bấm r nếu cần, chờ "ĐÃ MỞ KHÓA"); bấm f rồi bấm r thật nhanh (trong vòng nửa giây); sau đó không bấm gì trong 10 s.
+Đạt khi:
+    [ ] Các thông báo hiện lần lượt theo thứ tự: "Đã gửi lệnh khóa" -> "Xe chấp nhận lệnh khóa" -> "Đã gửi lệnh mở khóa" -> "Xe chấp nhận lệnh mở khóa"
+    [ ] Mỗi thông báo đọc kịp; không thông báo nào bị bỏ qua
+    [ ] Sau 10 s không bấm gì, thông báo cuối vẫn nằm trên màn hình
+Ghi chú: nếu PX4 từ chối một lệnh, thông báo "Xe từ chối lệnh ..." thay cho "Xe chấp nhận lệnh ..." ở đúng vị trí đó vẫn tính là Đạt.
+
+AC4 (b) – Chưa kết nối
+----------------------
+Bước:
+    Terminal B: bấm f để khóa xe.
+    Terminal A: nhấn Ctrl+C để tắt mô phỏng (nếu số HEARTBEAT vẫn tăng thì chạy thêm pkill -9 -f px4).
+    Terminal B: chờ app hiện "MẤT KẾT NỐI", rồi bấm w.
+Đạt khi:
+    [ ] Vùng thông báo hiện "Chưa kết nối xe"
+    [ ] App không treo, vẫn bấm h, q được
+
+Kết thúc: bấm q để thoát app. Nếu ở bước Chuẩn bị 6 có đổi tham số PX4: khi bật lại mô phỏng lần sau, kiểm tham số còn giữ giá trị mới hay không và ghi vào ghi chú.
+
+BẢNG KẾT QUẢ
+------------
+Phần         | Kết quả (Đạt / Không đạt) | Ghi chú
+-------------+---------------------------+--------
+Hồi quy      |                           |
+AC1          |                           |
+AC2          |                           |
+AC3          |                           | thời gian dừng đo được:      s
+AC4 (a), (b) |                           |
+AC5 (a)–(c)  |                           |
+
+Kết luận US-03b:
+
+LƯU Ý
+-----
+- PX4 có thể tự khóa lại xe sau khoảng 10 s đã mở khóa mà xe không chạy (tham số COM_DISARM_PRFLT). Khi đó dòng "Khóa xe" tự về "ĐÃ KHÓA" và bấm w sẽ báo "Xe chưa mở khóa": đây là hành vi đúng của app. Bấm r để mở khóa lại rồi làm tiếp.
+- Nếu sau khi xe dừng (hết 1 s) mà console PX4 báo mất tay điều khiển (manual control lost) hoặc xe tự chuyển chế độ: ghi bug-log kèm dòng thông báo trên console, đối chiếu với kết quả spike Q3 (US-03b.txt mục 5).
+- Hướng "quay trái / quay phải" xét theo góc nhìn từ phía sau xe, nhìn về phía đầu xe.
+
+NẾU CÓ AC KHÔNG ĐẠT
+-------------------
+1. Ghi lỗi vào docs/agile/bug-log.txt (trạng thái MO): lệnh / phím đã bấm, kết quả thấy, kết quả mong đợi, dòng thông báo trên console PX4 nếu có.
+2. Không chuyển US-03b sang XONG; báo lại để sửa rồi kiểm lại AC đó.
