@@ -1,4 +1,4 @@
-"""US-04/T0: các interface giữa tầng ứng dụng và driver (hợp đồng Sprint 2, xem docs/diagrams/class/class.txt mục 4.2). Giống HAL trên STM32: RoverApp gọi các hàm ở đây mà không biết bên dưới là MAVLink, curses hay đồng hồ thật; test truyền vào bản giả lập. File này chỉ có chữ ký hàm, không có xử lý."""
+"""Tầng 3 – trừu tượng: các interface giữa tầng ứng dụng và driver (VehicleLink, Terminal, Clock). Giống HAL trên STM32: RoverApp gọi các hàm ở đây mà không biết bên dưới là MAVLink, curses hay đồng hồ thật; test truyền vào bản giả lập. File này chỉ có chữ ký hàm, không có xử lý."""
 
 # Cho phép ghi kiểu ở dạng chuỗi được đánh giá muộn (ví dụ list [VehicleEvent]) mà không cần đúng thứ tự khai báo.
 from __future__ import annotations
@@ -6,7 +6,7 @@ from __future__ import annotations
 # Protocol: khai báo interface chỉ gồm chữ ký hàm. Lớp nào có đủ các hàm đúng tên và tham số thì dùng thay được, không cần kế thừa; giống một struct gồm các con trỏ hàm trong C.
 from typing import Protocol
 
-from rover .types import VehicleEvent
+from rover .core .model import VehicleEvent
 
 
 class VehicleLink (Protocol):

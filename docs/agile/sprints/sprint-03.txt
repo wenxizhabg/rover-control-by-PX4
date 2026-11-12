@@ -26,7 +26,7 @@ SPRINT BACKLOG (cập nhật trạng thái mỗi khi task đổi trạng thái)
 ---------------------------------------------------------------
 Task         | Người   | Mô tả ngắn                                          | Test tự động     | Phụ thuộc                  | Trạng thái | Commit
 -------------+---------+-----------------------------------------------------+------------------+----------------------------+------------+-------
-S03/REFACTOR | Hoàng   | Sắp code theo 4 tầng, bỏ lệnh connect               | giữ 49 test      | –                          | TODO       |
+S03/REFACTOR | Hoàng   | Sắp code theo 4 tầng, bỏ lệnh connect               | giữ 49 test      | –                          | DOING      |
 US-03b/T0    | Hoàng   | Spike: chọn cách PX4 rover nhận lệnh lái (4 giờ)    | không            | S03/REFACTOR               | TODO       |
 US-03b/T1    | Phương  | DriveController, Action lái                         | có (6 test)      | US-03b/T0                  | TODO       |
 US-03b/T2    | Hoàng   | send_drive (+ đổi chế độ nếu cần) trong driver      | có (3–4 test)    | US-03b/T0                  | TODO       |

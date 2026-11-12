@@ -1,7 +1,6 @@
-"""US-04/T4, US-02/T3 & US-03a/T3: terminal, đồng hồ và kênh xe giả lập dùng trong test."""
+"""Giả lập tầng 3 dùng trong test: terminal, đồng hồ và kênh xe (US-04/T4, US-02/T3, US-03a/T3)."""
 
-from rover.screen import ViewModel, render
-from rover.types import VehicleEvent
+from rover .core .model import VehicleEvent
 
 
 class FakeClock:

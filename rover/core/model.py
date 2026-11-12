@@ -1,18 +1,12 @@
-"""US-04/T0: kiểu dữ liệu dùng chung giữa các tầng của app (hợp đồng Sprint 2, xem docs/diagrams/class/class.txt mục 4.1). File này chỉ định nghĩa kiểu, không có xử lý."""
+"""Tầng 2 – kiểu dữ liệu dùng chung cho mọi tầng: trạng thái kết nối, hành động người dùng, thông tin xe và các sự kiện driver trả về. File này chỉ định nghĩa kiểu, không có xử lý (hợp đồng API: docs/diagrams/class/class.txt)."""
 
-# Cho phép ghi kiểu ở dạng chuỗi được đánh giá muộn: nhờ vậy dòng import VehicleInfo bên dưới chỉ cần khi kiểm tra kiểu, không chạy lúc chương trình chạy.
+# Cho phép ghi kiểu ở dạng chuỗi được đánh giá muộn, không cần đúng thứ tự khai báo.
 from __future__ import annotations
 
 # dataclass: khai báo lớp chỉ để chứa dữ liệu; Python tự sinh hàm khởi tạo, hàm so sánh == và hàm in ra chuỗi.
 from dataclasses import dataclass
 # Enum: tập hằng số có tên; khác enum trong C ở chỗ mỗi giá trị là một đối tượng, in ra được tên. auto () tự đánh số, vì code chỉ so sánh theo tên, không dùng con số.
 from enum import Enum, auto
-# TYPE_CHECKING chỉ bằng True khi công cụ kiểm tra kiểu đọc file, bằng False khi chạy thật.
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    # vehicle_info.py import pymavlink; chỉ import khi kiểm tra kiểu để tầng xử lý dùng file này mà không kéo theo pymavlink (quy tắc chiều gọi, class.txt mục 3).
-    from rover .vehicle_info import VehicleInfo
 
 
 class LinkState (Enum):
@@ -24,12 +18,22 @@ class LinkState (Enum):
 
 
 class Action (Enum):
-    """Việc người dùng muốn làm, đổi từ phím bấm bằng keymap .action_for."""
+    """Việc người dùng muốn làm, đổi từ phím bấm bằng view .action_for."""
 
     TOGGLE_HELP = auto ()  # ẩn / hiện bảng phím (US-04)
     QUIT = auto ()         # thoát app (US-04)
     ARM = auto ()          # mở khóa xe (US-03a)
     DISARM = auto ()       # khóa xe (US-03a)
+
+
+@dataclass (frozen = True)
+class VehicleInfo:
+    """Thông tin cơ bản của một xe, đọc từ HEARTBEAT. frozen = True nghĩa là tạo xong thì không sửa được các trường, tránh vô tình thay đổi thông tin xe ở chỗ khác trong chương trình."""
+
+    system_id: int      # số hiệu của xe trên mạng MAVLink, lấy từ phần đầu (header) của gói
+    component_id: int   # số hiệu của bộ phận gửi gói trong xe; 1 là autopilot
+    autopilot: str      # tên loại firmware, ví dụ "PX4"
+    vehicle_type: str   # tên loại thiết bị, ví dụ "GROUND_ROVER"
 
 
 @dataclass (frozen = True)

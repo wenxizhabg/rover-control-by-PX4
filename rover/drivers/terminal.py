@@ -1,7 +1,8 @@
-"""US-04/T3: hiện thực Terminal bằng curses."""
+"""Tầng 4 – driver màn hình, bàn phím (hiện thực Terminal bằng curses) và đồng hồ hệ thống (hiện thực Clock)."""
 
 import curses
 import locale
+import time
 
 
 class CursesTerminal:
@@ -54,3 +55,11 @@ class CursesTerminal:
 
         if first_error is not None:
             raise first_error
+
+
+class SystemClock:
+    """Đồng hồ hệ thống chỉ tăng, không phụ thuộc giờ lịch."""
+
+    def now (self) -> float:
+        """Trả thời gian hiện tại theo giây từ time.monotonic ()."""
+        return time .monotonic ()

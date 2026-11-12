@@ -1,4 +1,4 @@
-"""US-02/T2 & US-03a/T2: bộ giả lập gửi nhận gói tin MAVLink qua UDP dùng cho các test không cần mô phỏng PX4 thật."""
+"""Giả lập PX4 / QGroundControl gửi nhận gói MAVLink qua UDP trên localhost, cho test driver MAVLink không cần mô phỏng PX4 thật (US-02/T2, US-03a/T2)."""
 
 import socket
 import threading

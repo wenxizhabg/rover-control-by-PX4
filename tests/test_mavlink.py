@@ -1,12 +1,11 @@
-"""US-02/T2 & US-03a/T2: kiểm tra MavlinkVehicleLink đọc HEARTBEAT, gửi lệnh mở/khóa và đọc COMMAND_ACK (tầng driver, dùng giả lập UDP)."""
+"""Kiểm tra tầng 4 – driver MAVLink: parse_heartbeat đọc thông tin xe từ HEARTBEAT (US-01/T3) và MavlinkVehicleLink đọc HEARTBEAT, COMMAND_ACK, gửi lệnh mở / khóa (US-02/T2, US-03a/T2); dùng gói tự đóng và giả lập UDP, không cần mô phỏng PX4."""
 
 import time
 
 from pymavlink .dialects .v20 import common as mavlink
 
-from rover .mavlink_link import MavlinkVehicleLink
-from rover .types import ArmAck, Heartbeat
-from rover .vehicle_info import VehicleInfo
+from rover .core .model import ArmAck, Heartbeat, VehicleInfo
+from rover .drivers .mavlink import MavlinkVehicleLink, parse_heartbeat
 from tests .mavlink_sim import (
     GCS_HEARTBEAT,
     VEHICLE_HEARTBEAT,
@@ -18,7 +17,97 @@ from tests .mavlink_sim import (
 )
 
 
-def test_1_vehicle_heartbeat_returns_heartbeat_event ():
+def make_heartbeat (system_id, component_id, autopilot, vehicle_type):
+    """Tạo một HEARTBEAT giống như nhận được từ mạng.
+
+    Làm 2 bước để giống thật:
+    1. Bên gửi: đóng gói HEARTBEAT thành dãy byte. system_id và component_id của bên gửi được ghi vào phần đầu (header) của gói.
+    2. Bên nhận: giải mã dãy byte đó thành message, như app sẽ làm khi nhận từ mạng.
+    """
+    # Bên gửi, tự xưng là system_id / component_id.
+    sender = mavlink. MAVLink (file = None, srcSystem = system_id, srcComponent = component_id)
+    msg = sender. heartbeat_encode (
+        type = vehicle_type,                        # loại thiết bị
+        autopilot = autopilot,                      # loại firmware
+        base_mode = 0,                              # các cờ trạng thái (không dùng trong test)
+        custom_mode= 0,                             # chế độ riêng của PX4 (không dùng trong test)
+        system_status = mavlink. MAV_STATE_STANDBY,  # trạng thái: đang chờ
+    )
+    data = msg. pack (sender)                         # -> dãy byte, đúng như gửi qua UDP
+
+    # Bên nhận giải mã dãy byte thành message.
+    receiver = mavlink. MAVLink (file = None)
+    return receiver. decode (bytearray (data))
+
+
+def test_1_heartbeat_tu_xe_px4_binh_thuong ():
+    # Đầu vào: HEARTBEAT của xe mô phỏng (system 1, component 1, PX4, xe mặt đất).
+    msg = make_heartbeat (
+        system_id = 1,
+        component_id = 1,
+        autopilot = mavlink.MAV_AUTOPILOT_PX4,
+        vehicle_type = mavlink.MAV_TYPE_GROUND_ROVER,
+    )
+
+    info = parse_heartbeat (msg)
+
+    # Mong đợi: đọc ra đúng 4 thông tin, tên đã bỏ tiền tố "MAV_..._".
+    assert info == VehicleInfo (
+        system_id = 1,
+        component_id = 1,
+        autopilot = "PX4",
+        vehicle_type = "GROUND_ROVER",
+    )
+
+
+def test_2_heartbeat_tu_QroundControl ():
+    # Đầu vào: HEARTBEAT kiểu QGroundControl gửi:
+    # autopilot = INVALID (không phải autopilot), type = GCS (trạm mặt đất).
+    msg = make_heartbeat (
+        system_id = 255,
+        component_id = 190,
+        autopilot = mavlink. MAV_AUTOPILOT_INVALID,
+        vehicle_type = mavlink. MAV_TYPE_GCS,
+    )
+
+    # Mong đợi: None, nghĩa là "đây không phải xe", app sẽ bỏ qua gói này.
+    assert parse_heartbeat (msg) is None
+
+
+def test_3_loai_xe_la_khong_gay_loi ():
+    # Đầu vào: firmware PX4 nhưng type = 250, số này không có trong bảng tra MAV_TYPE.
+    msg = make_heartbeat (
+        system_id = 1,
+        component_id = 1,
+        autopilot = mavlink. MAV_AUTOPILOT_PX4,
+        vehicle_type = 250,
+    )
+
+    info = parse_heartbeat (msg)
+
+    # Mong đợi: không lỗi; vẫn nhận là xe, loại xe ghi "UNKNOWN(250)" để người dùng biết số thật.
+    assert info is not None
+    assert info.autopilot == "PX4"
+    assert info.vehicle_type == "UNKNOWN(250)"
+
+
+def test_4_doc_system_id_tu_goi_khong_gan_cung ():
+    # Đầu vào: HEARTBEAT của một xe khác, có system_id = 2.
+    msg = make_heartbeat (
+        system_id = 2,
+        component_id = 1,
+        autopilot = mavlink.MAV_AUTOPILOT_PX4,
+        vehicle_type = mavlink.MAV_TYPE_GROUND_ROVER,
+    )
+
+    info = parse_heartbeat (msg)
+
+    # Mong đợi: system_id = 2, lấy từ phần đầu của gói, không phải số 1 viết sẵn trong code.
+    assert info.system_id == 2
+    assert info.component_id == 1
+
+
+def test_5_vehicle_heartbeat_returns_heartbeat_event ():
     # Đầu vào: giả lập xe PX4 rover gửi HEARTBEAT tới cổng trống; chờ 0,3 s; gọi poll ().
     port = find_free_port ()
     link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
@@ -42,7 +131,7 @@ def test_1_vehicle_heartbeat_returns_heartbeat_event ():
         link .close ()
 
 
-def test_2_armed_flag_in_base_mode_sets_armed_true ():
+def test_6_armed_flag_in_base_mode_sets_armed_true ():
     # Đầu vào: giả lập xe gửi HEARTBEAT có base_mode bật cờ MAV_MODE_FLAG_SAFETY_ARMED; gọi poll ().
     port = find_free_port ()
     armed_heartbeat = heartbeat_bytes (
@@ -65,7 +154,7 @@ def test_2_armed_flag_in_base_mode_sets_armed_true ():
         link .close ()
 
 
-def test_3_gcs_heartbeat_is_ignored ():
+def test_7_gcs_heartbeat_is_ignored ():
     # Đầu vào: chỉ có giả lập QGroundControl (autopilot = INVALID) gửi gói; chờ 0,3 s; gọi poll ().
     port = find_free_port ()
     link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
@@ -80,7 +169,7 @@ def test_3_gcs_heartbeat_is_ignored ():
         link .close ()
 
 
-def test_4_poll_without_packets_does_not_block ():
+def test_8_poll_without_packets_does_not_block ():
     # Đầu vào: không có giả lập nào gửi gói; đo thời gian thực hiện một lần poll ().
     port = find_free_port ()
     link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
@@ -109,7 +198,7 @@ def _wait_for_heartbeat (link, timeout = 1.0):
     raise AssertionError ("Không nhận được HEARTBEAT từ giả lập")
 
 
-def test_5_send_arm_true_sends_arm_command_long ():
+def test_9_send_arm_true_sends_arm_command_long ():
     # Đầu vào: giả lập PX4 hai chiều gửi HEARTBEAT; app poll () thấy xe; gọi send_arm (True).
     port = find_free_port ()
     link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
@@ -129,7 +218,7 @@ def test_5_send_arm_true_sends_arm_command_long ():
         link .close ()
 
 
-def test_6_send_arm_false_sends_disarm_command_long ():
+def test_10_send_arm_false_sends_disarm_command_long ():
     # Đầu vào: giả lập PX4 hai chiều gửi HEARTBEAT; app poll () thấy xe; gọi send_arm (False).
     port = find_free_port ()
     link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
@@ -149,7 +238,7 @@ def test_6_send_arm_false_sends_disarm_command_long ():
         link .close ()
 
 
-def test_7_poll_decodes_arm_command_ack_and_ignores_other_commands ():
+def test_11_poll_decodes_arm_command_ack_and_ignores_other_commands ():
     # Đầu vào: giả lập gửi COMMAND_ACK (400, ACCEPTED), COMMAND_ACK (400, DENIED), COMMAND_ACK (176, ACCEPTED); app gọi poll ().
     port = find_free_port ()
     ack_packets = [

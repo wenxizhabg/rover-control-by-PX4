@@ -21,7 +21,7 @@ Agile (Scrum kết hợp các thực hành XP):
 - Story mới chỉ được thêm vào product backlog sau sprint review và retrospective.
 
 ## Trạng thái hiện tại
-Sprint 1 – US-01: Bật mô phỏng Gazebo và kết nối đến xe.
+Sprint 3 – US-03b: Lái xe tiến, lùi, quay bằng phím; sắp lại code theo 4 tầng.
 
 ## Tổng quan hệ thống
 ![Tổng quan hệ thống](docs/diagrams/system-overview/system-overview.svg)
@@ -142,7 +142,7 @@ Mở một terminal riêng cho mô phỏng (giữ nguyên terminal này trong su
 - Bật xong khi: cửa sổ Gazebo hiện xe `r1_rover` và terminal hiện dấu nhắc `pxh>`.
 
 ### Kiểm tra PX4 đang gửi MAVLink cho ứng dụng
-ại dấu nhắc `pxh>`, gõ:
+Tại dấu nhắc `pxh>`, gõ:
 
     mavlink status
 
@@ -170,6 +170,25 @@ Kích hoạt môi trường ảo rồi chạy:
 - Nhấn `R` để mở khóa xe (arm), `F` để khóa xe (disarm).
 - Nhấn `H` để hiện hoặc ẩn bảng hướng dẫn.
 - Nhấn `Q` để thoát. `Ctrl+C` cũng thoát và khôi phục terminal.
+
+App tự kết nối tới xe khi mở (dòng "Kết nối" chuyển từ `ĐANG CHỜ XE` sang `ĐÃ KẾT NỐI`). Lệnh `python -m rover connect` của Sprint 1 đã bỏ từ Sprint 3.
+
+## Cấu trúc code
+
+Code chia 4 tầng; tầng trên gọi tầng dưới, không gọi ngược lại. Chi tiết API: [docs/diagrams/class/class.txt](docs/diagrams/class/class.txt).
+
+    rover/
+    ├── __main__.py        python -m rover -> chạy app
+    ├── app.py             Tầng 1  ứng dụng: RoverApp (vòng lặp chính), run_app (nơi duy nhất tạo driver)
+    ├── core/              Tầng 2  xử lý thuần, không dùng pymavlink, curses, time
+    │   ├── model.py       kiểu dữ liệu dùng chung: LinkState, Action, VehicleInfo, Heartbeat, ArmAck
+    │   ├── vehicle.py     trạng thái xe: LinkMonitor (kết nối), ArmControl (mở / khóa)
+    │   └── view.py        giao diện: phím -> hành động, bảng hướng dẫn, dựng khung màn hình
+    ├── hal.py             Tầng 3  interface: VehicleLink, Terminal, Clock
+    └── drivers/           Tầng 4  driver thật
+        ├── mavlink.py     MAVLink qua UDP: MavlinkVehicleLink, parse_heartbeat
+        └── terminal.py    màn hình, bàn phím (curses) và đồng hồ hệ thống
+    tests/                 test tự động; fakes.py, mavlink_sim.py là giả lập dùng chung
 
 ## Quy ước đặt tên (theo PEP 8)
 

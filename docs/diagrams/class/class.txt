@@ -3,6 +3,7 @@ SƠ ĐỒ LỚP – KIẾN TRÚC PHẦN MỀM VÀ ĐỊNH NGHĨA API (SPRINT 2)
 File nguồn : docs/diagrams/class/class.mmd (Mermaid classDiagram, sửa sơ đồ ở file này)
 File ảnh   : docs/diagrams/class/class.svg (xuất từ file nguồn khi cần; cách xuất giống docs/diagrams/system-overview/system-overview.txt)
 Phiên bản  : cuối Sprint 2 (2026-11-11), khớp code commit 5514ead. Phủ US-01, US-04, US-02, US-03a. US-03b chưa làm nên chưa có trong sơ đồ (xem mục 7). Bản đầu: Sprint Planning Sprint 2 (2026-11-10).
+             S03/REFACTOR (2026-11-12): file này (mục 3, 4, 5, 6) đổi đường dẫn theo cấu trúc 4 tầng mới, bỏ lệnh connect; class.mmd còn theo cấu trúc cũ, vẽ lại ở S03/DIAG-2.
 
 Sơ đồ lớp này là bản mô tả kiến trúc phần mềm của app, đồng thời là "hợp đồng" giữa các task trong Sprint 2: mọi người code đúng tên hàm, tham số, kết quả ở mục 4 thì các phần ghép được với nhau mà không phải chờ nhau (hành động Retro Sprint 1 số 1).
 
@@ -30,16 +31,16 @@ A o-- B                         : A nhận B từ ngoài truyền vào (hình th
 
 3. KIẾN TRÚC 4 TẦNG
 -------------------
-Tầng 1 – Ứng dụng   : cli.py, app.py (RoverApp). Điểm vào và vòng lặp chính. Chỉ tầng này biết đủ mọi thành phần và nối chúng lại.
-Tầng 2 – Xử lý      : keymap.py, screen.py, link_monitor.py, arm_control.py. Python thuần: không import pymavlink, không import curses, không gọi time; thời điểm hiện tại được truyền vào qua tham số now.
-Tầng 3 – Trừu tượng : hal.py (VehicleLink, Terminal, Clock). Giống HAL trên STM32: tầng trên gọi HAL_UART_Transmit () mà không biết thanh ghi; ở đây RoverApp gọi link .poll () mà không biết MAVLink, UDP. Trong Python, interface viết bằng typing.Protocol: giống struct gồm các con trỏ hàm trong C, lớp nào có đủ hàm đúng chữ ký thì dùng thay được, không cần kế thừa.
-Tầng 4 – Driver     : mavlink_link.py, terminal.py, clock.py, cùng vehicle_info.py, connection.py của US-01. Chỉ tầng này dùng pymavlink, curses, time.
+Tầng 1 – Ứng dụng   : rover/__main__.py, rover/app.py (RoverApp, run_app). Điểm vào và vòng lặp chính. Chỉ tầng này biết đủ mọi thành phần và nối chúng lại.
+Tầng 2 – Xử lý      : rover/core/ (model.py: kiểu dữ liệu; vehicle.py: LinkMonitor, ArmControl; view.py: phím, khung màn hình). Python thuần: không import pymavlink, không import curses, không gọi time; thời điểm hiện tại được truyền vào qua tham số now.
+Tầng 3 – Trừu tượng : rover/hal.py (VehicleLink, Terminal, Clock). Giống HAL trên STM32: tầng trên gọi HAL_UART_Transmit () mà không biết thanh ghi; ở đây RoverApp gọi link .poll () mà không biết MAVLink, UDP. Trong Python, interface viết bằng typing.Protocol: giống struct gồm các con trỏ hàm trong C, lớp nào có đủ hàm đúng chữ ký thì dùng thay được, không cần kế thừa.
+Tầng 4 – Driver     : rover/drivers/ (mavlink.py: DEFAULT_URL, parse_heartbeat, MavlinkVehicleLink; terminal.py: CursesTerminal, SystemClock). Chỉ tầng này dùng pymavlink, curses, time.
 
 Quy tắc chiều gọi:
 1. Tầng 1 gọi tầng 2 và tầng 3. Tầng 2 không gọi tầng 3, tầng 4 (chỉ nhận dữ liệu, trả kết quả).
 2. Tầng 4 không gọi lên tầng nào; nó hiện thực interface của tầng 3.
-3. Riêng việc TẠO driver (MavlinkVehicleLink, CursesTerminal, SystemClock) làm ở app .run_app () (tầng 1), rồi truyền vào RoverApp; RoverApp chỉ biết interface.
-4. Kiểu dữ liệu ở Types (types.py, vehicle_info.VehicleInfo) dùng chung cho mọi tầng.
+3. Riêng việc TẠO driver (MavlinkVehicleLink, CursesTerminal, SystemClock) làm ở app .run_app () (tầng 1), rồi truyền vào RoverApp; RoverApp chỉ biết interface. Chỉ app .run_app () được import cả hal và drivers; rover/core/ và rover/hal.py không import rover/drivers/.
+4. Kiểu dữ liệu ở Types (rover/core/model.py, gồm cả VehicleInfo) dùng chung cho mọi tầng.
 
 Lợi ích:
 - Test: mỗi tầng test riêng bằng giả lập của tầng 3 (FakeVehicleLink, FakeTerminal, FakeClock), không cần PX4, không cần terminal thật, không phải chờ thời gian thật.
@@ -49,15 +50,15 @@ Lợi ích:
 Vòng lặp chính (RoverApp .step, một lần gọi = một vòng, kiểu super-loop, một luồng, không thread):
 1. now = clock .now ()
 2. Nếu có link: đọc mọi sự kiện link .poll (); Heartbeat -> link_monitor .on_heartbeat (now) và arm_control .on_heartbeat (armed); ArmAck -> message = arm_control .on_ack (ack).
-3. key = terminal .read_key () (chờ tối đa 50 ms, cũng là nhịp của vòng lặp); action = keymap .action_for (key).
+3. key = terminal .read_key () (chờ tối đa 50 ms, cũng là nhịp của vòng lặp); action = view .action_for (key).
 4. Xử lý action: QUIT -> trả False; TOGGLE_HELP -> đảo show_help; ARM / DISARM -> arm_control .request (...), được phép thì link .send_arm (...).
-5. Dựng ViewModel, gọi screen .render (view), terminal .draw (lines). Trả True.
+5. Dựng ViewModel, gọi view .render (view_model), terminal .draw (lines). Trả True.
 
 4. ĐỊNH NGHĨA API
 -----------------
 Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints/sprint-02.txt). Cột "AC": tiêu chí chấp nhận mà nó phục vụ.
 
-4.1 rover/types.py – kiểu dữ liệu dùng chung                                         (Task US-04/T0)
+4.1 rover/core/model.py – kiểu dữ liệu dùng chung                                    (Task US-04/T0; S03/REFACTOR chuyển VehicleInfo vào đây)
     class LinkState (Enum)                trạng thái kết nối với xe
         WAITING                           chưa nhận HEARTBEAT nào của xe từ lúc mở app
         CONNECTED                         HEARTBEAT cuối cách hiện tại không quá 3 s
@@ -65,6 +66,9 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
     class Action (Enum)                   việc người dùng muốn làm, đổi từ phím bấm
         TOGGLE_HELP, QUIT                 (US-04)
         ARM, DISARM                       (US-03a)
+    @dataclass (frozen = True) VehicleInfo  thông tin cơ bản của xe đọc từ HEARTBEAT (US-01/T3)
+        system_id, component_id : int     số hiệu xe và bộ phận gửi gói, lấy từ header của gói
+        autopilot, vehicle_type : str     tên firmware (ví dụ "PX4") và loại thiết bị (ví dụ "GROUND_ROVER")
     @dataclass (frozen = True) Heartbeat  một HEARTBEAT của xe đã giải mã
         info  : VehicleInfo               thông tin xe (lớp của US-01)
         armed : bool                      True nếu cờ MAV_MODE_FLAG_SAFETY_ARMED trong base_mode đang bật
@@ -84,14 +88,14 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
     class Clock (Protocol)
         now () -> float                   số giây, đơn điệu tăng (không lùi khi đổi giờ hệ thống).
 
-4.3 rover/keymap.py – phím -> hành động                                              (Task US-04/T1, US-03a/T3 thêm R, F)
+4.3 rover/core/view.py – phím -> hành động                                            (Task US-04/T1, US-03a/T3 thêm R, F)
     KEY_BINDINGS : list [tuple [str, Action, str]]   bảng (phím, hành động, mô tả tiếng Việt); một chỗ duy nhất định nghĩa phím
         ("h", TOGGLE_HELP, "ẩn / hiện hướng dẫn"), ("q", QUIT, "thoát app")             US-04
         ("r", ARM, "mở khóa xe"), ("f", DISARM, "khóa xe")                              US-03a
     action_for (key : str | None) -> Action | None   không phân biệt hoa thường; phím không có trong bảng hoặc None -> None (bỏ qua).   AC: US-04 AC2, AC3
     help_lines () -> list [str]                      mỗi dòng "<PHÍM>  <mô tả>", theo thứ tự KEY_BINDINGS.                       AC: US-04 AC2
 
-4.4 rover/screen.py – dựng nội dung khung                                            (Task US-04/T2; US-02/T3, US-03a/T3 thêm hàm format)
+4.4 rover/core/view.py – dựng nội dung khung                                          (Task US-04/T2; US-02/T3, US-03a/T3 thêm hàm format)
     @dataclass ViewModel                  dữ liệu cần để vẽ một khung
         status_lines : list [str] = []    các dòng trong vùng trạng thái; mỗi story thêm dòng của mình
         message : str = ""                thông báo gần nhất
@@ -105,7 +109,7 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
     format_arm_status (armed : bool | None) -> str                                          (US-03a/T3)  AC: US-03a AC1, AC2
         None -> "Khóa xe  : chưa rõ"      True -> "Khóa xe  : ĐÃ MỞ KHÓA"      False -> "Khóa xe  : ĐÃ KHÓA"
 
-4.5 rover/link_monitor.py – trạng thái kết nối                                       (Task US-02/T1)
+4.5 rover/core/vehicle.py – trạng thái kết nối                                     (Task US-02/T1)
     LINK_TIMEOUT_S = 3.0                  ngưỡng báo mất kết nối (PO chốt 2026-11-10)
     class LinkMonitor
         __init__ (timeout_s : float = LINK_TIMEOUT_S)
@@ -114,7 +118,7 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
         heartbeat_count : int (property)            số HEARTBEAT đã nhận từ lúc mở app.                                                     AC: US-02 AC1
         seconds_since_last (now : float) -> float | None   now - lần_cuối; None nếu chưa có HEARTBEAT.                                       AC: US-02 AC1, AC2
 
-4.6 rover/arm_control.py – logic mở / khóa xe                                       (Task US-03a/T1)
+4.6 rover/core/vehicle.py – logic mở / khóa xe                                     (Task US-03a/T1)
     class ArmControl
         armed : bool | None (property)              trạng thái khóa theo HEARTBEAT gần nhất; None nếu chưa có HEARTBEAT.   AC: US-03a AC1, AC2
         on_heartbeat (armed : bool) -> None         cập nhật trạng thái khóa từ HEARTBEAT.
@@ -134,46 +138,46 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
         run () -> int                               lặp step () tới khi False hoặc Ctrl+C; LUÔN gọi terminal .close () và link .close () trước khi trả; trả 0.   AC: US-04 AC3
     run_app () -> int                               tạo SystemClock, CursesTerminal (và MavlinkVehicleLink từ US-02/T3), tạo RoverApp, gọi run ().
 
-4.8 rover/cli.py – sửa từ US-01                                                      (Task US-04/T4)
-    main (argv = None, connect_fn = connect, app_fn = run_app) -> int
+4.8 rover/__main__.py – điểm vào                                                      (S03/REFACTOR thay cho rover/cli.py)
+    "python -m rover" -> sys .exit (app .run_app ()). Lệnh "python -m rover connect" của US-01 đã bỏ (quyết định sprint review Sprint 02); khách hàng mở app là tự kết nối.
                                                     "python -m rover" (không có lệnh con) -> gọi app_fn (); "python -m rover connect ..." giữ nguyên như US-01. app_fn: test truyền hàm giả lập.
 
 4.9 Driver (tầng 4)
-    rover/terminal.py  class CursesTerminal          (Task US-04/T3)   hiện thực Terminal bằng curses; mở chế độ cbreak, tắt echo, ẩn con trỏ, timeout 50 ms.
-    rover/clock.py     class SystemClock             (Task US-04/T3)   now () = time .monotonic ().
-    rover/mavlink_link.py class MavlinkVehicleLink   (Task US-02/T2; US-03a/T2 thêm send_arm và ArmAck)
-        __init__ (url : str = DEFAULT_URL)          mở cổng ngay (udpin không chờ ai); DEFAULT_URL lấy từ connection.py (US-01).
+    rover/drivers/terminal.py  class CursesTerminal  (Task US-04/T3)   hiện thực Terminal bằng curses; mở chế độ cbreak, tắt echo, ẩn con trỏ, timeout 50 ms.
+    rover/drivers/terminal.py  class SystemClock     (Task US-04/T3)   now () = time .monotonic ().
+    rover/drivers/mavlink.py   class MavlinkVehicleLink   (Task US-02/T2; US-03a/T2 thêm send_arm và ArmAck)
+        __init__ (url : str = DEFAULT_URL)          mở cổng ngay (udpin không chờ ai); DEFAULT_URL khai báo cùng file (mục 4.10).
         conn                                        kết nối pymavlink (mavutil .mavlink_connection).
         last_system_id, last_component_id : int | None   số hiệu của xe trong HEARTBEAT gần nhất; None khi chưa thấy xe.
-        poll ()                                     recv_match (blocking = False) tới khi hết gói; HEARTBEAT -> parse_heartbeat (US-01) -> Heartbeat (info, armed), đồng thời ghi last_system_id, last_component_id; COMMAND_ACK của lệnh ARM_DISARM (400) -> ArmAck, ACK lệnh khác bị bỏ qua.
+        poll ()                                     recv_match (blocking = False) tới khi hết gói; HEARTBEAT -> parse_heartbeat (mục 4.10) -> Heartbeat (info, armed), đồng thời ghi last_system_id, last_component_id; COMMAND_ACK của lệnh ARM_DISARM (400) -> ArmAck, ACK lệnh khác bị bỏ qua.
         send_arm (arm)                              COMMAND_LONG MAV_CMD_COMPONENT_ARM_DISARM, param1 = 1 / 0, gửi tới last_system_id, last_component_id; hai số này còn None thì trả về, không gửi.
         close ()
 
-4.10 rover/cli.py – phần có từ US-01, liệt kê cho đủ
-    EXIT_OK = 0, EXIT_NO_VEHICLE = 1              mã thoát của lệnh connect.
-    build_parser () -> ArgumentParser            lệnh con connect (--url, --timeout); lệnh con không bắt buộc (US-04/T4).
+4.10 rover/drivers/mavlink.py – phần có từ US-01, liệt kê cho đủ
+    DEFAULT_URL = "udpin:0.0.0.0:14540"          cổng PX4 SITL gửi MAVLink cho ứng dụng (instance mode Onboard).
+    parse_heartbeat (msg) -> VehicleInfo | None  HEARTBEAT của xe -> VehicleInfo; autopilot = INVALID (QGroundControl, app khác) -> None; loại không có trong bảng tra -> "UNKNOWN(<số>)".   (Task US-01/T3)
 
 5. KIỂU GIẢ LẬP DÙNG TRONG TEST (tests/fakes.py, tests/mavlink_sim.py)
 ---------------------------------------------------------------------
 FakeClock (start = 0.0)      : now () trả giá trị đang đặt; advance (seconds) tăng thời gian. Dùng để kiểm 3 s mà không chờ thật.     (US-04/T4)
 FakeTerminal (keys)          : read_key () lần lượt trả các phím trong danh sách keys, hết thì trả None; draw () lưu lại khung cuối vào last_lines; close () đặt closed = True.   (US-04/T4)
 FakeVehicleLink ()           : push (event) thêm sự kiện cho lần poll () kế tiếp; poll () trả rồi xóa; send_arm () ghi vào sent_arm (danh sách bool); close () đặt closed = True.   (US-02/T3 tạo poll, push; US-03a/T3 thêm send_arm)
-HeartbeatSimulator (port, script)   : (tests/mavlink_sim.py) giả lập xe / QGroundControl gửi HEARTBEAT một chiều tới cổng của app theo kịch bản; dùng cho test connect (US-01) và poll ().   (US-02/T2 chuyển từ test_connection.py)
+HeartbeatSimulator (port, script)   : (tests/mavlink_sim.py) giả lập xe / QGroundControl gửi HEARTBEAT một chiều tới cổng của app theo kịch bản; dùng cho test poll ().   (US-02/T2 chuyển từ test_connection.py)
 TwoWayVehicleSimulator (port, ack_packets) : (tests/mavlink_sim.py) giả lập PX4 hai chiều: gửi HEARTBEAT, nhận COMMAND_LONG app gửi (wait_commands), gửi COMMAND_ACK theo kịch bản.   (US-03a/T2)
 
 6. MỖI THÀNH PHẦN PHỤC VỤ AC NÀO
 --------------------------------
-US-04  AC1 khung màn hình      : Terminal .draw, screen .render, RoverApp .step, CursesTerminal, cli .main
-       AC2 bảng phím H         : keymap, screen .render (show_help)
-       AC3 thoát Q / Ctrl+C    : keymap (Q), RoverApp .run, Terminal .close
-US-02  AC1–AC4                 : MavlinkVehicleLink .poll (Heartbeat), LinkMonitor, screen .format_link_status
-US-03a AC1, AC2 mở / khóa      : keymap (R, F), ArmControl .request, VehicleLink .send_arm, Heartbeat .armed, screen .format_arm_status
+US-04  AC1 khung màn hình      : Terminal .draw, view .render, RoverApp .step, CursesTerminal, __main__
+       AC2 bảng phím H         : view (KEY_BINDINGS, help_lines, render với show_help)
+       AC3 thoát Q / Ctrl+C    : view .action_for (Q), RoverApp .run, Terminal .close
+US-02  AC1–AC4                 : MavlinkVehicleLink .poll (Heartbeat), LinkMonitor, view .format_link_status
+US-03a AC1, AC2 mở / khóa      : view .action_for (R, F), ArmControl .request, VehicleLink .send_arm, Heartbeat .armed, view .format_arm_status
        AC3 xe từ chối          : ArmAck, ArmControl .on_ack
        AC4 chưa kết nối        : LinkMonitor .state, ArmControl .request
 
 7. KHI THÊM US-03b (SAU SPIKE) – DỰ KIẾN, CHƯA LÀM
 --------------------------------------------------
-Thêm Action FORWARD / BACKWARD / TURN_LEFT / TURN_RIGHT / STOP và phím W, S, A, D, Space vào keymap; thêm DriveController (tầng 2: lệnh lái 1 s rồi tự dừng); thêm VehicleLink .send_drive (...) và hiện thực trong MavlinkVehicleLink theo kết quả spike. Các phần khác không phải sửa.
+Thêm Action FORWARD / BACKWARD / TURN_LEFT / TURN_RIGHT / STOP và phím W, S, A, D, Space vào KEY_BINDINGS (rover/core/view.py); thêm DriveController (tầng 2: lệnh lái 1 s rồi tự dừng); thêm VehicleLink .send_drive (...) và hiện thực trong MavlinkVehicleLink theo kết quả spike. Các phần khác không phải sửa.
 
 8. QUY TẮC CẬP NHẬT
 -------------------

@@ -1,8 +1,7 @@
-"""US-04/T4, US-02/T3 & US-03a/T3: kiểm tra vòng lặp app bằng terminal, đồng hồ và kênh xe giả lập."""
+"""Kiểm tra tầng 1 – vòng lặp RoverApp bằng terminal, đồng hồ và kênh xe giả lập (US-04/T4, US-02/T3, US-03a/T3)."""
 
 from rover.app import RoverApp
-from rover.types import ArmAck, Heartbeat
-from rover.vehicle_info import VehicleInfo
+from rover .core .model import ArmAck, Heartbeat, VehicleInfo
 from tests.fakes import FakeClock, FakeTerminal, FakeVehicleLink
 
 

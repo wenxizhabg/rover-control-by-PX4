@@ -1,15 +1,11 @@
-"""US-04/T4, US-02/T3 & US-03a/T3: vòng lặp ứng dụng rover, tách biệt driver thật để có thể kiểm thử."""
+"""Tầng 1 – ứng dụng: vòng lặp chính RoverApp nối các tầng lại với nhau, và run_app là nơi duy nhất tạo driver thật."""
 
-from rover import keymap, screen
-from rover.arm_control import ArmControl
-from rover.clock import SystemClock
-from rover.hal import Clock, Terminal, VehicleLink
-from rover.keymap import help_lines
-from rover.link_monitor import LinkMonitor
-from rover.mavlink_link import MavlinkVehicleLink
-from rover.screen import ViewModel, format_arm_status, format_link_status, render
-from rover.terminal import CursesTerminal
-from rover.types import Action, ArmAck, Heartbeat
+from rover .core .model import Action, ArmAck, Heartbeat
+from rover .core .vehicle import ArmControl, LinkMonitor
+from rover .core .view import ViewModel, action_for, format_arm_status, format_link_status, help_lines, render
+from rover .drivers .mavlink import MavlinkVehicleLink
+from rover .drivers .terminal import CursesTerminal, SystemClock
+from rover .hal import Clock, Terminal, VehicleLink
 
 
 class RoverApp:
@@ -41,7 +37,7 @@ class RoverApp:
                 elif isinstance (event, ArmAck):
                     self ._message = self ._arm_control .on_ack (event)
 
-        action = keymap .action_for (self ._terminal .read_key ())
+        action = action_for (self ._terminal .read_key ())
 
         if action == Action .QUIT:
             return False

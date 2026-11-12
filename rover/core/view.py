@@ -1,8 +1,36 @@
-"""US-04/T2, US-02/T3 & US-03a/T3: dựng các dòng nội dung của khung màn hình từ ViewModel."""
+"""Tầng 2 – giao diện người dùng: đổi phím bấm thành hành động, tạo bảng hướng dẫn và dựng các dòng của khung màn hình."""
 
 from dataclasses import dataclass, field
 
-from rover.types import LinkState
+from rover .core .model import Action, LinkState
+
+
+KEY_BINDINGS: list[tuple[str, Action, str]] = [
+    ("h", Action .TOGGLE_HELP, "ẩn / hiện hướng dẫn"),
+    ("q", Action .QUIT, "thoát app"),
+    ("r", Action .ARM, "mở khóa xe"),
+    ("f", Action .DISARM, "khóa xe"),
+]
+
+
+def action_for (key: str | None) -> Action | None:
+    """Trả hành động tương ứng với phím, không phân biệt chữ hoa hay chữ thường."""
+    if key is None:
+        return None
+
+    normalized_key = key .lower ()
+    for bound_key, action, _description in KEY_BINDINGS:
+        if normalized_key == bound_key:
+            return action
+    return None
+
+
+def help_lines () -> list[str]:
+    """Trả các dòng hướng dẫn theo thứ tự phím được khai báo trong KEY_BINDINGS."""
+    return [
+        f"{key .upper ()}  {description}"
+        for key, _action, description in KEY_BINDINGS
+    ]
 
 
 @dataclass

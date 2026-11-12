@@ -1,7 +1,7 @@
-"""Cho phép chạy app bằng lệnh "python -m rover ...". Python chạy file này khi gặp "-m rover"; file chỉ gọi main trong cli.py và trả mã thoát của main cho hệ điều hành."""
+"""Điểm vào của "python -m rover": Python chạy file này khi gặp "-m rover"; file chỉ chạy app và trả mã thoát của app cho hệ điều hành."""
 
 import sys
 
-from rover .cli import main
+from rover .app import run_app
 
-sys .exit (main ())
+sys .exit (run_app ())

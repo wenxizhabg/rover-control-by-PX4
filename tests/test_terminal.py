@@ -1,11 +1,11 @@
-"""US-04/T3: kiểm tra driver curses bằng terminal giả."""
+"""Kiểm tra tầng 4 – driver màn hình, bàn phím CursesTerminal và đồng hồ SystemClock bằng curses giả (US-04/T3)."""
 
 import curses
 
 import pytest
 
-from rover import terminal
-from rover.clock import SystemClock
+from rover .drivers import terminal
+from rover .drivers .terminal import SystemClock
 
 
 class FakeWindow:
@@ -117,6 +117,6 @@ def test_close_attempts_all_restores_and_reports_first_error (fake_curses, monke
 
 
 def test_system_clock_uses_monotonic_time (monkeypatch):
-    monkeypatch .setattr ("rover.clock.time.monotonic", lambda: 12.5)
+    monkeypatch .setattr ("rover.drivers.terminal.time.monotonic", lambda: 12.5)
 
     assert SystemClock () .now () == 12.5
