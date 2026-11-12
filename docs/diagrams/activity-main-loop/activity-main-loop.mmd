@@ -1,0 +1,75 @@
+---
+title: Sơ đồ hoạt động – một vòng RoverApp .step () (Sprint 3) – chú thích tại docs/diagrams/activity-main-loop/activity-main-loop.txt
+config:
+  flowchart:
+    curve: linear
+---
+flowchart TD
+    start(["Bắt đầu một vòng step ()"])
+    now["now = clock .now ()"]
+    hasLink{"Có link?"}
+    poll["events = link .poll ()"]
+    nextEv{"Sự kiện kế tiếp?"}
+    onHb["link_monitor .on_heartbeat (now)<br/>arm_control .on_heartbeat (armed)"]
+    onAck["messages .post (arm_control .on_ack (ack), now)"]
+    state["link_state = link_monitor .state (now)"]
+    key["action = action_for (terminal .read_key ())<br/>(chờ phím tối đa 50 ms = nhịp vòng lặp)"]
+    act{"action?"}
+    quit(["Trả False: thoát app"])
+    help["show_help = not show_help"]
+    armReq["should_send, msg = arm_control .request (arm, link_state)<br/>messages .post (msg, now)"]
+    shouldSend{"should_send?"}
+    sendArm["link .send_arm (arm)"]
+    drvConn{"link_state = CONNECTED?"}
+    msgConn["messages .post ('Chưa kết nối xe', now)"]
+    drvArmed{"arm_control .armed = True?"}
+    msgArmed["messages .post ('Xe chưa mở khóa', now)"]
+    isStop{"action = STOP?"}
+    drvStop["drive .stop ()"]
+    drvStart["link .send_manual_mode ()<br/>drive .start (action, now)"]
+    sendCond{"Có link và<br/>link_state = CONNECTED?"}
+    armed2{"arm_control .armed = True?"}
+    stopUnarmed["drive .stop ()"]
+    sendDrive["link .send_drive (*drive .setpoint (now))<br/>(gửi mỗi vòng, kể cả (0, 0))"]
+    stopNoLink["drive .stop ()"]
+    build["Dựng ViewModel: dòng Kết nối, Khóa xe, Lái xe;<br/>message = messages .current (now)"]
+    draw["terminal .draw (render (view))"]
+    done(["Trả True: run () gọi vòng tiếp theo"])
+
+    start --> now --> hasLink
+    hasLink -->|"có"| poll --> nextEv
+    nextEv -->|"Heartbeat"| onHb --> nextEv
+    nextEv -->|"ArmAck"| onAck --> nextEv
+    nextEv -->|"hết sự kiện"| state
+    hasLink -->|"không"| state
+    state --> key --> act
+
+    act -->|"QUIT (Q)"| quit
+    act -->|"TOGGLE_HELP (H)"| help --> sendCond
+    act -->|"ARM / DISARM (R / F)"| armReq --> shouldSend
+    shouldSend -->|"có và có link"| sendArm --> sendCond
+    shouldSend -->|"không"| sendCond
+    act -->|"lái (W / S / A / D / Space)"| drvConn
+    drvConn -->|"không"| msgConn --> sendCond
+    drvConn -->|"có"| drvArmed
+    drvArmed -->|"không"| msgArmed --> sendCond
+    drvArmed -->|"có"| isStop
+    isStop -->|"có"| drvStop --> sendCond
+    isStop -->|"không"| drvStart --> sendCond
+    act -->|"không có phím / phím lạ"| sendCond
+
+    sendCond -->|"có"| armed2
+    armed2 -->|"không"| stopUnarmed --> sendDrive
+    armed2 -->|"có"| sendDrive
+    sendCond -->|"không"| stopNoLink --> build
+    sendDrive --> build --> draw --> done
+
+    classDef c_term fill:#ffe8a3,stroke:#000,stroke-width:2px,color:#000
+    classDef c_act fill:#cfe2ff,stroke:#000,stroke-width:1px,color:#000
+    classDef c_dec fill:#ffffff,stroke:#000,stroke-width:2px,color:#000
+    classDef c_send fill:#d4edda,stroke:#000,stroke-width:1px,color:#000
+
+    class start,quit,done c_term
+    class now,poll,onHb,onAck,state,key,help,armReq,msgConn,msgArmed,drvStop,build,draw,stopUnarmed,stopNoLink c_act
+    class hasLink,nextEv,act,shouldSend,drvConn,drvArmed,isStop,sendCond,armed2 c_dec
+    class sendArm,drvStart,sendDrive c_send

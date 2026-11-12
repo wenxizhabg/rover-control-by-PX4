@@ -1,9 +1,10 @@
-SƠ ĐỒ LỚP – KIẾN TRÚC PHẦN MỀM VÀ ĐỊNH NGHĨA API (SPRINT 2)
+SƠ ĐỒ LỚP – KIẾN TRÚC PHẦN MỀM VÀ ĐỊNH NGHĨA API (SPRINT 3)
 ==========================================================
 File nguồn : docs/diagrams/class/class.mmd (Mermaid classDiagram, sửa sơ đồ ở file này)
 File ảnh   : docs/diagrams/class/class.svg (xuất từ file nguồn khi cần; cách xuất giống docs/diagrams/system-overview/system-overview.txt)
-Phiên bản  : cuối Sprint 2 (2026-11-11), khớp code commit 5514ead. Phủ US-01, US-04, US-02, US-03a. US-03b chưa làm nên chưa có trong sơ đồ (xem mục 7). Bản đầu: Sprint Planning Sprint 2 (2026-11-10).
-             S03/REFACTOR (2026-11-12): file này (mục 3, 4, 5, 6) đổi đường dẫn theo cấu trúc 4 tầng mới, bỏ lệnh connect; class.mmd còn theo cấu trúc cũ, vẽ lại ở S03/DIAG-2.
+Phiên bản  : Sprint 3 (S03/DIAG-2), khớp code commit 20ff6bd (sau US-03b/T3). Phủ US-01, US-04, US-02, US-03a, US-03b. Sơ đồ vẽ lại theo cấu trúc 4 tầng (rover/app.py, rover/core/, rover/hal.py, rover/drivers/).
+             Lịch sử: bản đầu Sprint Planning Sprint 2 (2026-11-10); cuối Sprint 2 (2026-11-11, commit 5514ead); S03/REFACTOR (2026-11-12) đổi đường dẫn, bỏ lệnh connect; S03/DIAG-2 thêm phần US-03b (gộp mục 3.5 của docs/agile/user-stories/US-03b.txt).
+Sơ đồ liên quan: một vòng lặp RoverApp .step () vẽ chi tiết ở docs/diagrams/activity-main-loop/.
 
 Sơ đồ lớp này là bản mô tả kiến trúc phần mềm của app, đồng thời là "hợp đồng" giữa các task trong Sprint 2: mọi người code đúng tên hàm, tham số, kết quả ở mục 4 thì các phần ghép được với nhau mà không phải chờ nhau (hành động Retro Sprint 1 số 1).
 
@@ -18,11 +19,11 @@ Sơ đồ lớp này là bản mô tả kiến trúc phần mềm của app, đ�
 
 2. KÝ HIỆU TRONG SƠ ĐỒ
 ----------------------
-namespace Layer1..Layer4, Types : nhóm các lớp theo tầng.
+namespace Tang1_app .. Tang4_drivers, Types_core_model : nhóm các lớp theo tầng (tên thư mục / file ghi trong chú thích của từng namespace).
 <<interface>>                   : lớp trừu tượng (tầng 3), chỉ có chữ ký hàm; viết bằng typing.Protocol.
 <<module>>                      : file .py chỉ gồm hàm (không phải lớp), vẽ thành một khối để thấy được quan hệ.
 <<dataclass>>, <<enumeration>>  : kiểu dữ liệu.
-"US-01" trong nhãn              : code đã có từ Sprint 1, không sửa.
+<<core/vehicle.py>> ...          : nhãn chỉ file chứa lớp, khi một file có nhiều lớp.
 A ..> B                         : A gọi / dùng B (nét đứt, mũi tên mở).
 A ..|> B                        : A hiện thực interface B (nét đứt, mũi tên tam giác rỗng).
 A *-- B                         : A tự tạo và sở hữu B (hình thoi đặc), ví dụ RoverApp tạo LinkMonitor.
@@ -32,7 +33,7 @@ A o-- B                         : A nhận B từ ngoài truyền vào (hình th
 3. KIẾN TRÚC 4 TẦNG
 -------------------
 Tầng 1 – Ứng dụng   : rover/__main__.py, rover/app.py (RoverApp, run_app). Điểm vào và vòng lặp chính. Chỉ tầng này biết đủ mọi thành phần và nối chúng lại.
-Tầng 2 – Xử lý      : rover/core/ (model.py: kiểu dữ liệu; vehicle.py: LinkMonitor, ArmControl; view.py: phím, khung màn hình). Python thuần: không import pymavlink, không import curses, không gọi time; thời điểm hiện tại được truyền vào qua tham số now.
+Tầng 2 – Xử lý      : rover/core/ (model.py: kiểu dữ liệu; vehicle.py: LinkMonitor, ArmControl, DriveController; view.py: phím, khung màn hình, MessageBoard). Python thuần: không import pymavlink, không import curses, không gọi time; thời điểm hiện tại được truyền vào qua tham số now.
 Tầng 3 – Trừu tượng : rover/hal.py (VehicleLink, Terminal, Clock). Giống HAL trên STM32: tầng trên gọi HAL_UART_Transmit () mà không biết thanh ghi; ở đây RoverApp gọi link .poll () mà không biết MAVLink, UDP. Trong Python, interface viết bằng typing.Protocol: giống struct gồm các con trỏ hàm trong C, lớp nào có đủ hàm đúng chữ ký thì dùng thay được, không cần kế thừa.
 Tầng 4 – Driver     : rover/drivers/ (mavlink.py: DEFAULT_URL, parse_heartbeat, MavlinkVehicleLink; terminal.py: CursesTerminal, SystemClock). Chỉ tầng này dùng pymavlink, curses, time.
 
@@ -47,12 +48,14 @@ Lợi ích:
 - Song song: chốt xong mục 4 thì mỗi người làm một phần mà không phải chờ người khác.
 - Thay đổi: đổi cách nói chuyện với xe (ví dụ phase ns-3, hoặc spike US-03b chọn cách gửi lệnh lái) chỉ sửa tầng 4.
 
-Vòng lặp chính (RoverApp .step, một lần gọi = một vòng, kiểu super-loop, một luồng, không thread):
+Vòng lặp chính (RoverApp .step, một lần gọi = một vòng, kiểu super-loop, một luồng, không thread; sơ đồ chi tiết: docs/diagrams/activity-main-loop/):
 1. now = clock .now ()
-2. Nếu có link: đọc mọi sự kiện link .poll (); Heartbeat -> link_monitor .on_heartbeat (now) và arm_control .on_heartbeat (armed); ArmAck -> message = arm_control .on_ack (ack).
-3. key = terminal .read_key () (chờ tối đa 50 ms, cũng là nhịp của vòng lặp); action = view .action_for (key).
-4. Xử lý action: QUIT -> trả False; TOGGLE_HELP -> đảo show_help; ARM / DISARM -> arm_control .request (...), được phép thì link .send_arm (...).
-5. Dựng ViewModel, gọi view .render (view_model), terminal .draw (lines). Trả True.
+2. Nếu có link: đọc mọi sự kiện link .poll (); Heartbeat -> link_monitor .on_heartbeat (now) và arm_control .on_heartbeat (armed); ArmAck -> messages .post (arm_control .on_ack (ack), now).
+3. link_state = link_monitor .state (now); key = terminal .read_key () (chờ tối đa 50 ms, cũng là nhịp của vòng lặp); action = view .action_for (key).
+4. Xử lý action: QUIT -> trả False; TOGGLE_HELP -> đảo show_help; ARM / DISARM -> arm_control .request (...), thông báo post vào MessageBoard, được phép thì link .send_arm (...);
+   lái (W / S / A / D / Space) -> chưa kết nối: post "Chưa kết nối xe"; chưa mở khóa: post "Xe chưa mở khóa"; Space: drive .stop (); còn lại: link .send_manual_mode () rồi drive .start (action, now).
+5. Có link và ĐÃ KẾT NỐI: (chưa mở khóa thì drive .stop ()) gửi link .send_drive (*drive .setpoint (now)) MỖI vòng, kể cả (0, 0); không thì drive .stop ().
+6. Dựng ViewModel (dòng Kết nối, Khóa xe, Lái xe; message = messages .current (now)), gọi view .render (view_model), terminal .draw (lines). Trả True.
 
 4. ĐỊNH NGHĨA API
 -----------------
@@ -66,6 +69,7 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
     class Action (Enum)                   việc người dùng muốn làm, đổi từ phím bấm
         TOGGLE_HELP, QUIT                 (US-04)
         ARM, DISARM                       (US-03a)
+        FORWARD, BACKWARD, TURN_LEFT, TURN_RIGHT, STOP   (US-03b/T1)
     @dataclass (frozen = True) VehicleInfo  thông tin cơ bản của xe đọc từ HEARTBEAT (US-01/T3)
         system_id, component_id : int     số hiệu xe và bộ phận gửi gói, lấy từ header của gói
         autopilot, vehicle_type : str     tên firmware (ví dụ "PX4") và loại thiết bị (ví dụ "GROUND_ROVER")
@@ -90,12 +94,13 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
     class Clock (Protocol)
         now () -> float                   số giây, đơn điệu tăng (không lùi khi đổi giờ hệ thống).
 
-4.3 rover/core/view.py – phím -> hành động                                            (Task US-04/T1, US-03a/T3 thêm R, F)
+4.3 rover/core/view.py – phím -> hành động                                            (Task US-04/T1, US-03a/T3 thêm R, F, US-03b/T3 thêm W, S, A, D, Space)
     KEY_BINDINGS : list [tuple [str, Action, str]]   bảng (phím, hành động, mô tả tiếng Việt); một chỗ duy nhất định nghĩa phím
         ("h", TOGGLE_HELP, "ẩn / hiện hướng dẫn"), ("q", QUIT, "thoát app")             US-04
         ("r", ARM, "mở khóa xe"), ("f", DISARM, "khóa xe")                              US-03a
-    action_for (key : str | None) -> Action | None   không phân biệt hoa thường; phím không có trong bảng hoặc None -> None (bỏ qua).   AC: US-04 AC2, AC3
-    help_lines () -> list [str]                      mỗi dòng "<PHÍM>  <mô tả>", theo thứ tự KEY_BINDINGS.                       AC: US-04 AC2
+        ("w", FORWARD, "tiến"), ("s", BACKWARD, "lùi"), ("a", TURN_LEFT, "quay trái"), ("d", TURN_RIGHT, "quay phải"), (" ", STOP, "dừng ngay")   US-03b
+    action_for (key : str | None) -> Action | None   không phân biệt hoa thường; phím không có trong bảng hoặc None -> None (bỏ qua).   AC: US-04 AC2, AC3, US-03b AC1–AC3
+    help_lines () -> list [str]                      mỗi dòng "<PHÍM>  <mô tả>", theo thứ tự KEY_BINDINGS; phím dấu cách hiện là "Space".   AC: US-04 AC2
 
 4.4 rover/core/view.py – dựng nội dung khung                                          (Task US-04/T2; US-02/T3, US-03a/T3 thêm hàm format)
     @dataclass ViewModel                  dữ liệu cần để vẽ một khung
@@ -110,6 +115,8 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
         LOST      -> "Kết nối  : MẤT KẾT NỐI  (HEARTBEAT: 42, lần cuối 5.2 s trước)"
     format_arm_status (armed : bool | None) -> str                                          (US-03a/T3)  AC: US-03a AC1, AC2
         None -> "Khóa xe  : chưa rõ"      True -> "Khóa xe  : ĐÃ MỞ KHÓA"      False -> "Khóa xe  : ĐÃ KHÓA"
+    format_drive_status (action : Action | None, remaining_s : float) -> str                (US-03b/T3)  AC: US-03b AC1, AC2
+        None -> "Lái xe   : ĐỨNG YÊN"     FORWARD -> "Lái xe   : TIẾN (còn 0.6 s)"   (BACKWARD -> LÙI, TURN_LEFT -> QUAY TRÁI, TURN_RIGHT -> QUAY PHẢI; số giây 1 chữ số thập phân)
 
 4.5 rover/core/vehicle.py – trạng thái kết nối                                     (Task US-02/T1)
     LINK_TIMEOUT_S = 3.0                  ngưỡng báo mất kết nối (PO chốt 2026-11-10)
@@ -132,8 +139,8 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
                                                     accepted -> "Xe chấp nhận lệnh mở khóa" / "Xe chấp nhận lệnh khóa"
                                                     bị từ chối -> "Xe từ chối lệnh mở khóa" / "Xe từ chối lệnh khóa"                    AC: US-03a AC3
 
-4.7 rover/app.py – ứng dụng                                                          (Task US-04/T4; US-02/T3, US-03a/T3 nối thêm)
-    class RoverApp
+4.7 rover/app.py – ứng dụng                                                          (Task US-04/T4; US-02/T3, US-03a/T3, US-03b/T3, T6 nối thêm)
+    class RoverApp                                  tự tạo và sở hữu LinkMonitor, ArmControl, DriveController, MessageBoard (thay thuộc tính _message cũ, US-03b/T6)
         __init__ (terminal : Terminal, clock : Clock, link : VehicleLink | None = None)
                                                     link = None: chạy khung app không có xe (US-04 làm trước); US-02/T3 truyền link thật.
         step () -> bool                             một vòng lặp (mục 3); trả False khi người dùng bấm Q.                AC: tất cả
@@ -142,7 +149,6 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
 
 4.8 rover/__main__.py – điểm vào                                                      (S03/REFACTOR thay cho rover/cli.py)
     "python -m rover" -> sys .exit (app .run_app ()). Lệnh "python -m rover connect" của US-01 đã bỏ (quyết định sprint review Sprint 02); khách hàng mở app là tự kết nối.
-                                                    "python -m rover" (không có lệnh con) -> gọi app_fn (); "python -m rover connect ..." giữ nguyên như US-01. app_fn: test truyền hàm giả lập.
 
 4.9 Driver (tầng 4)
     rover/drivers/terminal.py  class CursesTerminal  (Task US-04/T3)   hiện thực Terminal bằng curses; mở chế độ cbreak, tắt echo, ẩn con trỏ, timeout 50 ms.
@@ -160,14 +166,33 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
 4.10 rover/drivers/mavlink.py – phần có từ US-01, liệt kê cho đủ
     DEFAULT_URL = "udpin:0.0.0.0:14540"          cổng PX4 SITL gửi MAVLink cho ứng dụng (instance mode Onboard).
     parse_heartbeat (msg) -> VehicleInfo | None  HEARTBEAT của xe -> VehicleInfo; autopilot = INVALID (QGroundControl, app khác) -> None; loại không có trong bảng tra -> "UNKNOWN(<số>)".   (Task US-01/T3)
+    PX4_MAIN_MODE_MANUAL = 1, MANUAL_Z_NEUTRAL = 500   hằng số của send_manual_mode, send_drive (US-03b/T2, mục 4.9).
+
+4.11 rover/core/vehicle.py – lái xe 1 giây                                            (Task US-03b/T1)
+    DRIVE_DURATION_S = 1.0                thời gian xe chạy cho mỗi lần bấm phím lái (PO chốt 2026-11-10)
+    DRIVE_SPEED, TURN_SPEED               mức tiến / lùi và mức quay trong [0, 1] (spike US-03b/T0 Q6 đề xuất DRIVE_SPEED = 1.0, TURN_SPEED = 0.5)
+    class DriveController                 máy trạng thái theo thời gian, cùng kiểu LinkMonitor: không đọc đồng hồ, now truyền vào; không biết MAVLink (đổi mức lái sang MANUAL_CONTROL là việc của driver)
+        __init__ (duration_s = DRIVE_DURATION_S, drive_speed = DRIVE_SPEED, turn_speed = TURN_SPEED)
+        start (action : Action, now : float) -> None       FORWARD / BACKWARD / TURN_LEFT / TURN_RIGHT: chạy hướng đó tới now + duration_s; bấm lại thì tính lại từ now.   AC: US-03b AC1–AC3
+        stop () -> None                                    dừng ngay.                                                                         AC: US-03b AC3
+        setpoint (now : float) -> tuple [float, float]     (forward, turn): FORWARD (drive_speed, 0), BACKWARD (-drive_speed, 0), TURN_LEFT (0, -turn_speed), TURN_RIGHT (0, turn_speed); hết thời gian hoặc đã stop thì (0.0, 0.0).   AC: US-03b AC1–AC3
+        active_action (now : float) -> Action | None       hướng đang chạy; None nếu đứng yên.                                                AC: US-03b AC1, AC2
+        remaining_s (now : float) -> float                 số giây còn lại; 0.0 nếu đứng yên.                                                AC: US-03b AC1, AC2
+
+4.12 rover/core/view.py – bảng thông báo có thời gian giữ                             (Task US-03b/T5)
+    MESSAGE_HOLD_S = 0.5                  thời gian tối thiểu mỗi thông báo nằm trên màn hình (khách hàng chốt 2026-11-12)
+    class MessageBoard                    hàng đợi FIFO (collections .deque), cùng kiểu máy trạng thái theo thời gian; RoverApp post mọi thông báo vào đây, màn hình chỉ đọc current
+        __init__ (hold_s : float = MESSAGE_HOLD_S)
+        post (text : str, now : float) -> None       bảng trống thì hiện ngay; không thì xếp vào cuối hàng đợi.                    AC: US-03b AC5
+        current (now : float) -> str                  thông báo đang hiện; đã hiện >= hold_s và hàng đợi còn thì chuyển sang thông báo kế tiếp (tính giờ từ now); hàng đợi rỗng thì giữ thông báo cuối; chưa có thông báo thì "".   AC: US-03b AC5
 
 5. KIỂU GIẢ LẬP DÙNG TRONG TEST (tests/fakes.py, tests/mavlink_sim.py)
 ---------------------------------------------------------------------
 FakeClock (start = 0.0)      : now () trả giá trị đang đặt; advance (seconds) tăng thời gian. Dùng để kiểm 3 s mà không chờ thật.     (US-04/T4)
 FakeTerminal (keys)          : read_key () lần lượt trả các phím trong danh sách keys, hết thì trả None; draw () lưu lại khung cuối vào last_lines; close () đặt closed = True.   (US-04/T4)
-FakeVehicleLink ()           : push (event) thêm sự kiện cho lần poll () kế tiếp; poll () trả rồi xóa; send_arm () ghi vào sent_arm (danh sách bool); close () đặt closed = True.   (US-02/T3 tạo poll, push; US-03a/T3 thêm send_arm)
+FakeVehicleLink ()           : push (event) thêm sự kiện cho lần poll () kế tiếp; poll () trả rồi xóa; send_arm () ghi vào sent_arm (danh sách bool); send_drive () ghi vào sent_drive (danh sách (forward, turn)); send_manual_mode () tăng manual_mode_requests; close () đặt closed = True.   (US-02/T3 tạo poll, push; US-03a/T3 thêm send_arm; US-03b/T3 thêm send_drive, send_manual_mode)
 HeartbeatSimulator (port, script)   : (tests/mavlink_sim.py) giả lập xe / QGroundControl gửi HEARTBEAT một chiều tới cổng của app theo kịch bản; dùng cho test poll ().   (US-02/T2 chuyển từ test_connection.py)
-TwoWayVehicleSimulator (port, ack_packets) : (tests/mavlink_sim.py) giả lập PX4 hai chiều: gửi HEARTBEAT, nhận COMMAND_LONG app gửi (wait_commands), gửi COMMAND_ACK theo kịch bản.   (US-03a/T2)
+TwoWayVehicleSimulator (port, ack_packets) : (tests/mavlink_sim.py) giả lập PX4 hai chiều: gửi HEARTBEAT, nhận COMMAND_LONG (wait_commands) và MANUAL_CONTROL (wait_manual) app gửi, gửi COMMAND_ACK theo kịch bản.   (US-03a/T2; US-03b/T2 thêm MANUAL_CONTROL)
 
 6. MỖI THÀNH PHẦN PHỤC VỤ AC NÀO
 --------------------------------
@@ -178,10 +203,14 @@ US-02  AC1–AC4                 : MavlinkVehicleLink .poll (Heartbeat), LinkMon
 US-03a AC1, AC2 mở / khóa      : view .action_for (R, F), ArmControl .request, VehicleLink .send_arm, Heartbeat .armed, view .format_arm_status
        AC3 xe từ chối          : ArmAck, ArmControl .on_ack
        AC4 chưa kết nối        : LinkMonitor .state, ArmControl .request
+US-03b AC1, AC2 tiến, lùi, quay : view .action_for (W, S, A, D), DriveController (start, setpoint, active_action, remaining_s), VehicleLink .send_manual_mode, .send_drive, view .format_drive_status
+       AC3 dừng ngay           : view .action_for (Space), DriveController .stop, .start (bấm lại tính lại 1 s), RoverApp .step (gửi setpoint mỗi vòng)
+       AC4 chưa mở khóa / chưa kết nối : RoverApp .step (kiểm link_state, arm_control .armed), MavlinkVehicleLink .send_drive (chưa thấy xe thì không gửi)
+       AC5 đọc kịp thông báo   : MessageBoard (post, current), MESSAGE_HOLD_S
 
-7. KHI THÊM US-03b (SAU SPIKE) – ĐANG LÀM (Sprint 03; driver: US-03b/T2 xong, xem mục 4.2, 4.9; phần còn lại: docs/agile/user-stories/US-03b.txt mục 3.5)
---------------------------------------------------
-Thêm Action FORWARD / BACKWARD / TURN_LEFT / TURN_RIGHT / STOP và phím W, S, A, D, Space vào KEY_BINDINGS (rover/core/view.py); thêm DriveController (tầng 2: lệnh lái 1 s rồi tự dừng); thêm VehicleLink .send_drive (...) và hiện thực trong MavlinkVehicleLink theo kết quả spike. Các phần khác không phải sửa.
+7. US-03b ĐÃ VÀO SƠ ĐỒ
+---------------------
+Mục 7 cũ ("khi thêm US-03b, dự kiến") đã làm xong: Action lái, phím W / S / A / D / Space (4.1, 4.3), format_drive_status (4.4), send_drive, send_manual_mode (4.2, 4.9), DriveController (4.11), MessageBoard (4.12), RoverApp sở hữu DriveController và MessageBoard (4.7). Mục 3.5 của docs/agile/user-stories/US-03b.txt đã gộp vào đây.
 
 8. QUY TẮC CẬP NHẬT
 -------------------
