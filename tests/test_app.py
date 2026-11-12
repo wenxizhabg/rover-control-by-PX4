@@ -1,4 +1,4 @@
-"""Kiểm tra tầng 1 – vòng lặp RoverApp bằng terminal, đồng hồ và kênh xe giả lập (US-04/T4, US-02/T3, US-03a/T3)."""
+"""Kiểm tra tầng 1 – vòng lặp RoverApp bằng terminal, đồng hồ và kênh xe giả lập (US-04/T4, US-02/T3, US-03a/T3, US-03b/T6)."""
 
 from rover.app import RoverApp
 from rover .core .model import ArmAck, Heartbeat, VehicleInfo
@@ -146,16 +146,21 @@ def test_press_r_when_connected_sends_arm_and_updates_status ():
 
 
 def test_arm_ack_rejected_shows_message ():
-    # Đầu vào: đã kết nối -> bấm "r" -> step () -> push ArmAck (False) -> step ().
+    # Đầu vào: đã kết nối -> bấm "r" -> step () -> push ArmAck (False) -> step () -> advance 0.5 s -> step ().
+    # Cập nhật theo US-03b/T6: MessageBoard giữ thông báo "Đã gửi lệnh mở khóa" tối thiểu 0.5 s trước khi chuyển sang ACK từ chối.
     terminal = FakeTerminal ([None, "r"])
+    clock = FakeClock ()
     link = FakeVehicleLink ()
-    app = RoverApp (terminal, FakeClock (), link)
+    app = RoverApp (terminal, clock, link)
 
     link .push (_make_heartbeat (armed = False))
     assert app .step () is True
     assert app .step () is True
 
     link .push (ArmAck (False))
+    assert app .step () is True
+
+    clock .advance (0.5)
     assert app .step () is True
 
     # Mong đợi: vùng thông báo hiện "Xe từ chối lệnh mở khóa" (phục vụ US-03a AC3).
@@ -172,4 +177,42 @@ def test_press_r_when_not_connected_does_not_send ():
 
     # Mong đợi: không gửi lệnh nào và khung hiện "Chưa kết nối xe" (phục vụ US-03a AC4).
     assert link .sent_arm == []
+    assert any ("Chưa kết nối xe" in line for line in terminal .last_lines)
+
+
+def test_message_board_holds_sent_message_before_showing_ack ():
+    # Đầu vào: Heartbeat (armed = False) -> step () -> bấm "r" -> step () -> push ArmAck (True) -> advance 0.05 -> step () -> advance 0.5 -> step ().
+    terminal = FakeTerminal ([None, "r"])
+    clock = FakeClock ()
+    link = FakeVehicleLink ()
+    app = RoverApp (terminal, clock, link)
+
+    link .push (_make_heartbeat (armed = False))
+    assert app .step () is True
+    assert app .step () is True
+
+    link .push (ArmAck (True))
+    clock .advance (0.05)
+    assert app .step () is True
+    # Mong đợi 1: khung ngay sau vòng có ACK vẫn giữ "Đã gửi lệnh mở khóa" đủ thời gian đọc (phục vụ US-03b AC5a).
+    assert any ("Đã gửi lệnh mở khóa" in line for line in terminal .last_lines)
+
+    clock .advance (0.5)
+    assert app .step () is True
+    # Mong đợi 2: sau khi đủ 0.5 s mới hiện "Xe chấp nhận lệnh mở khóa" (phục vụ US-03b AC5a).
+    assert any ("Xe chấp nhận lệnh mở khóa" in line for line in terminal .last_lines)
+
+
+def test_message_board_keeps_last_message_after_long_idle ():
+    # Đầu vào: chưa có Heartbeat -> bấm "r" -> step () -> advance 10.0 s -> step ().
+    terminal = FakeTerminal (["r"])
+    clock = FakeClock ()
+    link = FakeVehicleLink ()
+    app = RoverApp (terminal, clock, link)
+
+    assert app .step () is True
+    clock .advance (10.0)
+    assert app .step () is True
+
+    # Mong đợi: không có thông báo mới nên khung cuối vẫn giữ "Chưa kết nối xe" (phục vụ US-03b AC5c).
     assert any ("Chưa kết nối xe" in line for line in terminal .last_lines)

@@ -2,7 +2,7 @@
 
 from rover .core .model import Action, ArmAck, Heartbeat
 from rover .core .vehicle import ArmControl, LinkMonitor
-from rover .core .view import ViewModel, action_for, format_arm_status, format_link_status, help_lines, render
+from rover .core .view import MessageBoard, ViewModel, action_for, format_arm_status, format_link_status, help_lines, render
 from rover .drivers .mavlink import MavlinkVehicleLink
 from rover .drivers .terminal import CursesTerminal, SystemClock
 from rover .hal import Clock, Terminal, VehicleLink
@@ -23,8 +23,8 @@ class RoverApp:
         self ._show_help = False
         self ._link_monitor = LinkMonitor ()
         self ._arm_control = ArmControl ()
-        # Giữ thông báo gần nhất qua các vòng lặp để không bị xóa sau chu kỳ chờ phím 50 ms.
-        self ._message = ""
+        # Giữ mỗi thông báo tối thiểu 0.5 s qua các vòng lặp để người vận hành đọc kịp khi có phản hồi liên tiếp.
+        self ._messages = MessageBoard ()
 
     def step (self) -> bool:
         """Xử lý một phím và vẽ khung; trả False khi người dùng yêu cầu thoát."""
@@ -35,7 +35,7 @@ class RoverApp:
                     self ._link_monitor .on_heartbeat (now)
                     self ._arm_control .on_heartbeat (event .armed)
                 elif isinstance (event, ArmAck):
-                    self ._message = self ._arm_control .on_ack (event)
+                    self ._messages .post (self ._arm_control .on_ack (event), now)
 
         action = action_for (self ._terminal .read_key ())
 
@@ -45,10 +45,11 @@ class RoverApp:
             self ._show_help = not self ._show_help
         elif action in (Action .ARM, Action .DISARM):
             arm = action == Action .ARM
-            should_send, self ._message = self ._arm_control .request (
+            should_send, message = self ._arm_control .request (
                 arm,
                 self ._link_monitor .state (now),
             )
+            self ._messages .post (message, now)
             if should_send and self ._link is not None:
                 self ._link .send_arm (arm)
 
@@ -65,7 +66,7 @@ class RoverApp:
 
         view = ViewModel (
             status_lines = status_lines,
-            message = self ._message,
+            message = self ._messages .current (now),
             show_help = self ._show_help,
             help_lines = help_lines (),
         )
