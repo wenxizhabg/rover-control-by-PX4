@@ -1,0 +1,48 @@
+SƠ ĐỒ HOẠT ĐỘNG – MỘT VÒNG LẶP CHÍNH RoverApp .step () – CHÚ THÍCH
+==================================================================
+File nguồn : docs/diagrams/activity-main-loop/activity-main-loop.mmd (Mermaid flowchart, sửa sơ đồ ở file này)
+File ảnh   : docs/diagrams/activity-main-loop/activity-main-loop.svg (xuất từ file nguồn)
+Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI).
+Phiên bản  : Sprint 3 (S03/DIAG-2), khớp rover/app.py sau US-03b/T3 (commit 20ff6bd). Lớp và hàm nhắc tới ở đây: docs/diagrams/class/class.txt.
+
+1. VÒNG LẶP CHÍNH LÀ GÌ
+-----------------------
+RoverApp .run () gọi step () lặp lại cho tới khi step () trả False (bấm Q) hoặc người dùng nhấn Ctrl+C. Mỗi lần gọi step () là một vòng: đọc dữ liệu xe, đọc phím, xử lý, gửi lệnh lái, vẽ màn hình.
+Kiểu super-loop như chương trình vi điều khiển: một luồng, không thread. Nhịp vòng lặp do terminal .read_key () quyết định (chờ phím tối đa 50 ms), nên app chạy khoảng 20 vòng mỗi giây.
+
+2. KÝ HIỆU
+----------
+Hình bo tròn, nền vàng : bắt đầu / kết thúc một vòng (trả True: chạy vòng sau; trả False: thoát app).
+Hình thoi, nền trắng   : điều kiện rẽ nhánh; chữ trên mũi tên là kết quả của điều kiện.
+Hình chữ nhật, nền xanh dương : xử lý bên trong app (tầng 2: LinkMonitor, ArmControl, DriveController, MessageBoard, view).
+Hình chữ nhật, nền xanh lá    : gửi lệnh tới xe qua VehicleLink (tầng 3; driver thật gửi MAVLink).
+
+3. CÁC BƯỚC TRONG MỘT VÒNG (theo thứ tự trên sơ đồ)
+---------------------------------------------------
+1. now = clock .now (): lấy thời điểm một lần, dùng chung cho cả vòng để mọi tính toán thời gian (3 s mất kết nối, 1 s lái, 0.5 s giữ thông báo) nhất quán.
+2. Đọc dữ liệu xe (chỉ khi có link): link .poll () trả mọi sự kiện đang chờ, không chờ gói mới.
+   - Heartbeat -> LinkMonitor ghi nhận nhịp (US-02); ArmControl cập nhật trạng thái khóa (US-03a).
+   - ArmAck    -> ArmControl tạo thông báo "Xe chấp nhận / từ chối lệnh ..." và đưa vào MessageBoard (post).
+3. link_state = link_monitor .state (now): ĐANG CHỜ XE / ĐÃ KẾT NỐI / MẤT KẾT NỐI; tính một lần, dùng cho cả bước 5 và 6.
+4. Đọc phím: action = action_for (terminal .read_key ()); không bấm gì hoặc phím lạ -> None.
+5. Xử lý action:
+   - Q          : trả False ngay (run () đóng terminal và link rồi thoát).
+   - H          : bật / tắt bảng hướng dẫn.
+   - R / F      : ArmControl .request (arm, link_state) trả (có gửi không, thông báo); thông báo luôn post vào MessageBoard; được phép thì link .send_arm (arm).   (US-03a)
+   - W / S / A / D / Space (US-03b):
+       chưa kết nối         -> post "Chưa kết nối xe" (AC4 b)
+       đã kết nối, chưa mở khóa -> post "Xe chưa mở khóa" (AC4 a)
+       Space                -> drive .stop (): dừng ngay (AC3)
+       W / S / A / D        -> link .send_manual_mode () (đưa xe về Manual nếu đang ở Hold, spike Q2) rồi drive .start (action, now): chạy 1 s tính từ lần bấm này (AC1, AC2, AC3)
+6. Gửi lệnh lái (mọi nhánh của bước 5, trừ Q, đều đi tới đây):
+   - Có link và ĐÃ KẾT NỐI: nếu xe chưa mở khóa thì drive .stop (); rồi LUÔN gửi link .send_drive (*drive .setpoint (now)), kể cả khi setpoint là (0, 0).
+     Lý do (spike US-03b/T0): PX4 cần dòng MANUAL_CONTROL đều đặn, ngừng quá 0.5 s là mất tay điều khiển và chuyển sang Hold; ở chế độ Manual, PX4 từ chối mở khóa khi chưa có dòng này. Hết 1 s thì setpoint tự về (0, 0) nên xe dừng mà không cần bấm gì.
+   - Không có link hoặc chưa / mất kết nối: drive .stop (), không gửi gì (chưa biết xe ở đâu để gửi).
+7. Dựng khung: vùng trạng thái gồm 3 dòng (Kết nối, Khóa xe, Lái xe – có "còn x s" khi đang chạy); vùng thông báo lấy messages .current (now): mỗi thông báo giữ ít nhất 0.5 s rồi mới tới thông báo kế tiếp (AC5).
+8. terminal .draw (render (view)) vẽ lại toàn bộ khung; trả True để run () gọi vòng sau.
+
+4. LƯU Ý KHI SỬA CODE
+---------------------
+- Thông báo không gán thẳng vào màn hình mà luôn đi qua MessageBoard .post (...); màn hình chỉ đọc messages .current (now). Thêm thông báo mới thì làm theo đúng cách này.
+- Thứ tự "xử lý phím rồi mới gửi lệnh lái" làm phím vừa bấm có tác dụng ngay trong cùng vòng (bấm W thì ngay vòng đó đã gửi mức tiến).
+- Sửa rover/app.py làm đổi luồng thì sửa file .mmd này và file chú thích này trong cùng commit (DoD story, điều 4).
