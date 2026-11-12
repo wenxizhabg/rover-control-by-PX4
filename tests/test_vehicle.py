@@ -1,7 +1,15 @@
-"""Kiểm tra tầng 2 – trạng thái của xe: LinkMonitor (US-02/T1) và ArmControl (US-03a/T1); thời gian giả lập, không cần mạng hay mô phỏng."""
+"""Kiểm tra tầng 2 – trạng thái của xe: LinkMonitor (US-02/T1), ArmControl (US-03a/T1) và DriveController (US-03b/T1); thời gian giả lập, không cần mạng hay mô phỏng."""
 
-from rover .core .model import ArmAck, LinkState
-from rover .core .vehicle import LINK_TIMEOUT_S, ArmControl, LinkMonitor
+from rover .core .model import Action, ArmAck, LinkState
+from rover .core .vehicle import (
+    DRIVE_DURATION_S,
+    DRIVE_SPEED,
+    LINK_TIMEOUT_S,
+    TURN_SPEED,
+    ArmControl,
+    DriveController,
+    LinkMonitor,
+)
 
 
 def test_1_initial_state_is_waiting ():
@@ -132,3 +140,72 @@ def test_11_on_ack_returns_message_for_last_request ():
     assert msg_disarm_denied == "Xe từ chối lệnh khóa"
     assert msg_arm_accepted == "Xe chấp nhận lệnh mở khóa"
     assert msg_disarm_accepted == "Xe chấp nhận lệnh khóa"
+
+
+def test_12_drive_controller_initial_state_is_idle ():
+    # Đầu vào: tạo mới DriveController (); kiểm tra tại now = 0.0.
+    ctrl = DriveController ()
+
+    # Mong đợi: đứng yên (setpoint = (0.0, 0.0), active_action = None, remaining_s = 0.0) (phục vụ AC1).
+    assert ctrl .setpoint (0.0) == (0.0, 0.0)
+    assert ctrl .active_action (0.0) is None
+    assert ctrl .remaining_s (0.0) == 0.0
+
+
+def test_13_drive_forward_for_one_second_then_stops ():
+    # Đầu vào: bắt đầu tiến tại now = 10.0; kiểm tra tại 10.5, 10.99 và đúng mốc 11.0 s.
+    ctrl = DriveController ()
+    ctrl .start (Action .FORWARD, 10.0)
+
+    # Mong đợi: trong 1 giây đầu trả mức tiến DRIVE_SPEED; đúng 11.0 s tự dừng (phục vụ AC1).
+    assert ctrl .setpoint (10.5) == (DRIVE_SPEED, 0.0)
+    assert ctrl .setpoint (10.99) == (DRIVE_SPEED, 0.0)
+    assert ctrl .setpoint (11.0) == (0.0, 0.0)
+
+
+def test_14_drive_backward_and_turn_directions ():
+    # Đầu vào: kiểm tra các hướng lùi (BACKWARD), quay trái (TURN_LEFT), quay phải (TURN_RIGHT) tại now = 0.5.
+    ctrl = DriveController ()
+
+    ctrl .start (Action .BACKWARD, 0.0)
+    assert ctrl .setpoint (0.5) == (-DRIVE_SPEED, 0.0)
+
+    ctrl .start (Action .TURN_LEFT, 0.0)
+    assert ctrl .setpoint (0.5) == (0.0, -TURN_SPEED)
+
+    ctrl .start (Action .TURN_RIGHT, 0.0)
+    # Mong đợi: đúng hướng và dấu quy ước (phục vụ AC2).
+    assert ctrl .setpoint (0.5) == (0.0, TURN_SPEED)
+
+
+def test_15_drive_stop_stops_immediately ():
+    # Đầu vào: đang tiến tại now = 0.0 thì gọi stop () ngay; kiểm tra tại now = 0.2.
+    ctrl = DriveController ()
+    ctrl .start (Action .FORWARD, 0.0)
+    ctrl .stop ()
+
+    # Mong đợi: dừng ngay lập tức, trả (0.0, 0.0) và active_action là None (phục vụ AC3).
+    assert ctrl .setpoint (0.2) == (0.0, 0.0)
+    assert ctrl .active_action (0.2) is None
+
+
+def test_16_repeated_drive_command_resets_timeout ():
+    # Đầu vào: bấm tiến tại now = 0.0, sau đó 0.8 s bấm tiếp tiến lần nữa; kiểm tra tại 1.5 s và 1.8 s.
+    ctrl = DriveController ()
+    ctrl .start (Action .FORWARD, 0.0)
+    ctrl .start (Action .FORWARD, 0.8)
+
+    # Mong đợi: thời gian 1 s được tính lại từ lần bấm cuối; 1.5 s vẫn chạy, 1.8 s mới dừng (phục vụ AC3).
+    assert ctrl .setpoint (1.5) == (DRIVE_SPEED, 0.0)
+    assert ctrl .setpoint (1.8) == (0.0, 0.0)
+
+
+def test_17_drive_active_action_and_remaining_seconds ():
+    # Đầu vào: bắt đầu quay phải tại now = 2.0; kiểm tra hướng và thời gian còn lại tại now = 2.4 và 3.5.
+    ctrl = DriveController ()
+    ctrl .start (Action .TURN_RIGHT, 2.0)
+
+    # Mong đợi: active_action trả TURN_RIGHT; remaining_s trả 0.6 s; sau khi hết giờ trả 0.0 (phục vụ AC1, AC2).
+    assert ctrl .active_action (2.4) == Action .TURN_RIGHT
+    assert abs (ctrl .remaining_s (2.4) - 0.6) < 1e-9
+    assert ctrl .remaining_s (3.5) == 0.0

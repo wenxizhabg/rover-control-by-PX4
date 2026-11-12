@@ -24,6 +24,11 @@ class Action (Enum):
     QUIT = auto ()         # thoát app (US-04)
     ARM = auto ()          # mở khóa xe (US-03a)
     DISARM = auto ()       # khóa xe (US-03a)
+    FORWARD = auto ()      # tiến (US-03b)
+    BACKWARD = auto ()     # lùi (US-03b)
+    TURN_LEFT = auto ()    # quay trái (US-03b)
+    TURN_RIGHT = auto ()   # quay phải (US-03b)
+    STOP = auto ()         # dừng ngay (US-03b)
 
 
 @dataclass (frozen = True)

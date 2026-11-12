@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from rover .core .model import ArmAck, LinkState
+from rover .core .model import Action, ArmAck, LinkState
 
 # Ngưỡng thời gian mất kết nối (giây); quá 3.0 s không có HEARTBEAT thì coi là mất kết nối.
 LINK_TIMEOUT_S: float = 3.0
@@ -80,3 +80,61 @@ class ArmControl:
         if ack .accepted:
             return f"Xe chấp nhận lệnh {action_text}"
         return f"Xe từ chối lệnh {action_text}"
+
+
+# Thời gian xe chạy cho mỗi lần bấm phím lái (giây).
+DRIVE_DURATION_S: float = 1.0
+# Mức ga tiến / lùi và mức lái quay trong khoảng [0.0, 1.0].
+DRIVE_SPEED: float = 0.5
+TURN_SPEED: float = 0.5
+
+
+class DriveController:
+    """Máy trạng thái điều khiển lái theo thời gian; trả mức lái (forward, turn) trong [-1.0, 1.0]."""
+
+    def __init__ (
+        self,
+        duration_s: float = DRIVE_DURATION_S,
+        drive_speed: float = DRIVE_SPEED,
+        turn_speed: float = TURN_SPEED,
+    ) -> None:
+        self .duration_s = duration_s
+        self .drive_speed = drive_speed
+        self .turn_speed = turn_speed
+        self ._action: Action | None = None
+        self ._expires_at: float = 0.0
+
+    def start (self, action: Action, now: float) -> None:
+        """Bắt đầu chạy theo hướng action trong duration_s giây tính từ mốc now."""
+        self ._action = action
+        self ._expires_at = now + self .duration_s
+
+    def stop (self) -> None:
+        """Dừng xe ngay lập tức."""
+        self ._action = None
+        self ._expires_at = 0.0
+
+    def active_action (self, now: float) -> Action | None:
+        """Hướng lái đang chạy; trả về None nếu đã hết thời gian hoặc đang đứng yên."""
+        if self ._action is None or now >= self ._expires_at:
+            return None
+        return self ._action
+
+    def remaining_s (self, now: float) -> float:
+        """Thời gian chạy còn lại tính bằng giây; trả về 0.0 nếu xe đang đứng yên."""
+        if self ._action is None or now >= self ._expires_at:
+            return 0.0
+        return self ._expires_at - now
+
+    def setpoint (self, now: float) -> tuple [float, float]:
+        """Trả về mức lái (forward, turn); trả (0.0, 0.0) nếu hết thời gian hoặc dừng."""
+        action = self .active_action (now)
+        if action == Action .FORWARD:
+            return (self .drive_speed, 0.0)
+        if action == Action .BACKWARD:
+            return (-self .drive_speed, 0.0)
+        if action == Action .TURN_LEFT:
+            return (0.0, -self .turn_speed)
+        if action == Action .TURN_RIGHT:
+            return (0.0, self .turn_speed)
+        return (0.0, 0.0)
