@@ -82,13 +82,15 @@ def command_ack_bytes (command, result, system_id = 1, component_id = 1):
 
 
 class TwoWayVehicleSimulator:
-    """Giả lập xe PX4 hai chiều trên một socket UDP: vừa gửi HEARTBEAT/COMMAND_ACK tới app, vừa đọc COMMAND_LONG app gửi về."""
+    """Giả lập xe PX4 hai chiều trên một socket UDP: vừa gửi HEARTBEAT/COMMAND_ACK tới app, vừa đọc COMMAND_LONG và MANUAL_CONTROL app gửi về."""
 
     def __init__ (self, port, ack_packets = None):
         self .port = port
         # Danh sách các gói COMMAND_ACK gửi sẵn khi bắt đầu chạy (phục vụ test đọc phản hồi).
         self .ack_packets = list (ack_packets or [])
         self .received_commands = []
+        # MANUAL_CONTROL app gửi (lệnh lái, US-03b/T2).
+        self .received_manual = []
         self ._lock = threading .Lock ()
         self ._stop = threading .Event ()
         self ._thread = threading .Thread (target = self ._run, daemon = True)
@@ -115,23 +117,33 @@ class TwoWayVehicleSimulator:
                 except socket .timeout:
                     continue
 
-                # Giải mã gói app gửi về và giữ lại các COMMAND_LONG để test kiểm tra.
+                # Giải mã gói app gửi về và giữ lại các COMMAND_LONG, MANUAL_CONTROL để test kiểm tra.
                 msgs = decoder .parse_buffer (data) or []
                 with self ._lock:
                     for msg in msgs:
                         if msg .get_type () == "COMMAND_LONG":
                             self .received_commands .append (msg)
+                        elif msg .get_type () == "MANUAL_CONTROL":
+                            self .received_manual .append (msg)
 
     def wait_commands (self, count = 1, timeout = 1.0):
         """Chờ tối đa timeout giây cho tới khi giả lập nhận đủ count lệnh COMMAND_LONG từ app."""
+        return self ._wait (self .received_commands, count, timeout)
+
+    def wait_manual (self, count = 1, timeout = 1.0):
+        """Chờ tối đa timeout giây cho tới khi giả lập nhận đủ count gói MANUAL_CONTROL từ app."""
+        return self ._wait (self .received_manual, count, timeout)
+
+    def _wait (self, received, count, timeout):
+        """Chờ tới khi danh sách received có ít nhất count phần tử hoặc hết timeout giây; trả bản sao danh sách."""
         deadline = time .monotonic () + timeout
         while time .monotonic () < deadline:
             with self ._lock:
-                if len (self .received_commands) >= count:
-                    return list (self .received_commands)
+                if len (received) >= count:
+                    return list (received)
             time .sleep (0.02)
         with self ._lock:
-            return list (self .received_commands)
+            return list (received)
 
     def __enter__ (self):
         self ._thread .start ()

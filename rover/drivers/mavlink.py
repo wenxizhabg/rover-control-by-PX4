@@ -1,4 +1,4 @@
-"""Tầng 4 – driver MAVLink qua UDP (hiện thực VehicleLink): giải mã HEARTBEAT, COMMAND_ACK của xe và gửi lệnh mở / khóa xe."""
+"""Tầng 4 – driver MAVLink qua UDP (hiện thực VehicleLink): giải mã HEARTBEAT, COMMAND_ACK của xe; gửi lệnh mở / khóa, lệnh lái và lệnh đổi sang chế độ Manual."""
 
 import os
 
@@ -14,6 +14,11 @@ from rover .core .model import ArmAck, Heartbeat, VehicleEvent, VehicleInfo
 
 # Địa chỉ mặc định: nghe (udpin) trên mọi địa chỉ của máy, cổng 14540, là cổng PX4 SITL gửi MAVLink cho ứng dụng (instance mode Onboard).
 DEFAULT_URL = "udpin:0.0.0.0:14540"
+
+# Main mode Manual của PX4 (custom mode), dùng làm param2 của MAV_CMD_DO_SET_MODE.
+PX4_MAIN_MODE_MANUAL = 1
+# Kênh z của MANUAL_CONTROL có thang [0, 1000] vì lý do tương thích cũ của PX4: 500 là đứng yên, 1000 tiến hết cỡ, 0 lùi hết cỡ (spike US-03b/T0 Q4).
+MANUAL_Z_NEUTRAL = 500
 
 
 def _enum_name (enum_name, value, prefix):
@@ -94,6 +99,39 @@ class MavlinkVehicleLink:
             confirmation = 0,
             param1 = 1 if arm else 0,
             param2 = 0,
+            param3 = 0,
+            param4 = 0,
+            param5 = 0,
+            param6 = 0,
+            param7 = 0,
+        )
+
+    def send_drive (self, forward: float, turn: float) -> None:
+        """Gửi một MANUAL_CONTROL tới xe đã thấy gần nhất: tiến / lùi ở kênh z, quay ở kênh y (dương là quay phải), theo spike US-03b/T0."""
+        if self .last_system_id is None:
+            return
+
+        self .conn .mav .manual_control_send (
+            target = self .last_system_id,
+            x = 0,                                                    # pitch: rover không dùng ở chế độ Manual
+            y = round (1000 * turn),                                  # roll: PX4 rover dùng làm lệnh quay, thang [-1000, 1000]
+            z = MANUAL_Z_NEUTRAL + round (MANUAL_Z_NEUTRAL * forward),  # throttle: thang [0, 1000], 500 là đứng yên
+            r = 0,                                                    # yaw: rover không dùng ở chế độ Manual
+            buttons = 0,
+        )
+
+    def send_manual_mode (self) -> None:
+        """Gửi MAV_CMD_DO_SET_MODE yêu cầu xe đã thấy gần nhất chuyển sang chế độ Manual; xe trả lời bằng COMMAND_ACK (app bỏ qua ACK này)."""
+        if self .last_system_id is None or self .last_component_id is None:
+            return
+
+        self .conn .mav .command_long_send (
+            target_system = self .last_system_id,
+            target_component = self .last_component_id,
+            command = mavlink .MAV_CMD_DO_SET_MODE,
+            confirmation = 0,
+            param1 = mavlink .MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,  # dùng chế độ riêng của PX4 (custom mode) ở param2
+            param2 = PX4_MAIN_MODE_MANUAL,
             param3 = 0,
             param4 = 0,
             param5 = 0,

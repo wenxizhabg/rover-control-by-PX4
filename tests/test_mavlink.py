@@ -1,4 +1,4 @@
-"""Kiểm tra tầng 4 – driver MAVLink: parse_heartbeat đọc thông tin xe từ HEARTBEAT (US-01/T3) và MavlinkVehicleLink đọc HEARTBEAT, COMMAND_ACK, gửi lệnh mở / khóa (US-02/T2, US-03a/T2); dùng gói tự đóng và giả lập UDP, không cần mô phỏng PX4."""
+"""Kiểm tra tầng 4 – driver MAVLink: parse_heartbeat đọc thông tin xe từ HEARTBEAT (US-01/T3) và MavlinkVehicleLink đọc HEARTBEAT, COMMAND_ACK, gửi lệnh mở / khóa (US-02/T2, US-03a/T2), gửi lệnh lái và đổi chế độ Manual (US-03b/T2); dùng gói tự đóng và giả lập UDP, không cần mô phỏng PX4."""
 
 import time
 
@@ -256,5 +256,80 @@ def test_11_poll_decodes_arm_command_ack_and_ignores_other_commands ():
         # Mong đợi: trong kết quả có đúng [ArmAck (True), ArmAck (False)] theo thứ tự, bỏ qua ACK của lệnh 176 (phục vụ AC3).
         acks = [ev for ev in events if isinstance (ev, ArmAck)]
         assert acks == [ArmAck (True), ArmAck (False)]
+    finally:
+        link .close ()
+
+
+def test_12_send_drive_forward_sends_manual_control ():
+    # Đầu vào: giả lập PX4 hai chiều gửi HEARTBEAT; app poll () thấy xe; gọi send_drive (0.5, 0.0).
+    port = find_free_port ()
+    link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
+    try:
+        with TwoWayVehicleSimulator (port) as sim:
+            _wait_for_heartbeat (link)
+            link .send_drive (0.5, 0.0)
+            manual = sim .wait_manual (count = 1, timeout = 1.0)
+
+        # Mong đợi: một MANUAL_CONTROL tới xe 1, z = 500 + 500 * 0.5 = 750 (tiến), y = 0, x = r = 0 (phục vụ US-03b AC1; kênh theo spike Q4).
+        assert len (manual) == 1
+        assert manual [0] .target == 1
+        assert (manual [0] .x, manual [0] .y, manual [0] .z, manual [0] .r) == (0, 0, 750, 0)
+    finally:
+        link .close ()
+
+
+def test_13_send_drive_turn_left_sends_negative_y ():
+    # Đầu vào: giả lập PX4 hai chiều gửi HEARTBEAT; app poll () thấy xe; gọi send_drive (0.0, -0.5).
+    port = find_free_port ()
+    link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
+    try:
+        with TwoWayVehicleSimulator (port) as sim:
+            _wait_for_heartbeat (link)
+            link .send_drive (0.0, -0.5)
+            manual = sim .wait_manual (count = 1, timeout = 1.0)
+
+        # Mong đợi: z = 500 (không tiến, không lùi), y = -500 (quay trái) (phục vụ US-03b AC2; dấu theo spike Q4).
+        assert len (manual) == 1
+        assert (manual [0] .z, manual [0] .y) == (500, -500)
+    finally:
+        link .close ()
+
+
+def test_14_no_vehicle_seen_sends_nothing ():
+    # Đầu vào: giả lập đang chạy nhưng app chưa poll () nên chưa thấy HEARTBEAT nào; gọi send_drive (0.5, 0.0) và send_manual_mode ().
+    port = find_free_port ()
+    link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
+    try:
+        with TwoWayVehicleSimulator (port) as sim:
+            link .send_drive (0.5, 0.0)
+            link .send_manual_mode ()
+            time .sleep (0.3)
+            manual = sim .wait_manual (count = 1, timeout = 0.1)
+            cmds = sim .wait_commands (count = 1, timeout = 0.1)
+
+        # Mong đợi: giả lập không nhận MANUAL_CONTROL hay COMMAND_LONG nào (phục vụ US-03b AC4: không gửi lệnh khi chưa có xe).
+        assert manual == []
+        assert cmds == []
+    finally:
+        link .close ()
+
+
+def test_15_send_manual_mode_sends_set_mode_command ():
+    # Đầu vào: giả lập PX4 hai chiều gửi HEARTBEAT; app poll () thấy xe; gọi send_manual_mode ().
+    port = find_free_port ()
+    link = MavlinkVehicleLink (url = f"udpin:127.0.0.1:{port}")
+    try:
+        with TwoWayVehicleSimulator (port) as sim:
+            _wait_for_heartbeat (link)
+            link .send_manual_mode ()
+            cmds = sim .wait_commands (count = 1, timeout = 1.0)
+
+        # Mong đợi: COMMAND_LONG MAV_CMD_DO_SET_MODE (176), param1 = 1 (custom mode), param2 = 1 (Manual), tới xe 1 / component 1 (phục vụ US-03b AC1–AC3; theo spike Q2).
+        assert len (cmds) == 1
+        assert cmds [0] .command == mavlink .MAV_CMD_DO_SET_MODE
+        assert cmds [0] .param1 == mavlink .MAV_MODE_FLAG_CUSTOM_MODE_ENABLED
+        assert cmds [0] .param2 == 1
+        assert cmds [0] .target_system == 1
+        assert cmds [0] .target_component == 1
     finally:
         link .close ()
