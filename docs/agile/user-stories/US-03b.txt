@@ -71,7 +71,7 @@ T0  Spike: chọn cách PX4 rover nhận lệnh lái từ app (giới hạn 4 gi
 
     Test tự động: không (script thử)
     Kiểm tay    : xe trong Gazebo chạy theo lệnh của script
-    Trạng thái  : TODO
+    Trạng thái  : DONE
 
 T1  Logic lái 1 giây (tầng xử lý)
     File code   : rover/core/model.py (thêm Action), rover/core/vehicle.py (thêm DriveController)
@@ -118,7 +118,7 @@ T1  Logic lái 1 giây (tầng xử lý)
          Ý nghĩa : AC1, AC2 (màn hình hiện hướng và "còn x s").
 
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T2  Gửi lệnh lái tới PX4 (driver MAVLink)
     File code   : rover/hal.py (thêm send_drive vào VehicleLink, và hàm đổi chế độ nếu spike cần), rover/drivers/mavlink.py
@@ -155,7 +155,7 @@ T2  Gửi lệnh lái tới PX4 (driver MAVLink)
       (Nếu có hàm đổi chế độ: thêm test 4 – giả lập nhận COMMAND_LONG MAV_CMD_DO_SET_MODE với đúng param theo spike Q2.)
 
     Kiểm tay    : không bắt buộc (kiểm cùng AC sau T3)
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T3  Nối lái xe vào app
     File code   : rover/core/view.py (thêm phím W, S, A, D, Space và format_drive_status), rover/app.py, tests/fakes.py (FakeVehicleLink thêm send_drive, sent_drive)
@@ -256,7 +256,7 @@ T5  Bảng thông báo có thời gian giữ (tầng xử lý)
          Ý nghĩa : AC5 (a) (không làm chậm thông báo khi không cần chờ).
 
     Kiểm tay    : không
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 T6  Nối bảng thông báo vào app
     File code   : rover/app.py
@@ -333,10 +333,27 @@ tests/fakes.py
 
 5. KẾT QUẢ SPIKE (Hoàng điền khi xong T0)
 -----------------------------------------
-Q1 Cách lái chọn         :
-Q2 Chế độ, lệnh đổi chế độ:
-Q3 Tần số gửi, ngừng gửi  :
-Q4 Kênh / trường, dấu      :
-Q5 Cổng 14540, tham số PX4 :
-Q6 Mức tốc độ hợp lý       :
-Ước lượng lại US-03b      :      điểm
+Làm ngày 2026-11-12, PX4-Autopilot v1.18.0-beta1 (máy Hoàng), make px4_sitl gz_r1_rover, script tools/spike_drive.py (mỗi lần chạy một thí nghiệm: python tools/spike_drive.py e1 | e1b | e2a | e2b | e2c | e3 | e4 | e5 | e6 | e6b | e7). Đo bằng LOCAL_POSITION_NED (quãng đường theo hướng mũi xe) và ATTITUDE (góc quay, dương = quay phải) mà PX4 gửi về cổng 14540; đối chiếu mã nguồn PX4 (mavlink_receiver.cpp handle_message_manual_control, rover_differential/DifferentialManualMode.cpp).
+
+Q1 Cách lái chọn         : cách (a) chế độ Manual + MANUAL_CONTROL. Lái được ngay qua cổng 14540 (e3, e4, e5), không phải đổi tham số; không cần thử cách (b).
+Q2 Chế độ, lệnh đổi chế độ: COMMAND_LONG MAV_CMD_DO_SET_MODE (176), param1 = 1, param2 = 1 (Manual) -> COMMAND_ACK ACCEPTED, kể cả khi chưa gửi MANUAL_CONTROL (e1, e1b).
+                            Mở khóa ở Manual khi CHƯA có dòng MANUAL_CONTROL bị từ chối: COMMAND_ACK 400 = TEMPORARILY_REJECTED (e2a); đang gửi MANUAL_CONTROL đứng yên thì mở khóa được (e2b). Mở khóa ở Hold (AUTO/LOITER) không cần MANUAL_CONTROL (thử thêm A).
+                            Sau failsafe mất tay điều khiển (Q3) xe ở Hold, gửi lại MANUAL_CONTROL KHÔNG tự về Manual, phải gửi lại lệnh 176 (e6).
+                            => Đề xuất: gửi lệnh đổi Manual mỗi lần bấm phím lái hợp lệ (lệnh nhẹ, gửi lại không sao), không phụ thuộc chế độ lúc mở app hay sau failsafe; và gửi MANUAL_CONTROL đứng yên ngay từ lúc ĐÃ KẾT NỐI (không đợi mở khóa) để R mở khóa được cả khi xe đang ở Manual.
+                            Qua cổng 14540 không thấy STATUSTEXT giải thích lý do từ chối; app vẫn hiện "Xe từ chối lệnh mở khóa" nhờ COMMAND_ACK.
+Q3 Tần số gửi, ngừng gửi  : COM_RC_LOSS_T = 0.5 s (đọc qua PARAM_REQUEST_READ). Gửi 10, 5, 2 lần/giây đều không bị mất (e6b; 2 lần/giây là sát ngưỡng). Vòng lặp app khoảng 20 lần/giây là đủ, không cần giới hạn tần số trong driver.
+                            Ngừng gửi hẳn: trong khoảng 1.5 s xe chuyển sang AUTO/LOITER (Hold), vẫn mở khóa, trôi thêm khoảng 0.7 m rồi đứng (e6). NAV_RCL_ACT = 2 (Return) nhưng xe vào Hold, có thể vì xe đang ở ngay điểm home.
+Q4 Kênh / trường, dấu      : tiến / lùi ở z, thang [0, 1000], z = 500 là ĐỨNG YÊN (PX4 đổi throttle = z / 500 - 1): z = 750 tiến 0.55 m trong 1 s, z = 250 lùi 0.54 m (e3, e4). Gửi z = 0 là lùi hết cỡ, KHÔNG phải dừng.
+                            Quay ở y, thang [-1000, 1000]: y = +500 quay +51 độ (quay PHẢI), y = -500 quay -53 độ (quay trái) (e5). Khớp quy ước turn > 0 = quay phải của T1.
+                            x và r không có tác dụng ở Manual (thử thêm C). Công thức cho T2: z = 500 + round (500 * forward), y = round (1000 * turn), x = r = 0, buttons = 0.
+Q5 Cổng 14540, tham số PX4 : làm được hoàn toàn qua 14540 (instance Onboard, như app). Không phải đổi tham số: COM_RC_IN_MODE = 1 (chỉ nhận tay điều khiển qua MAVLink) là mặc định của SITL (ROMFS init.d-posix/rcS).
+Q6 Mức tốc độ hợp lý       : tiến (1 s rồi trả z = 500; quãng trong 1 s + quãng trôi): forward 0.2 (z = 600): 0.25 + 0.14 m; 0.5 (z = 750): 0.55 + 0.38 m, tốc độ cuối 0.38 m/s; 1.0 (z = 1000): 0.94 + 0.90 m, tốc độ cuối 0.90 m/s. Đề xuất DRIVE_SPEED = 1.0 (gần 2 m mỗi lần bấm; 0.5 nếu PO muốn chậm hơn, khoảng 1 m).
+                            Quay: y = 300, 500, 800 đều quay khoảng 51 độ trong 1 s + 14 độ trôi, vì r1_rover giới hạn gia tốc quay RO_YAW_ACCEL_LIM = 120 độ/s². Đề xuất TURN_SPEED = 0.5 (khoảng 65 độ mỗi lần bấm).
+                            Dừng: sau khi trả z = 500, xe dừng hẳn (< 0.05 m/s) sau 1.1–1.3 s, hơi quá "trong vòng 1 s" của AC3; báo PO quyết chấp nhận "khoảng 1 s" hay thêm phanh chủ động (ngoài phạm vi hiện tại).
+Ước lượng lại US-03b      : 10 điểm (giữ nguyên). Cách lái đơn giản như dự kiến; phần thêm là hàm đổi chế độ (T2) và đổi chính sách gửi (T3).
+
+Ảnh hưởng tới task (sửa mục 3.5 và test trước khi code, báo cả nhóm):
+- T1: DRIVE_SPEED = 1.0, TURN_SPEED = 0.5 (theo Q6); logic không đổi.
+- T2: send_drive (forward, turn) gửi MANUAL_CONTROL theo công thức Q4; test 1 send_drive (0.5, 0.0) -> z = 750, y = 0; test 2 send_drive (0.0, -0.5) -> z = 500, y = -500. Thêm VehicleLink .send_manual_mode () -> None: COMMAND_LONG 176, param1 = 1, param2 = 1; chưa thấy xe thì không gửi; test 4.
+- T3: chính sách gửi đổi thành "mỗi vòng, nếu ĐÃ KẾT NỐI thì gửi send_drive (*drive .setpoint (now))" (bỏ điều kiện đã mở khóa; chưa mở khóa thì setpoint luôn là (0, 0)). Bấm phím lái hợp lệ (đã kết nối, đã mở khóa): gọi link .send_manual_mode () rồi drive .start (...). Test 5, 6 của T3 giữ nguyên ý.
+- Hồi quy US-03a: khi xe đang ở Manual mà app chưa gửi MANUAL_CONTROL thì R bị từ chối (e2a); chính sách gửi mới của T3 sửa luôn điểm này.
