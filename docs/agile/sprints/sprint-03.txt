@@ -154,7 +154,10 @@ SPRINT REVIEW (điền khi kết thúc sprint)
 Kiểm hồi quy sau refactor (US-04, US-02, US-03a): ĐẠT (màn hình, kết nối liên tục, mở/khóa xe)
 Kết quả kiểm thử chấp nhận US-03b: AC1: ĐẠT  AC2: ĐẠT  AC3: ĐẠT  AC4: ĐẠT  AC5: ĐẠT
 Story đạt: US-03b
-Phản hồi của khách hàng:
+Phản hồi của khách hàng: 
+    đạt apceptance 
+    thao tác điều khiển còn thô quá, chỉ cho 1 lệnh chứ không cùng lúc kiểu vừa tiến vừa rẻ.
+    Muốn xem tình trạng chất lượng kết nối bằng wifi như tỷ lệ gói tin bị rớt ...
 
 SPRINT RETROSPECTIVE (điền khi kết thúc sprint)
 -----------------------------------------------
