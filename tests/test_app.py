@@ -1,7 +1,8 @@
-"""Kiểm tra tầng 1 – vòng lặp RoverApp bằng terminal, đồng hồ và kênh xe giả lập (US-04/T4, US-02/T3, US-03a/T3, US-03b/T6)."""
+"""Kiểm tra tầng 1 – vòng lặp RoverApp bằng terminal, đồng hồ và kênh xe giả lập (US-04/T4, US-02/T3, US-03a/T3, US-03b/T6, US-03b/T3)."""
 
 from rover.app import RoverApp
 from rover .core .model import ArmAck, Heartbeat, VehicleInfo
+from rover .core .vehicle import DRIVE_SPEED
 from tests.fakes import FakeClock, FakeTerminal, FakeVehicleLink
 
 
@@ -215,4 +216,72 @@ def test_message_board_keeps_last_message_after_long_idle ():
     assert app .step () is True
 
     # Mong đợi: không có thông báo mới nên khung cuối vẫn giữ "Chưa kết nối xe" (phục vụ US-03b AC5c).
+    assert any ("Chưa kết nối xe" in line for line in terminal .last_lines)
+
+
+def test_press_w_when_armed_sends_drive_and_stops_after_timeout ():
+    # Đầu vào: Heartbeat (armed = True) -> bấm "w" -> step () -> advance 0.5 -> step () -> advance 0.6 -> step ().
+    terminal = FakeTerminal (["w"])
+    clock = FakeClock ()
+    link = FakeVehicleLink ()
+    app = RoverApp (terminal, clock, link)
+
+    link .push (_make_heartbeat (armed = True))
+    assert app .step () is True
+    # Mong đợi 1: khung lần 1 hiển thị đang TIẾN và đã yêu cầu chuyển chế độ Manual.
+    assert link .manual_mode_requests == 1
+    assert any ("TIẾN" in line for line in terminal .last_lines)
+
+    clock .advance (0.5)
+    assert app .step () is True
+
+    clock .advance (0.6)
+    assert app .step () is True
+
+    # Mong đợi 2: 2 vòng đầu gửi (DRIVE_SPEED, 0.0), vòng cuối hết 1 s tự trả (0.0, 0.0) và hiện "ĐỨNG YÊN" (phục vụ US-03b AC1).
+    assert link .sent_drive == [(DRIVE_SPEED, 0.0), (DRIVE_SPEED, 0.0), (0.0, 0.0)]
+    assert any ("ĐỨNG YÊN" in line for line in terminal .last_lines)
+
+
+def test_press_space_while_driving_stops_immediately ():
+    # Đầu vào: xe đã mở khóa -> bấm "w", step () -> bấm " ", step ().
+    terminal = FakeTerminal (["w", " "])
+    link = FakeVehicleLink ()
+    app = RoverApp (terminal, FakeClock (), link)
+
+    link .push (_make_heartbeat (armed = True))
+    assert app .step () is True
+    assert app .step () is True
+
+    # Mong đợi: lần gửi cuối là (0.0, 0.0) và khung hiện "ĐỨNG YÊN" (phục vụ US-03b AC3).
+    assert link .sent_drive [-1] == (0.0, 0.0)
+    assert any ("ĐỨNG YÊN" in line for line in terminal .last_lines)
+
+
+def test_press_w_when_disarmed_does_not_drive_and_shows_message ():
+    # Đầu vào: Heartbeat (armed = False); bấm "w"; gọi step ().
+    terminal = FakeTerminal (["w"])
+    link = FakeVehicleLink ()
+    app = RoverApp (terminal, FakeClock (), link)
+
+    link .push (_make_heartbeat (armed = False))
+    assert app .step () is True
+
+    # Mong đợi: chính sách mới vẫn giữ luồng (0.0, 0.0) khi đã kết nối nhưng không gửi lệnh lái khác (0.0, 0.0), không đổi Manual và báo "Xe chưa mở khóa" (phục vụ US-03b AC4a).
+    assert link .manual_mode_requests == 0
+    assert all (command == (0.0, 0.0) for command in link .sent_drive)
+    assert any ("Xe chưa mở khóa" in line for line in terminal .last_lines)
+
+
+def test_press_w_when_not_connected_does_not_send_and_shows_message ():
+    # Đầu vào: chưa có Heartbeat; bấm "w"; gọi step ().
+    terminal = FakeTerminal (["w"])
+    link = FakeVehicleLink ()
+    app = RoverApp (terminal, FakeClock (), link)
+
+    assert app .step () is True
+
+    # Mong đợi: chưa kết nối thì không gửi gì và báo "Chưa kết nối xe" (phục vụ US-03b AC4b).
+    assert link .sent_drive == []
+    assert link .manual_mode_requests == 0
     assert any ("Chưa kết nối xe" in line for line in terminal .last_lines)

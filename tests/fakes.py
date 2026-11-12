@@ -1,4 +1,4 @@
-"""Giả lập tầng 3 dùng trong test: terminal, đồng hồ và kênh xe (US-04/T4, US-02/T3, US-03a/T3)."""
+"""Giả lập tầng 3 dùng trong test: terminal, đồng hồ và kênh xe (US-04/T4, US-02/T3, US-03a/T3, US-03b/T3)."""
 
 from rover .core .model import VehicleEvent
 
@@ -42,11 +42,13 @@ class FakeTerminal:
 
 
 class FakeVehicleLink:
-    """Kênh xe giả lập, trả các sự kiện đã xếp sẵn cho lần poll kế tiếp và ghi lại lệnh send_arm."""
+    """Kênh xe giả lập, trả các sự kiện đã xếp sẵn cho lần poll kế tiếp và ghi lại lệnh gửi đi."""
 
     def __init__ (self) -> None:
         self ._events: list[VehicleEvent] = []
         self .sent_arm: list[bool] = []
+        self .sent_drive: list[tuple[float, float]] = []
+        self .manual_mode_requests: int = 0
         self .closed = False
 
     def push (self, event: VehicleEvent) -> None:
@@ -62,6 +64,14 @@ class FakeVehicleLink:
     def send_arm (self, arm: bool) -> None:
         """Ghi lại lệnh mở khóa (True) hoặc khóa (False) để test kiểm tra."""
         self .sent_arm .append (arm)
+
+    def send_drive (self, forward: float, turn: float) -> None:
+        """Ghi lại mức lái (forward, turn) đã gửi để test kiểm tra."""
+        self .sent_drive .append ((forward, turn))
+
+    def send_manual_mode (self) -> None:
+        """Đếm số lần yêu cầu xe chuyển sang chế độ Manual."""
+        self .manual_mode_requests += 1
 
     def close (self) -> None:
         """Đánh dấu link giả lập đã được đóng."""

@@ -1,4 +1,4 @@
-"""Kiểm tra tầng 2 – giao diện: đổi phím thành hành động, bảng hướng dẫn (US-04/T1, US-03a/T3), nội dung khung màn hình (US-04/T2, US-02/T3, US-03a/T3) và bảng thông báo giữ thời gian (US-03b/T5)."""
+"""Kiểm tra tầng 2 – giao diện: đổi phím thành hành động, bảng hướng dẫn (US-04/T1, US-03a/T3, US-03b/T3), nội dung khung màn hình (US-04/T2, US-02/T3, US-03a/T3, US-03b/T3) và bảng thông báo giữ thời gian (US-03b/T5)."""
 
 from rover .core import view
 from rover .core .model import Action, LinkState
@@ -169,3 +169,36 @@ def test_15_new_message_displays_immediately_after_old_held_long_enough ():
 
     # Mong đợi: thông báo cũ đã giữ đủ lâu thì thông báo mới hiện ngay không bị làm chậm (phục vụ US-03b AC5 (a)).
     assert board .current (2.0) == "B"
+
+
+def test_16_drive_keys_and_help_lines ():
+    # Đầu vào: action_for với các phím "w", "S", "a", "D", " " và danh sách hướng dẫn help_lines ().
+    lines = help_lines ()
+
+    # Mong đợi: ánh xạ đủ 5 hành động lái và bảng hướng dẫn hiện đủ các phím mới (phục vụ US-03b AC1–AC3).
+    assert action_for ("w") == Action .FORWARD
+    assert action_for ("S") == Action .BACKWARD
+    assert action_for ("a") == Action .TURN_LEFT
+    assert action_for ("D") == Action .TURN_RIGHT
+    assert action_for (" ") == Action .STOP
+    assert "W  tiến" in lines
+    assert "S  lùi" in lines
+    assert "A  quay trái" in lines
+    assert "D  quay phải" in lines
+    assert "Space  dừng ngay" in lines
+
+
+def test_17_drive_status_formats_idle_and_all_directions ():
+    # Đầu vào: gọi format_drive_status với None và 4 hướng lái kèm thời gian còn lại.
+    idle = view .format_drive_status (None, 0.0)
+    forward = view .format_drive_status (Action .FORWARD, 0.63)
+    backward = view .format_drive_status (Action .BACKWARD, 0.2)
+    turn_left = view .format_drive_status (Action .TURN_LEFT, 0.5)
+    turn_right = view .format_drive_status (Action .TURN_RIGHT, 1.0)
+
+    # Mong đợi: đúng chuỗi tiếng Việt và số giây 1 chữ số thập phân (phục vụ US-03b AC1, AC2).
+    assert idle == "Lái xe   : ĐỨNG YÊN"
+    assert forward == "Lái xe   : TIẾN (còn 0.6 s)"
+    assert backward == "Lái xe   : LÙI (còn 0.2 s)"
+    assert turn_left == "Lái xe   : QUAY TRÁI (còn 0.5 s)"
+    assert turn_right == "Lái xe   : QUAY PHẢI (còn 1.0 s)"

@@ -14,7 +14,20 @@ KEY_BINDINGS: list[tuple[str, Action, str]] = [
     ("q", Action .QUIT, "thoát app"),
     ("r", Action .ARM, "mở khóa xe"),
     ("f", Action .DISARM, "khóa xe"),
+    ("w", Action .FORWARD, "tiến"),
+    ("s", Action .BACKWARD, "lùi"),
+    ("a", Action .TURN_LEFT, "quay trái"),
+    ("d", Action .TURN_RIGHT, "quay phải"),
+    (" ", Action .STOP, "dừng ngay"),
 ]
+
+# Nhãn tiếng Việt tương ứng với từng hướng lái để hiển thị trên dòng trạng thái.
+_DRIVE_LABELS: dict[Action, str] = {
+    Action .FORWARD: "TIẾN",
+    Action .BACKWARD: "LÙI",
+    Action .TURN_LEFT: "QUAY TRÁI",
+    Action .TURN_RIGHT: "QUAY PHẢI",
+}
 
 
 def action_for (key: str | None) -> Action | None:
@@ -31,10 +44,12 @@ def action_for (key: str | None) -> Action | None:
 
 def help_lines () -> list[str]:
     """Trả các dòng hướng dẫn theo thứ tự phím được khai báo trong KEY_BINDINGS."""
-    return [
-        f"{key .upper ()}  {description}"
-        for key, _action, description in KEY_BINDINGS
-    ]
+    lines = []
+    for key, _action, description in KEY_BINDINGS:
+        # Phím dấu cách cần hiện tên "Space" thay vì khoảng trắng rỗng.
+        key_label = "Space" if key == " " else key .upper ()
+        lines .append (f"{key_label}  {description}")
+    return lines
 
 
 @dataclass
@@ -93,6 +108,17 @@ def format_arm_status (armed: bool | None) -> str:
     if armed:
         return "Khóa xe  : ĐÃ MỞ KHÓA"
     return "Khóa xe  : ĐÃ KHÓA"
+
+
+def format_drive_status (action: Action | None, remaining_s: float) -> str:
+    """Định dạng dòng hiển thị hướng lái hiện tại và thời gian chạy còn lại."""
+    if action is None:
+        return "Lái xe   : ĐỨNG YÊN"
+
+    label = _DRIVE_LABELS .get (action)
+    if label is None:
+        raise ValueError (f"Hành động lái không hỗ trợ: {action}")
+    return f"Lái xe   : {label} (còn {remaining_s:.1f} s)"
 
 
 class MessageBoard:
