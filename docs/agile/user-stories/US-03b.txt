@@ -256,7 +256,7 @@ T5  Bảng thông báo có thời gian giữ (tầng xử lý)
          Ý nghĩa : AC5 (a) (không làm chậm thông báo khi không cần chờ).
 
     Kiểm tay    : không
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T6  Nối bảng thông báo vào app
     File code   : rover/app.py
@@ -285,7 +285,7 @@ T6  Nối bảng thông báo vào app
          Ý nghĩa : AC5 (c).
 
     Kiểm tay    : AC5 theo docs/acceptance/US-03b-acceptance.txt
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 3.5 HỢP ĐỒNG API THÊM CHO US-03b (chép vào docs/diagrams/class/class.txt khi làm T1–T3)
 -------------------------------------------------------------------------------------
