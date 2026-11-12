@@ -1,78 +1,47 @@
-TỔNG QUAN HỆ THỐNG – CHÚ THÍCH SƠ ĐỒ
-====================================
+TỔNG QUAN HỆ THỐNG – CHÚ THÍCH SƠ ĐỒ (RÚT GỌN 4 KHỐI)
+=====================================================
 File nguồn : docs/diagrams/system-overview/system-overview.mmd (Mermaid, sửa sơ đồ ở file này)
-File ảnh   : docs/diagrams/system-overview/system-overview.svg (xuất từ file nguồn, dùng để xem và nhúng README; cần đưa vào Word/slide thì xuất thêm PNG từ mermaid.live)
-Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI). Bố cục có thể khác nhau giữa các phiên bản Mermaid, nên ảnh trong repo là bản chuẩn để cả nhóm cùng xem.
-Phiên bản  : kết quả đầu ra Sprint 2 (2026-11-11), khớp code commit 5514ead: US-01, US-04, US-02, US-03a. Khối xám: US-03b (chưa vào sprint). Kiến trúc chi tiết: docs/diagrams/class/.
+File ảnh   : docs/diagrams/system-overview/system-overview.svg (xuất từ file nguồn)
+Cách xuất  : dán file nguồn vào https://mermaid.live rồi chọn Actions > SVG; hoặc dùng mmdc (Mermaid CLI).
+Phiên bản  : Sprint 3 (rút gọn mức kiến trúc 4 khối tổng quan). Kiến trúc chi tiết các lớp: docs/diagrams/class/.
 
 1. MÔI TRƯỜNG CHẠY
 ------------------
-Toàn bộ hệ thống chạy trên một máy Ubuntu, các thành phần nói chuyện với nhau qua localhost.
-- Terminal A: chạy mô phỏng bằng lệnh "make px4_sitl gz_r1_rover" (PX4 SITL + Gazebo).
-- Terminal B: chạy app rover của nhóm bằng lệnh "python -m rover" (màn hình tự cập nhật, điều khiển bằng phím: H hướng dẫn, R mở khóa, F khóa, Q thoát). Lệnh "python -m rover connect" của US-01 vẫn dùng được (kết nối một lần rồi thoát).
+Toàn bộ hệ thống chạy trên một máy Ubuntu (hoặc môi trường Linux tương đương), các thành phần kết nối với nhau qua localhost:
+- Terminal A: Chạy mô phỏng bằng lệnh "make px4_sitl gz_r1_rover" (PX4 SITL kết hợp Gazebo mô phỏng xe r1_rover).
+- Terminal B: Chạy ứng dụng điều khiển rover bằng lệnh "python -m rover" (giao diện terminal curses tự cập nhật chu kỳ 50 ms).
 
-2. KÝ HIỆU KHỐI
----------------
-Khối nền xanh, viền đen đậm      : đã có, code của nhóm; trong ngoặc là story tạo ra khối đó.
-Khối nền vàng, viền đen đậm      : đã có, không do nhóm viết (người vận hành, PX4 SITL, Gazebo).
-Khối không màu, viền xám nét đứt : dự kiến cho story tiếp theo, chưa thiết kế chi tiết, tên và vị trí có thể đổi sau refinement.
-Khối rover/app.py gộp cả rover/keymap.py (phím -> hành động), rover/screen.py (dựng nội dung khung), rover/terminal.py (vẽ lên terminal, đọc phím bằng curses) để sơ đồ gọn; tách chi tiết xem sơ đồ lớp.
+2. KÝ HIỆU 4 KHỐI CHÍNH
+-----------------------
+- Người vận hành: Người dùng tương tác trực tiếp bằng bàn phím và theo dõi thông tin trên màn hình terminal.
+- App rover (Terminal B): Ứng dụng phần mềm do nhóm phát triển, chạy trên terminal để nhận phím bấm của người dùng, giao tiếp MAVLink với xe, và hiển thị trạng thái lên màn hình.
+- PX4 SITL - autopilot (Terminal A): Hệ thống lái tự động PX4 chạy ở chế độ mô phỏng Software-in-the-Loop, nhận lệnh điều khiển và điều hướng xe.
+- Gazebo - xe r1_rover (Terminal A): Môi trường mô phỏng vật lý 3D, mô phỏng thế giới thực, địa hình và động lực học của xe rover.
 
-3. KÝ HIỆU MŨI TÊN
-------------------
-Mũi tên đen đậm, có số    : luồng chạy khi người vận hành bấm R để mở khóa xe; số tăng dần theo thứ tự xảy ra (xem mục 4). Hai mũi tên cùng số 8 xảy ra trong cùng một bước.
-Mũi tên đen mảnh, không số: (a) liên kết giữa phần mềm bên ngoài (PX4 <-> Gazebo: PX4 đọc cảm biến và điều khiển động cơ của xe mô phỏng); (b) lệnh "python -m rover connect" của US-01: cli.py -> connection.py chờ HEARTBEAT đầu tiên từ PX4 -> vehicle_info.py, in kết quả rồi thoát (chi tiết: docs/agile/user-stories/US-01.txt).
-Mũi tên xám nét đứt       : luồng dự kiến, chưa đánh số (xem mục 5).
+Màu sắc khối:
+- Khối nền xanh, viền đen: Thành phần phần mềm do nhóm phát triển (App rover).
+- Khối nền vàng, viền đen: Thành phần bên ngoài và người dùng (Người vận hành, PX4 SITL, Gazebo).
 
-4. LUỒNG CHẠY CHÍNH: BẤM R ĐỂ MỞ KHÓA XE (SPRINT 2)
---------------------------------------------------
-App chạy một vòng lặp duy nhất (super-loop, không thread), mỗi vòng khoảng 50 ms: đọc mọi gói MAVLink đang chờ, đọc phím, xử lý, vẽ lại khung. Luồng dưới đây đi qua nhiều vòng lặp liên tiếp, từ lúc bấm R tới lúc màn hình hiện "ĐÃ MỞ KHÓA". Điều kiện trước: app đang hiện "ĐÃ KẾT NỐI" và "ĐÃ KHÓA".
+3. CÁC LUỒNG TRAO ĐỔI DỮ LIỆU
+-----------------------------
+(1) Người vận hành <--> App rover:
+    - Bàn phím: Người dùng gửi phím điều khiển (H: hướng dẫn, R: mở khóa, F: khóa xe, W/S/A/D: tiến/lùi/quay trái/quay phải, Space: dừng, Q: thoát).
+    - Màn hình: App cập nhật liên tục giao diện trực quan hiển thị trạng thái kết nối, trạng thái khóa xe, hướng lái hiện tại và bảng thông báo người dùng (MessageBoard).
 
-1  Người vận hành -> rover/app.py
-    Dữ liệu : phím R
-    Ý nghĩa : CursesTerminal .read_key () đọc phím (chờ tối đa 50 ms), keymap .action_for () đổi thành Action .ARM.
+(2) App rover <--> PX4 SITL:
+    Giao tiếp hai chiều bằng giao thức MAVLink 2 qua giao vận UDP (cổng nhận 14540 của App, cổng 14580 của PX4):
+    - PX4 SITL -> App rover:
+      + HEARTBEAT (chu kỳ 1 Hz): Thông báo xe còn hoạt động, chế độ bay/chạy hiện tại và cờ an toàn (armed / disarmed).
+      + COMMAND_ACK: Phản hồi xác nhận xe đã chấp nhận hay từ chối các lệnh mở/khóa.
+    - App rover -> PX4 SITL:
+      + Lệnh mở / khóa (COMMAND_LONG: MAV_CMD_COMPONENT_ARM_DISARM).
+      + Lệnh lái di chuyển (SET_POSITION_TARGET_LOCAL_NED hoặc lệnh setpoint tốc độ theo chế độ lái).
 
-2  rover/app.py -> rover/arm_control.py
-    Dữ liệu : request (arm = True, trạng thái kết nối hiện tại)
-    Ý nghĩa : ArmControl chỉ cho gửi khi trạng thái là CONNECTED; trả (True, "Đã gửi lệnh mở khóa"). Nếu đang ĐANG CHỜ XE / MẤT KẾT NỐI thì trả (False, "Chưa kết nối xe") và luồng dừng ở đây.
+(3) PX4 SITL <--> Gazebo:
+    - PX4 SITL -> Gazebo: Tín hiệu điều khiển động cơ, tốc độ bánh xe (actuator motor commands) để xe di chuyển trong mô phỏng vật lý.
+    - Gazebo -> PX4 SITL: Dữ liệu mô phỏng từ các cảm biến ảo (IMU, con quay hồi chuyển, gia tốc kế, GPS, odometry) phản hồi lại cho thuật toán ước lượng trạng thái của autopilot.
 
-3  rover/app.py -> rover/mavlink_link.py
-    Dữ liệu : send_arm (True)
-    Ý nghĩa : App chỉ gọi qua interface VehicleLink, không biết MAVLink.
-
-4  rover/mavlink_link.py -> PX4 SITL
-    Dữ liệu : COMMAND_LONG, command = MAV_CMD_COMPONENT_ARM_DISARM (400), param1 = 1 (MAVLink 2 / UDP)
-    Ý nghĩa : Lệnh có sẵn của PX4; gửi tới system_id, component_id của xe trong HEARTBEAT gần nhất, về cổng 14580 của PX4.
-
-5  PX4 SITL -> rover/mavlink_link.py
-    Dữ liệu : COMMAND_ACK (command = 400, result) và HEARTBEAT (khoảng 1 lần/giây, cờ armed trong base_mode)
-    Ý nghĩa : PX4 trả lời lệnh và tiếp tục gửi HEARTBEAT từ cổng 14580 tới cổng 14540 của app; sau khi mở khóa, cờ MAV_MODE_FLAG_SAFETY_ARMED bật.
-
-6  rover/mavlink_link.py -> rover/vehicle_info.py
-    Dữ liệu : HEARTBEAT
-    Ý nghĩa : Dùng lại parse_heartbeat của US-01 để bỏ gói không phải của xe (autopilot = INVALID, ví dụ QGroundControl).
-
-7  rover/mavlink_link.py -> rover/app.py
-    Dữ liệu : poll () trả danh sách Heartbeat (info, armed) và ArmAck (accepted)
-    Ý nghĩa : Đọc hết gói đang chờ mà không đứng chờ gói mới, nên màn hình không bị đơ khi mất xe.
-
-8  rover/app.py -> rover/link_monitor.py và rover/arm_control.py
-    Dữ liệu : on_heartbeat (now) cho LinkMonitor; on_heartbeat (armed) và on_ack (ack) cho ArmControl
-    Ý nghĩa : LinkMonitor cập nhật trạng thái kết nối (quá 3 s không có HEARTBEAT -> MẤT KẾT NỐI); ArmControl cập nhật trạng thái khóa theo xe và thông báo "Xe chấp nhận / từ chối lệnh mở khóa".
-
-9  rover/app.py -> Người vận hành
-    Dữ liệu : khung màn hình
-    Ý nghĩa : screen .render () dựng khung, CursesTerminal .draw () vẽ ra: "Kết nối  : ĐÃ KẾT NỐI (HEARTBEAT: n, lần cuối x s trước)", "Khóa xe  : ĐÃ MỞ KHÓA", thông báo gần nhất.
-
-Đặc điểm hiện tại: dữ liệu đi hai chiều giữa app và xe; app theo dõi kết nối liên tục chứ không dừng sau HEARTBEAT đầu tiên. Bấm F (khóa xe) đi đúng các bước trên với arm = False, param1 = 0.
-
-5. LUỒNG DỰ KIẾN (CHƯA CHÍNH XÁC)
----------------------------------
-- rover/app.py -> Lái xe (US-03b): chưa vào sprint, chờ spike chọn cách PX4 rover nhận lệnh di chuyển; dự kiến thêm phím W, S, A, D, Space và hàm VehicleLink .send_drive (xem docs/diagrams/class/class.txt mục 7).
-
-6. QUY TẮC CẬP NHẬT
+4. QUY TẮC CẬP NHẬT
 -------------------
-- Khi story thay đổi cấu trúc hoặc luồng (DoD story, điều 4): sửa system-overview.mmd, xuất lại system-overview.svg, sửa file này (cả 3 file nằm trong docs/diagrams/system-overview/); giữ số trên sơ đồ khớp với mục 4.
-- Ba file (nguồn .mmd, ảnh .svg, chú thích .txt) luôn được commit cùng nhau trong một commit.
-- Đổi dòng "Phiên bản" ở đầu file và dòng title trong file .mmd theo sprint mới nhất.
-- Trong file .mmd, các dòng linkStyle tô màu mũi tên theo thứ tự khai báo (đếm từ 0); thêm hoặc bớt mũi tên thì sửa lại các số đó.
+- Khi có thay đổi kiến trúc mức hệ thống: sửa file nguồn system-overview.mmd, cập nhật chú thích file này.
+- Giữ sơ đồ ở mức tổng quan 4 khối, không đưa tên file mã nguồn cụ thể hay đánh số chi tiết từng bước (chi tiết các bước trao đổi xem sơ đồ tuần tự sequence-arm, sequence-drive trong docs/diagrams/).

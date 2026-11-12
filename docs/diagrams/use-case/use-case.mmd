@@ -1,0 +1,37 @@
+---
+title: Sơ đồ Use Case – Ứng dụng điều khiển Rover (App rover)
+config:
+  flowchart:
+    curve: linear
+---
+flowchart LR
+    user["Người vận hành<br/>(Actor chính)"]
+    px4["PX4 SITL<br/>(Actor phụ)"]
+
+    subgraph sys ["Hệ thống: App rover"]
+        direction TB
+        uc_open(["Mở app<br/>(US-04)"])
+        uc_conn(["Kết nối tới xe<br/>(Tự động khi mở app)"])
+        uc_monitor(["Quan sát tình trạng kết nối<br/>(US-02)"])
+        uc_arm(["Mở / khóa xe<br/>(US-03a)"])
+        uc_drive(["Điều khiển cơ bản: tiến, lùi, quay, dừng<br/>(US-03b)"])
+
+        uc_monitor -.->|"<<include>>"| uc_conn
+        uc_arm -.->|"<<include>>"| uc_conn
+        uc_drive -.->|"<<include>>"| uc_conn
+    end
+
+    user --- uc_open
+    user --- uc_monitor
+    user --- uc_arm
+    user --- uc_drive
+
+    uc_conn --- px4
+    uc_arm --- px4
+    uc_drive --- px4
+
+    classDef actor fill:#ffe8a3,stroke:#000,stroke-width:2px,color:#000
+    classDef usecase fill:#cfe2ff,stroke:#000,stroke-width:2px,color:#000
+
+    class user,px4 actor
+    class uc_open,uc_conn,uc_monitor,uc_arm,uc_drive usecase
