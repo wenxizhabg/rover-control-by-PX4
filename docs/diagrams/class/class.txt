@@ -80,6 +80,8 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
     class VehicleLink (Protocol)          kênh nói chuyện với xe
         poll () -> list [VehicleEvent]    đọc MỌI gói đang chờ, KHÔNG chờ gói mới; chỉ trả gói của xe (bỏ gói autopilot = INVALID như QGroundControl); không có gì thì trả [].   AC: US-02 AC1–AC4, US-03a AC1–AC3
         send_arm (arm : bool) -> None     gửi lệnh mở khóa (True) hoặc khóa (False) tới xe đã thấy gần nhất; kết quả về sau qua ArmAck trong poll (). Chưa thấy HEARTBEAT nào của xe thì không gửi gì (lớp bảo vệ thứ hai, sau ArmControl .request).   AC: US-03a AC1–AC4
+        send_drive (forward : float, turn : float) -> None   gửi mức lái tới xe đã thấy gần nhất: forward trong [-1, 1] (dương tiến, âm lùi), turn trong [-1, 1] (dương quay phải, âm quay trái). Phải gửi đều đặn (PX4 coi ngừng quá 0.5 s là mất tay điều khiển). Chưa thấy xe thì không gửi.   (US-03b/T2)   AC: US-03b AC1–AC4
+        send_manual_mode () -> None       yêu cầu xe chuyển sang chế độ Manual để nhận lệnh lái (xe có thể đang ở Hold). Chưa thấy xe thì không gửi.   (US-03b/T2)   AC: US-03b AC1–AC3
         close () -> None                  đóng cổng.
     class Terminal (Protocol)             màn hình + bàn phím
         read_key () -> str | None         phím vừa bấm (một ký tự, ví dụ "h"); chờ tối đa 50 ms, không có phím thì trả None.   AC: US-04 AC2, AC3
@@ -145,12 +147,14 @@ Ký hiệu cột "Task": task tạo ra hàm / lớp đó (xem docs/agile/sprints
 4.9 Driver (tầng 4)
     rover/drivers/terminal.py  class CursesTerminal  (Task US-04/T3)   hiện thực Terminal bằng curses; mở chế độ cbreak, tắt echo, ẩn con trỏ, timeout 50 ms.
     rover/drivers/terminal.py  class SystemClock     (Task US-04/T3)   now () = time .monotonic ().
-    rover/drivers/mavlink.py   class MavlinkVehicleLink   (Task US-02/T2; US-03a/T2 thêm send_arm và ArmAck)
+    rover/drivers/mavlink.py   class MavlinkVehicleLink   (Task US-02/T2; US-03a/T2 thêm send_arm và ArmAck; US-03b/T2 thêm send_drive, send_manual_mode)
         __init__ (url : str = DEFAULT_URL)          mở cổng ngay (udpin không chờ ai); DEFAULT_URL khai báo cùng file (mục 4.10).
         conn                                        kết nối pymavlink (mavutil .mavlink_connection).
         last_system_id, last_component_id : int | None   số hiệu của xe trong HEARTBEAT gần nhất; None khi chưa thấy xe.
         poll ()                                     recv_match (blocking = False) tới khi hết gói; HEARTBEAT -> parse_heartbeat (mục 4.10) -> Heartbeat (info, armed), đồng thời ghi last_system_id, last_component_id; COMMAND_ACK của lệnh ARM_DISARM (400) -> ArmAck, ACK lệnh khác bị bỏ qua.
         send_arm (arm)                              COMMAND_LONG MAV_CMD_COMPONENT_ARM_DISARM, param1 = 1 / 0, gửi tới last_system_id, last_component_id; hai số này còn None thì trả về, không gửi.
+        send_drive (forward, turn)                  MANUAL_CONTROL target = last_system_id, x = 0, y = round (1000 * turn), z = MANUAL_Z_NEUTRAL + round (500 * forward) (MANUAL_Z_NEUTRAL = 500: thang z của PX4 là [0, 1000], 500 là đứng yên), r = 0, buttons = 0 (spike US-03b/T0 Q4). last_system_id còn None thì không gửi.
+        send_manual_mode ()                         COMMAND_LONG MAV_CMD_DO_SET_MODE (176), param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED (1), param2 = PX4_MAIN_MODE_MANUAL (1); COMMAND_ACK của lệnh này bị poll () bỏ qua.
         close ()
 
 4.10 rover/drivers/mavlink.py – phần có từ US-01, liệt kê cho đủ
@@ -175,7 +179,7 @@ US-03a AC1, AC2 mở / khóa      : view .action_for (R, F), ArmControl .request
        AC3 xe từ chối          : ArmAck, ArmControl .on_ack
        AC4 chưa kết nối        : LinkMonitor .state, ArmControl .request
 
-7. KHI THÊM US-03b (SAU SPIKE) – DỰ KIẾN, CHƯA LÀM
+7. KHI THÊM US-03b (SAU SPIKE) – ĐANG LÀM (Sprint 03; driver: US-03b/T2 xong, xem mục 4.2, 4.9; phần còn lại: docs/agile/user-stories/US-03b.txt mục 3.5)
 --------------------------------------------------
 Thêm Action FORWARD / BACKWARD / TURN_LEFT / TURN_RIGHT / STOP và phím W, S, A, D, Space vào KEY_BINDINGS (rover/core/view.py); thêm DriveController (tầng 2: lệnh lái 1 s rồi tự dừng); thêm VehicleLink .send_drive (...) và hiện thực trong MavlinkVehicleLink theo kết quả spike. Các phần khác không phải sửa.
 
