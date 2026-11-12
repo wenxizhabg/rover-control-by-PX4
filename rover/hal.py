@@ -10,7 +10,7 @@ from rover .core .model import VehicleEvent
 
 
 class VehicleLink (Protocol):
-    """Kênh nói chuyện với xe. Hiện thực thật: MavlinkVehicleLink (US-02/T2, US-03a/T2); giả lập trong test: FakeVehicleLink."""
+    """Kênh nói chuyện với xe. Hiện thực thật: MavlinkVehicleLink (US-02/T2, US-03a/T2, US-03b/T2); giả lập trong test: FakeVehicleLink."""
 
     def poll (self) -> list [VehicleEvent]:
         """Đọc mọi gói đang chờ, không chờ gói mới; chỉ trả gói của xe (bỏ gói autopilot = INVALID như QGroundControl); không có gói nào thì trả danh sách rỗng."""
@@ -18,6 +18,14 @@ class VehicleLink (Protocol):
 
     def send_arm (self, arm: bool) -> None:
         """Gửi lệnh mở khóa (arm = True) hoặc khóa (arm = False) tới xe đã thấy gần nhất; xe trả lời sau, qua ArmAck trong poll ()."""
+        ...
+
+    def send_drive (self, forward: float, turn: float) -> None:
+        """Gửi mức lái tới xe đã thấy gần nhất: forward trong [-1, 1] (dương là tiến, âm là lùi), turn trong [-1, 1] (dương là quay phải, âm là quay trái); chưa thấy xe thì không gửi. Phải gửi đều đặn, xe chỉ chạy khi đang ở chế độ Manual và đã mở khóa."""
+        ...
+
+    def send_manual_mode (self) -> None:
+        """Yêu cầu xe đã thấy gần nhất chuyển sang chế độ Manual để nhận lệnh lái; chưa thấy xe thì không gửi."""
         ...
 
     def close (self) -> None:

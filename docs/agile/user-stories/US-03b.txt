@@ -86,7 +86,7 @@ T1  Logic lái 1 giây (tầng xử lý)
 
     Công việc:
       1. rover/core/model.py: thêm vào Action: FORWARD, BACKWARD, TURN_LEFT, TURN_RIGHT, STOP.
-      2. rover/core/vehicle.py: hằng số DRIVE_DURATION_S = 1.0, DRIVE_SPEED = 0.5, TURN_SPEED = 0.5 (giá trị tốc độ chỉnh lại theo spike Q6); lớp DriveController theo mục 3.5.
+      2. rover/core/vehicle.py: hằng số DRIVE_DURATION_S = 1.0, DRIVE_SPEED = 1.0, TURN_SPEED = 0.5 (đã chốt theo spike Q6); lớp DriveController theo mục 3.5.
 
     Mục đích:
       Toàn bộ quyết định "đang lái hướng nào, còn bao lâu, lúc nào dừng" của AC1–AC3, test được không cần xe.
@@ -121,41 +121,46 @@ T1  Logic lái 1 giây (tầng xử lý)
     Trạng thái  : DONE
 
 T2  Gửi lệnh lái tới PX4 (driver MAVLink)
-    File code   : rover/hal.py (thêm send_drive vào VehicleLink, và hàm đổi chế độ nếu spike cần), rover/drivers/mavlink.py
-    File test   : tests/test_mavlink.py (thêm), tests/mavlink_sim.py (mở rộng giả lập PX4 hai chiều để ghi lại message lái)
+    File code   : rover/hal.py (thêm send_drive, send_manual_mode vào VehicleLink), rover/drivers/mavlink.py
+    File test   : tests/test_mavlink.py (thêm), tests/mavlink_sim.py (mở rộng giả lập PX4 hai chiều để ghi lại MANUAL_CONTROL)
     Người làm   : Hoàng
     Phụ thuộc   : T0
 
-    Kiến thức:
-      - Theo kết quả spike (mục 5). Phần dưới viết theo cách (a) MANUAL_CONTROL; nếu spike chọn (b) thì thay message tương ứng và sửa mục 3.5 trước khi code (báo cả nhóm vì đổi hợp đồng API).
-      - MANUAL_CONTROL: target = system_id của xe, các kênh x, y, z, r kiểu int16 trong [-1000, 1000], buttons = 0. Đổi mức lái [-1, 1] thành [-1000, 1000] bằng nhân 1000 và làm tròn.
+    Kiến thức (theo kết quả spike, mục 5):
+      - Cách (a): chế độ Manual + MANUAL_CONTROL. target = system_id của xe, x = r = 0, buttons = 0.
+      - Tiến / lùi ở kênh z, thang [0, 1000], z = 500 là đứng yên: z = 500 + round (500 * forward). Gửi z = 0 là lùi hết cỡ, không phải dừng.
+      - Quay ở kênh y, thang [-1000, 1000], y > 0 là quay phải: y = round (1000 * turn).
+      - Đổi sang Manual: COMMAND_LONG MAV_CMD_DO_SET_MODE (176), param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED (1), param2 = 1 (main mode Manual của PX4). Cần vì xe có thể đang ở Hold (lúc mở mô phỏng, hoặc sau khi mất tay điều khiển) và không tự về Manual.
       - Như send_arm: chưa thấy HEARTBEAT của xe (last_system_id = None) thì không gửi gì.
 
     Công việc:
-      1. rover/hal.py: VehicleLink thêm send_drive (forward: float, turn: float) -> None. Nếu spike Q2 cần đổi chế độ riêng: thêm send_manual_mode () -> None (hoặc tên theo spike) và ghi vào mục 3.5.
-      2. rover/drivers/mavlink.py: hiện thực send_drive (và hàm đổi chế độ nếu có) theo spike Q1–Q5.
-      3. tests/mavlink_sim.py: giả lập PX4 hai chiều ghi lại MANUAL_CONTROL (hoặc message spike chọn) và COMMAND_LONG đổi chế độ.
+      1. rover/hal.py: VehicleLink thêm send_drive (forward: float, turn: float) -> None và send_manual_mode () -> None (mục 3.5).
+      2. rover/drivers/mavlink.py: hiện thực hai hàm trên theo công thức ở phần Kiến thức.
+      3. tests/mavlink_sim.py: giả lập PX4 hai chiều ghi lại MANUAL_CONTROL app gửi (ngoài COMMAND_LONG đã có).
 
     Mục đích:
       Phần nói chuyện thật với PX4 của AC1–AC3.
 
-    Test tự động (3 test, giả lập PX4 hai chiều, không cần mô phỏng; chốt nội dung kiểm cụ thể sau spike):
+    Test tự động (4 test, giả lập PX4 hai chiều, không cần mô phỏng):
       1. Gửi lệnh tiến
          Đầu vào : giả lập xe gửi HEARTBEAT; poll () thấy xe; send_drive (0.5, 0.0)
-         Mong đợi: giả lập nhận message lái, kênh tiến / lùi (theo spike Q4) = 500, kênh quay = 0, gửi đúng system_id của xe
-         Ý nghĩa : AC1.
+         Mong đợi: giả lập nhận MANUAL_CONTROL target = 1, z = 750, y = 0, x = 0, r = 0
+         Ý nghĩa : AC1 (z = 500 + 500 * 0.5).
       2. Gửi lệnh quay trái
          Đầu vào : như test 1, send_drive (0.0, -0.5)
-         Mong đợi: kênh tiến / lùi = 0, kênh quay = -500 (hoặc dấu theo spike Q4)
-         Ý nghĩa : AC2.
+         Mong đợi: z = 500 (đứng yên), y = -500
+         Ý nghĩa : AC2 (turn < 0 là quay trái).
       3. Chưa thấy xe thì không gửi
-         Đầu vào : chưa có HEARTBEAT; send_drive (0.5, 0.0)
-         Mong đợi: giả lập không nhận message nào
+         Đầu vào : giả lập đang chạy nhưng app chưa poll () nên chưa thấy HEARTBEAT; send_drive (0.5, 0.0); send_manual_mode ()
+         Mong đợi: giả lập không nhận MANUAL_CONTROL hay COMMAND_LONG nào
          Ý nghĩa : AC4 (không gửi lệnh khi chưa có xe).
-      (Nếu có hàm đổi chế độ: thêm test 4 – giả lập nhận COMMAND_LONG MAV_CMD_DO_SET_MODE với đúng param theo spike Q2.)
+      4. Đổi sang chế độ Manual
+         Đầu vào : như test 1, send_manual_mode ()
+         Mong đợi: giả lập nhận COMMAND_LONG command = 176, param1 = 1, param2 = 1, target_system = 1, target_component = 1
+         Ý nghĩa : AC1–AC3 (xe ở Hold thì phải về Manual mới lái được).
 
     Kiểm tay    : không bắt buộc (kiểm cùng AC sau T3)
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T3  Nối lái xe vào app
     File code   : rover/core/view.py (thêm phím W, S, A, D, Space và format_drive_status), rover/app.py, tests/fakes.py (FakeVehicleLink thêm send_drive, sent_drive)
@@ -165,12 +170,13 @@ T3  Nối lái xe vào app
 
     Kiến thức:
       - Phím Space: curses trả ký tự " ". Trong KEY_BINDINGS dùng " " và mô tả "Space  dừng ngay" ở bảng hướng dẫn.
-      - Chính sách gửi (mặc định, chỉnh theo spike Q3): mỗi vòng lặp, nếu đã kết nối và xe đang mở khóa thì gửi link .send_drive (*drive .setpoint (now)), kể cả khi setpoint là (0, 0), để PX4 luôn nhận dòng lệnh đều đặn và dừng xe đúng lúc. Vòng lặp khoảng 20 lần/giây; nếu spike cho biết tần số khác, giới hạn tần số trong driver.
+      - Chính sách gửi (chốt theo spike Q2, Q3): mỗi vòng lặp, nếu ĐÃ KẾT NỐI thì gửi link .send_drive (*drive .setpoint (now)), kể cả khi xe chưa mở khóa hoặc setpoint là (0, 0). Lý do: ở chế độ Manual, PX4 từ chối mở khóa khi chưa có dòng MANUAL_CONTROL; ngừng gửi quá 0.5 s thì PX4 coi là mất tay điều khiển và chuyển sang Hold. Vòng lặp khoảng 20 lần/giây là đủ, không cần giới hạn tần số.
+      - Bấm phím lái hợp lệ: gọi link .send_manual_mode () trước drive .start (...), để xe về Manual nếu đang ở Hold.
 
     Công việc:
       1. core/view.py: KEY_BINDINGS thêm ("w", FORWARD, "tiến"), ("s", BACKWARD, "lùi"), ("a", TURN_LEFT, "quay trái"), ("d", TURN_RIGHT, "quay phải"), (" ", STOP, "dừng ngay"); format_drive_status (action, remaining_s) theo mục 3.5.
-      2. app.py: tạo DriveController; phím lái: chưa kết nối -> thông báo "Chưa kết nối xe"; chưa mở khóa (arm_control .armed khác True) -> "Xe chưa mở khóa"; còn lại -> drive .start (action, now) (STOP -> drive .stop ()); mỗi vòng gửi setpoint theo chính sách trên; thêm dòng format_drive_status vào vùng trạng thái. Nếu spike cần đổi chế độ: gọi hàm đổi chế độ khi xe vừa chuyển sang mở khóa (hoặc thời điểm spike Q2 chỉ ra).
-      3. tests/fakes.py: FakeVehicleLink thêm send_drive () ghi vào sent_drive (danh sách tuple).
+      2. app.py: tạo DriveController; phím lái: chưa kết nối -> thông báo "Chưa kết nối xe"; chưa mở khóa (arm_control .armed khác True) -> "Xe chưa mở khóa"; còn lại -> link .send_manual_mode () rồi drive .start (action, now) (STOP -> drive .stop ()); mỗi vòng gửi setpoint theo chính sách trên; thêm dòng format_drive_status vào vùng trạng thái.
+      3. tests/fakes.py: FakeVehicleLink thêm send_drive () ghi vào sent_drive (danh sách tuple) và send_manual_mode () đếm vào manual_mode_requests (số lần gọi).
 
     Mục đích:
       Người vận hành bấm phím và thấy xe chạy, màn hình hiện đúng trạng thái lái.
@@ -256,7 +262,7 @@ T5  Bảng thông báo có thời gian giữ (tầng xử lý)
          Ý nghĩa : AC5 (a) (không làm chậm thông báo khi không cần chờ).
 
     Kiểm tay    : không
-    Trạng thái  : DOING
+    Trạng thái  : DONE
 
 T6  Nối bảng thông báo vào app
     File code   : rover/app.py
@@ -285,7 +291,7 @@ T6  Nối bảng thông báo vào app
          Ý nghĩa : AC5 (c).
 
     Kiểm tay    : AC5 theo docs/acceptance/US-03b-acceptance.txt
-    Trạng thái  : TODO
+    Trạng thái  : DOING
 
 3.5 HỢP ĐỒNG API THÊM CHO US-03b (chép vào docs/diagrams/class/class.txt khi làm T1–T3)
 -------------------------------------------------------------------------------------
@@ -294,8 +300,8 @@ rover/core/model.py
 
 rover/core/vehicle.py
     DRIVE_DURATION_S = 1.0    thời gian xe chạy cho mỗi lần bấm phím lái (PO chốt 2026-11-10)
-    DRIVE_SPEED = 0.5         mức tiến / lùi trong [0, 1] (chỉnh theo spike Q6)
-    TURN_SPEED = 0.5          mức quay trong [0, 1] (chỉnh theo spike Q6)
+    DRIVE_SPEED = 1.0         mức tiến / lùi trong [0, 1] (spike Q6: khoảng 0.9 m trong 1 s, cộng khoảng 0.9 m trôi)
+    TURN_SPEED = 0.5          mức quay trong [0, 1] (spike Q6: khoảng 65 độ mỗi lần bấm)
     class DriveController
         start (action : Action, now : float) -> None       FORWARD / BACKWARD / TURN_LEFT / TURN_RIGHT: chạy hướng đó tới now + DRIVE_DURATION_S; bấm lại thì tính lại từ now
         stop () -> None                                    dừng ngay
@@ -317,11 +323,15 @@ rover/app.py
     RoverApp dùng MessageBoard thay cho thuộc tính _message (T6).
 
 rover/hal.py
-    VehicleLink thêm send_drive (forward : float, turn : float) -> None    gửi mức lái tới xe đã thấy gần nhất; chưa thấy xe thì không gửi
-    (thêm hàm đổi chế độ nếu spike Q2 cần; ghi tên và ý nghĩa vào đây trước khi code)
+    VehicleLink thêm send_drive (forward : float, turn : float) -> None    gửi mức lái (forward, turn trong [-1, 1]) tới xe đã thấy gần nhất; chưa thấy xe thì không gửi
+    VehicleLink thêm send_manual_mode () -> None                           yêu cầu xe chuyển sang chế độ Manual (để nhận lệnh lái); chưa thấy xe thì không gửi
+
+rover/drivers/mavlink.py
+    MavlinkVehicleLink .send_drive         MANUAL_CONTROL target = last_system_id, x = 0, y = round (1000 * turn), z = 500 + round (500 * forward), r = 0, buttons = 0
+    MavlinkVehicleLink .send_manual_mode   COMMAND_LONG MAV_CMD_DO_SET_MODE (176), param1 = 1 (MAV_MODE_FLAG_CUSTOM_MODE_ENABLED), param2 = 1 (Manual)
 
 tests/fakes.py
-    FakeVehicleLink thêm send_drive () ghi vào sent_drive : list [tuple [float, float]]
+    FakeVehicleLink thêm send_drive () ghi vào sent_drive : list [tuple [float, float]]; send_manual_mode () tăng manual_mode_requests : int
 
 4. GHI CHÚ / QUYẾT ĐỊNH CỦA PO
 ------------------------------

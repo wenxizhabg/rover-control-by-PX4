@@ -1,5 +1,6 @@
-"""Kiểm tra tầng 2 – giao diện: đổi phím thành hành động, bảng hướng dẫn (US-04/T1, US-03a/T3) và nội dung khung màn hình (US-04/T2, US-02/T3, US-03a/T3)."""
+"""Kiểm tra tầng 2 – giao diện: đổi phím thành hành động, bảng hướng dẫn (US-04/T1, US-03a/T3), nội dung khung màn hình (US-04/T2, US-02/T3, US-03a/T3) và bảng thông báo giữ thời gian (US-03b/T5)."""
 
+from rover .core import view
 from rover .core .model import Action, LinkState
 from rover .core .view import ViewModel, action_for, format_arm_status, format_link_status, help_lines, render
 
@@ -101,3 +102,70 @@ def test_9_arm_status_formats_unknown_armed_and_disarmed ():
     assert unknown == "Khóa xe  : chưa rõ"
     assert armed == "Khóa xe  : ĐÃ MỞ KHÓA"
     assert disarmed == "Khóa xe  : ĐÃ KHÓA"
+
+
+def test_10_message_board_is_empty_initially ():
+    # Đầu vào: tạo mới MessageBoard (), gọi current (0.0).
+    board = view .MessageBoard ()
+
+    # Mong đợi: trả về chuỗi rỗng "" lúc mới mở app.
+    assert board .current (0.0) == ""
+
+
+def test_11_first_message_displays_immediately ():
+    # Đầu vào: post ("A", 1.0) rồi gọi ngay current (1.0).
+    board = view .MessageBoard ()
+    board .post ("A", 1.0)
+
+    # Mong đợi: thông báo đầu hiện ngay lập tức (phục vụ US-03b AC5 (a): bấm R thấy ngay "Đã gửi lệnh mở khóa").
+    assert board .current (1.0) == "A"
+
+
+def test_12_next_message_waits_minimum_hold_time ():
+    # Đầu vào: post ("A", 0.0) -> current (0.0) -> post ("B", 0.01) -> kiểm tra tại 0.3 và 0.5.
+    assert view .MESSAGE_HOLD_S == 0.5
+    board = view .MessageBoard ()
+    board .post ("A", 0.0)
+    assert board .current (0.0) == "A"
+
+    board .post ("B", 0.01)
+
+    # Mong đợi: chưa đủ 0.5 s vẫn giữ "A"; đủ 0.5 s mới chuyển sang "B" (phục vụ US-03b AC5 (a)).
+    assert board .current (0.3) == "A"
+    assert board .current (0.5) == "B"
+
+
+def test_13_multiple_messages_display_in_fifo_order_without_dropping ():
+    # Đầu vào: post A, B, C cùng lúc tại 0.0 (C sau B sau A); gọi current tại 0.0, 0.49, 0.5, 0.99, 1.0.
+    board = view .MessageBoard ()
+    board .post ("A", 0.0)
+    board .post ("B", 0.0)
+    board .post ("C", 0.0)
+
+    # Mong đợi: mỗi thông báo giữ tối thiểu 0.5 s, hiện lần lượt đúng thứ tự FIFO và không mất thông báo nào (phục vụ US-03b AC5 (b)).
+    assert board .current (0.0) == "A"
+    assert board .current (0.49) == "A"
+    assert board .current (0.5) == "B"
+    assert board .current (0.99) == "B"
+    assert board .current (1.0) == "C"
+
+
+def test_14_last_message_stays_when_queue_is_empty ():
+    # Đầu vào: post ("A", 0.0) rồi kiểm tra sau rất lâu tại current (100.0).
+    board = view .MessageBoard ()
+    board .post ("A", 0.0)
+
+    # Mong đợi: không có thông báo mới thì giữ nguyên thông báo cuối trên màn hình (phục vụ US-03b AC5 (c)).
+    assert board .current (100.0) == "A"
+
+
+def test_15_new_message_displays_immediately_after_old_held_long_enough ():
+    # Đầu vào: post ("A", 0.0) -> current (0.0) -> sau 2.0 s post ("B", 2.0) -> current (2.0).
+    board = view .MessageBoard ()
+    board .post ("A", 0.0)
+    assert board .current (0.0) == "A"
+
+    board .post ("B", 2.0)
+
+    # Mong đợi: thông báo cũ đã giữ đủ lâu thì thông báo mới hiện ngay không bị làm chậm (phục vụ US-03b AC5 (a)).
+    assert board .current (2.0) == "B"
